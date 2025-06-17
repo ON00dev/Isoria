@@ -281,10 +281,14 @@ app.use((err, req, res, next) => {
 // Inicia o servidor
 const PORT = process.env.FRONTEND_PORT || 3555;
 server.listen(PORT, '127.0.0.1', () => {
-    console.log(`[Servidor] Aplicação completa rodando em http://127.0.0.1:${PORT}`);
-    console.log(`[Servidor] Servindo arquivos do diretório: ${path.join(__dirname, '../client')}`);
-    console.log(`[Servidor] Socket.IO habilitado para comunicação em tempo real`);
-});
+    console.log(`[Servidor] Rodando em http://127.0.0.1:${PORT}`);
+  }).on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`[Servidor] Porta ${PORT} já está em uso.`);
+    } else {
+      throw err;
+    }
+  });
 
 // Tratamento de encerramento gracioso
 process.on('SIGINT', () => {

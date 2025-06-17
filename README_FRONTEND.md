@@ -13,16 +13,18 @@ No arquivo `.env`, a porta é configurada através da variável:
 FRONTEND_PORT=3555
 ```
 
+## Instalar dependências
+```bash
+npm install
+```
+
 ## Como Executar
 
-### Servidor Completo
-```bash
-# Modo produção
-npm start
+| Ambiente | Comando       | Descrição                                    |
+| -------- | ------------- | -------------------------------------------- |
+| Browser  | `npm run start:web`   | Roda apenas o servidor e testa via navegador |
+| Desktop  | `npm run start:desktop` | Abre o Electron e carrega o jogo             |
 
-# Modo desenvolvimento (com nodemon)
-npm run dev
-```
 
 ## Estrutura de Arquivos Servidos
 

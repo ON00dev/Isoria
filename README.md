@@ -71,17 +71,6 @@ Isoria é uma engine completa para desenvolvimento de jogos isométricos tile-ba
 git clone https://github.com/seu-usuario/isoria.git
 cd isoria
 
-# Instalar dependências
-npm install
-
-# Iniciar o servidor em modo desenvolvimento
-npm run dev
-```
-
-## Uso
-
-Acesse `http://localhost:3000` no navegador para visualizar o jogo.
-
 ## Licença
 
 MIT
