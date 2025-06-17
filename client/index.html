@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Isoria - MMORPG</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+    <!-- Engine Tools Link -->
+    <style>
+        .engine-tools-link {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: #4cc9f0;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        .engine-tools-link:hover {
+            background: #3a9bc1;
+        }
+    </style>
+    <!-- Phaser 3 -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <!-- Socket.io Client -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+    <!-- Link para Engine Tools -->
+    <a href="engine-tools.html" class="engine-tools-link" target="_blank">🔧 Engine Tools</a>
+    
+    <div id="game-container">
+        <div id="game"></div>
+        <div id="ui-overlay">
+            <div id="player-info">
+                <div id="player-name">Jogador</div>
+                <div id="health-bar">
+                    <div id="health-bar-fill"></div>
+                </div>
+            </div>
+            <div id="chat-container">
+                <div id="chat-messages"></div>
+                <div id="chat-input-container">
+                    <input type="text" id="chat-input" placeholder="Digite sua mensagem...">
+                    <button id="chat-send">Enviar</button>
+                </div>
+            </div>
+            <div id="action-buttons">
+                <button id="attack-btn">Atacar</button>
+                <button id="interact-btn">Interagir</button>
+                <button id="inventory-btn">Inventário</button>
+            </div>
+        </div>
+        <div id="login-screen">
+            <div id="login-form">
+                <h2>Entrar no Jogo</h2>
+                <input type="text" id="player-name-input" placeholder="Seu nome">
+                <div id="character-selection">
+                    <h3>Escolha seu personagem</h3>
+                    <div id="character-options">
+                        <div class="character-option selected" data-skin="warrior">Guerreiro</div>
+                        <div class="character-option" data-skin="mage">Mago</div>
+                        <div class="character-option" data-skin="archer">Arqueiro</div>
+                    </div>
+                </div>
+                <button id="start-game-btn">Iniciar Jogo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts do jogo -->
+    <script src="js/config.js"></script>
+    <script src="js/scenes/BootScene.js"></script>
+    <script src="js/scenes/PreloadScene.js"></script>
+    <script src="js/scenes/MainMenuScene.js"></script>
+    <script src="js/scenes/GameScene.js"></script>
+    <script src="js/scenes/UIScene.js"></script>
+    <script src="js/entities/Player.js"></script>
+    <script src="js/utils/AStar.js"></script>
+    <script src="js/utils/IsometricHelper.js"></script>
+    <script src="js/network/SocketManager.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

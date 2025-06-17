@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Isoria Engine - Visual Script Framework</title>
+    <link rel="stylesheet" href="css/engine-tools.css">
+</head>
+<body>
+    <div class="engine-container">
+        <!-- Cabeçalho -->
+        <header class="engine-header">
+            <div class="header-left">
+                <h1>Isoria Engine</h1>
+                <span class="version">v1.0.0</span>
+            </div>
+            <div class="header-center">
+                <div class="mode-selector">
+                    <button class="mode-btn active" data-mode="visual">Visual</button>
+                    <button class="mode-btn" data-mode="script">Script</button>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="btn-primary" id="run-game">Executar</button>
+                <button class="btn-secondary" id="export-project">Exportar</button>
+                <span class="status" id="engine-status">Pronto</span>
+            </div>
+        </header>
+
+        <main class="engine-workspace">
+            <!-- Painel de Ferramentas Visuais -->
+            <aside class="tools-panel" id="visual-tools">
+                <div class="tools-header">
+                    <h3>Ferramentas Visuais</h3>
+                    <button class="collapse-btn" id="collapse-tools">−</button>
+                </div>
+                <div class="tools-content">
+                    <div class="tool-category">
+                        <h4>Mundo</h4>
+                        <div class="tool-group">
+                            <button class="tool-btn" data-tool="create-scene">Criar Cena</button>
+                            <button class="tool-btn" data-tool="add-tilemap">Adicionar Tilemap</button>
+                            <button class="tool-btn" data-tool="set-camera">Configurar Câmera</button>
+                        </div>
+                    </div>
+                    <div class="tool-category">
+                        <h4>Objetos</h4>
+                        <div class="tool-group">
+                            <button class="tool-btn" data-tool="add-sprite">Adicionar Sprite</button>
+                            <button class="tool-btn" data-tool="add-player">Adicionar Jogador</button>
+                            <button class="tool-btn" data-tool="add-npc">Adicionar NPC</button>
+                            <button class="tool-btn" data-tool="add-item">Adicionar Item</button>
+                        </div>
+                    </div>
+                    <div class="tool-category">
+                        <h4>Física</h4>
+                        <div class="tool-group">
+                            <button class="tool-btn" data-tool="add-collider">Adicionar Colisor</button>
+                            <button class="tool-btn" data-tool="add-trigger">Adicionar Trigger</button>
+                            <button class="tool-btn" data-tool="set-physics">Configurar Física</button>
+                        </div>
+                    </div>
+                    <div class="tool-category">
+                        <h4>Audio</h4>
+                        <div class="tool-group">
+                            <button class="tool-btn" data-tool="add-music">Adicionar Música</button>
+                            <button class="tool-btn" data-tool="add-sound">Adicionar Som</button>
+                        </div>
+                    </div>
+                    <div class="tool-category">
+                        <h4>Interface</h4>
+                        <div class="tool-group">
+                            <button class="tool-btn" data-tool="add-ui-text">Adicionar Texto</button>
+                            <button class="tool-btn" data-tool="add-ui-button">Adicionar Botão</button>
+                            <button class="tool-btn" data-tool="add-ui-panel">Adicionar Painel</button>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Terminal de Script -->
+            <aside class="script-panel" id="script-tools" style="display: none;">
+                <div class="script-header">
+                    <h3>Terminal de Script</h3>
+                    <div class="script-controls">
+                        <button class="btn-small" id="new-script">Novo</button>
+                        <button class="btn-small" id="save-script">Salvar</button>
+                        <button class="btn-small" id="load-script">Carregar</button>
+                    </div>
+                </div>
+                <div class="script-editor">
+                    <textarea id="script-code" placeholder="// Escreva seu código Isoria aqui...
+// Exemplo:
+// scene.create('MainScene')
+// scene.addTilemap('world', 800, 600)
+// player.create('hero', 100, 100)"></textarea>
+                </div>
+                <div class="script-output">
+                    <div class="output-header">
+                        <span>Console</span>
+                        <button class="btn-small" id="clear-console">Limpar</button>
+                    </div>
+                    <div class="console" id="script-console"></div>
+                </div>
+            </aside>
+
+            <!-- Área principal de ferramentas -->
+            <section id="tools-content">
+                <!-- Gerenciamento de Mapas -->
+                <div class="tool-panel active" id="map-tools">
+                    <h2>Gerenciamento de Mapas</h2>
+                    <div class="tool-grid">
+                        <div class="tool-card">
+                            <h3>Gerador de Mapa Isométrico</h3>
+                            <p>Gera um mapa isométrico automaticamente com as dimensões especificadas</p>
+                            <div class="tool-controls">
+                                <label>Largura (px): <input type="number" id="map-width" value="800" min="200" max="2000"></label>
+                                <label>Altura (px): <input type="number" id="map-height" value="600" min="200" max="1500"></label>
+                                <label>Tipo de Terreno: 
+                                    <select id="terrain-type">
+                                        <option value="grass">Grama</option>
+                                        <option value="stone">Pedra</option>
+                                        <option value="sand">Areia</option>
+                                        <option value="water">Água</option>
+                                        <option value="mixed">Misto</option>
+                                    </select>
+                                </label>
+                                <label>Densidade de Obstáculos (%): <input type="range" id="obstacle-density" min="0" max="30" value="10"></label>
+                                <button onclick="generateIsometricMap()">Gerar Mapa</button>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-card">
+                            <h3>Visualizar Camadas</h3>
+                            <p>Controla a visibilidade das camadas do mapa</p>
+                            <div class="tool-controls">
+                                <label><input type="checkbox" id="ground-layer" checked> Chão</label>
+                                <label><input type="checkbox" id="obstacles-layer" checked> Obstáculos</label>
+                                <label><input type="checkbox" id="decoration-layer" checked> Decoração</label>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-card">
+                            <h3>Converter Coordenadas</h3>
+                            <p>Converte entre coordenadas cartesianas e isométricas</p>
+                            <div class="tool-controls">
+                                <input type="number" id="coord-x" placeholder="X">
+                                <input type="number" id="coord-y" placeholder="Y">
+                                <button onclick="convertCoordinates()">Converter</button>
+                                <div id="coord-result"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assets e Recursos -->
+                <div class="tool-panel" id="assets-tools">
+                    <h2>Assets e Recursos</h2>
+                    <div class="tool-grid">
+                        <div class="tool-card">
+                            <h3>Gerenciar Tilesets</h3>
+                            <p>Carrega e visualiza tilesets isométricos</p>
+                            <div class="tool-controls">
+                                <input type="file" id="tileset-file" accept=".png,.jpg">
+                                <button onclick="loadTileset()">Carregar Tileset</button>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-card">
+                            <h3>Preview de Assets</h3>
+                            <p>Visualiza sprites e animações carregados</p>
+                            <div class="tool-controls">
+                                <select id="asset-selector">
+                                    <option value="warrior">Guerreiro</option>
+                                    <option value="mage">Mago</option>
+                                    <option value="archer">Arqueiro</option>
+                                </select>
+                                <button onclick="previewAsset()">Visualizar</button>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-card">
+                            <h3>Carregar Sons</h3>
+                            <p>Gerencia arquivos de áudio do jogo</p>
+                            <div class="tool-controls">
+                                <input type="file" id="audio-file" accept=".mp3,.wav,.ogg">
+                                <button onclick="loadAudio()">Carregar Áudio</button>
+                                <button onclick="playAudio()">Reproduzir</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Personagens -->
+                <div class="tool-panel" id="characters-tools">
+                    <h2>Personagens</h2>
+                    <div class="tool-grid">
+                        <div class="tool-card">
+                            <h3>Criar Personagem</h3>
+                            <p>Cria um novo personagem no mapa</p>
+                            <div class="tool-controls">
+                                <input type="text" id="char-name" placeholder="Nome">
+                                <select id="char-type">
+                                    <option value="warrior">Guerreiro</option>
+                                    <option value="mage">Mago</option>
+                                    <option value="archer">Arqueiro</option>
+                                </select>
+                                <button onclick="createCharacter()">Criar</button>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-card">
+                            <h3>Testar Animações</h3>
+                            <p>Testa as animações dos personagens</p>
+                            <div class="tool-controls">
+                                <select id="anim-direction">
+                                    <option value="down">Baixo</option>
+                                    <option value="up">Cima</option>
+                                    <option value="left">Esquerda</option>
+                                    <option value="right">Direita</option>
+                                </select>
+                                <select id="anim-type">
+                                    <option value="idle">Parado</option>
+                                    <option value="walk">Caminhando</option>
+                                    <option value="attack">Atacando</option>
+                                </select>
+                                <button onclick="testAnimation()">Testar</button>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-card">
+                            <h3>Configurar Atributos</h3>
+                            <p>Define HP, velocidade e outros atributos</p>
+                            <div class="tool-controls">
+                                <label>HP: <input type="number" id="char-hp" value="100"></label>
+                                <label>Velocidade: <input type="number" id="char-speed" value="200"></label>
+                                <button onclick="updateCharacterStats()">Aplicar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pathfinding -->
+                <div class="tool-panel" id="pathfinding-tools">
+                    <h2>Pathfinding</h2>
+                    <div class="tool-grid">
+                        <div class="tool-card">
+                            <h3>Testar A*</h3>
+                            <p>Testa o algoritmo de pathfinding A*</p>
+                            <div class="tool-controls">
+                                <label>Início X: <input type="number" id="path-start-x" value="0"></label>
+                                <label>Início Y: <input type="number" id="path-start-y" value="0"></label>
+                                <label>Fim X: <input type="number" id="path-end-x" value="5"></label>
+                                <label>Fim Y: <input type="number" id="path-end-y" value="5"></label>
+                                <button onclick="testPathfinding()">Calcular Caminho</button>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-card">
+                            <h3>Visualizar Grid</h3>
+                            <p>Mostra o grid de colisões do mapa</p>
+                            <div class="tool-controls">
+                                <label><input type="checkbox" id="show-grid"> Mostrar Grid</label>
+                                <label><input type="checkbox" id="show-obstacles"> Mostrar Obstáculos</label>
+                                <button onclick="toggleGridVisualization()">Aplicar</button>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-card">
+                            <h3>Editar Obstáculos</h3>
+                            <p>Adiciona ou remove obstáculos do mapa</p>
+                            <div class="tool-controls">
+                                <button onclick="setEditMode('add')">Adicionar Obstáculo</button>
+                                <button onclick="setEditMode('remove')">Remover Obstáculo</button>
+                                <button onclick="setEditMode('none')">Parar Edição</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Multiplayer -->
+                <div class="tool-panel" id="multiplayer-tools">
+                    <h2>Multiplayer</h2>
+                    <div class="tool-grid">
+                        <div class="tool-card">
+                            <h3>Status da Conexão</h3>
+                            <p>Monitora a conexão com o servidor</p>
+                            <div class="tool-controls">
+                                <div id="connection-status">Desconectado</div>
+                                <button onclick="connectToServer()">Conectar</button>
+                                <button onclick="disconnectFromServer()">Desconectar</button>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-card">
+                            <h3>Simular Jogadores</h3>
+                            <p>Adiciona jogadores virtuais para teste</p>
+                            <div class="tool-controls">
+                                <input type="number" id="bot-count" value="1" min="1" max="10">
+                                <button onclick="addBots()">Adicionar Bots</button>
+                                <button onclick="removeBots()">Remover Bots</button>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-card">
+                            <h3>Monitor de Eventos</h3>
+                            <p>Monitora eventos de rede em tempo real</p>
+                            <div class="tool-controls">
+                                <label><input type="checkbox" id="log-movement"> Movimento</label>
+                                <label><input type="checkbox" id="log-chat"> Chat</label>
+                                <label><input type="checkbox" id="log-combat"> Combate</label>
+                                <div id="event-log"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Debug e Testes -->
+                <div class="tool-panel" id="debug-tools">
+                    <h2>Debug e Testes</h2>
+                    <div class="tool-grid">
+                        <div class="tool-card">
+                            <h3>Console de Debug</h3>
+                            <p>Executa comandos de debug personalizados</p>
+                            <div class="tool-controls">
+                                <textarea id="debug-console" placeholder="Digite comandos JavaScript..."></textarea>
+                                <button onclick="executeDebugCommand()">Executar</button>
+                                <div id="debug-output"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-card">
+                            <h3>Performance Monitor</h3>
+                            <p>Monitora FPS e performance do jogo</p>
+                            <div class="tool-controls">
+                                <label><input type="checkbox" id="show-fps"> Mostrar FPS</label>
+                                <label><input type="checkbox" id="show-memory"> Mostrar Memória</label>
+                                <div id="performance-stats"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-card">
+                            <h3>Captura de Tela</h3>
+                            <p>Captura screenshots do jogo</p>
+                            <div class="tool-controls">
+                                <button onclick="takeScreenshot()">Capturar Tela</button>
+                                <button onclick="recordGif()">Gravar GIF</button>
+                                <div id="capture-preview"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Preview Dinâmico -->
+        <section class="preview-area">
+            <div class="preview-header">
+                <h3>Preview do Jogo</h3>
+                <div class="preview-controls">
+                    <button class="btn-small" id="fullscreen-preview">Tela Cheia</button>
+                    <button class="btn-small" id="reset-preview">Resetar</button>
+                    <select id="preview-resolution">
+                        <option value="800x600">800x600</option>
+                        <option value="1024x768">1024x768</option>
+                        <option value="1280x720">1280x720</option>
+                    </select>
+                </div>
+            </div>
+            <div class="preview-canvas">
+                <canvas id="game-preview" width="800" height="600"></canvas>
+                <div class="preview-overlay" id="preview-overlay">
+                    <div class="loading-spinner">Carregando...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Painel de Propriedades -->
+        <aside class="properties-panel">
+            <div class="properties-header">
+                <h3>Propriedades</h3>
+                <button class="collapse-btn" id="collapse-properties">−</button>
+            </div>
+            <div class="properties-content" id="properties-content">
+                <div class="no-selection">
+                    <p>Selecione um objeto para ver suas propriedades</p>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Documentação Modal -->
+    <div class="modal" id="docs-modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Documentação da Isoria Engine</h2>
+                <button class="close-btn" id="close-docs">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="docs-nav">
+                    <button class="docs-tab active" data-tab="getting-started">Começando</button>
+                    <button class="docs-tab" data-tab="api-reference">API Reference</button>
+                    <button class="docs-tab" data-tab="examples">Exemplos</button>
+                </div>
+                <div class="docs-content" id="docs-content">
+                    <!-- Conteúdo será carregado dinamicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="js/isoria-engine.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/utils/IsometricHelper.js"></script>
+    <script src="js/utils/AStar.js"></script>
+    <script src="js/managers/AssetManager.js"></script>
+    <script src="js/managers/MapManager.js"></script>
+    <script src="js/entities/Player.js"></script>
+    <script src="js/engine-tools.js"></script>
+    <script src="js/docs-content.js"></script>
+</body>
+</html>
