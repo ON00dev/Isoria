@@ -3,30 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Isoria Game Engine</title>
-    <link rel="stylesheet" href="./css/engine-tools.css">
+    <title>Game Engine Interface</title>
+    <link rel="stylesheet" href="m1.css">
 </head>
 <body>
     <!-- Header/Menu Bar -->
     <header class="header">
         <div class="menu-bar">
             <div class="logo">
-                <h1>Isoria Engine</h1>
+                <h1>GameEngine</h1>
             </div>
             <nav class="main-menu">
                 <ul>
-                    <li><a href="#" class="menu-item" data-menu="file">File</a></li>
-                    <li><a href="#" class="menu-item" data-menu="edit">Edit</a></li>
-                    <li><a href="#" class="menu-item" data-menu="view">View</a></li>
-                    <li><a href="#" class="menu-item" data-menu="build">Build</a></li>
-                    <li><a href="#" class="menu-item" data-menu="window">Window</a></li>
-                    <li><a href="#" class="menu-item" data-menu="help">Help</a></li>
+                    <li><a href="#" class="menu-item">File</a></li>
+                    <li><a href="#" class="menu-item">Edit</a></li>
+                    <li><a href="#" class="menu-item">View</a></li>
+                    <li><a href="#" class="menu-item">Build</a></li>
+                    <li><a href="#" class="menu-item">Window</a></li>
+                    <li><a href="#" class="menu-item">Help</a></li>
                 </ul>
             </nav>
             <div class="header-controls">
-                <button class="btn-play" id="btn-play">▶</button>
-                <button class="btn-pause" id="btn-pause">⏸</button>
-                <button class="btn-stop" id="btn-stop">⏹</button>
+                <button class="btn-play">▶</button>
+                <button class="btn-pause">⏸</button>
+                <button class="btn-stop">⏹</button>
             </div>
         </div>
     </header>
@@ -34,7 +34,7 @@
     <!-- Main Content Area -->
     <main class="main-container">
         <!-- Left Sidebar -->
-        <aside class="sidebar-left" id="sidebar-left">
+        <aside class="sidebar-left">
             <!-- Scene Hierarchy Panel -->
             <section class="panel">
                 <div class="panel-header">
@@ -42,32 +42,32 @@
                     <button class="panel-toggle">−</button>
                 </div>
                 <div class="panel-content">
-                    <div class="hierarchy-tree" id="hierarchy-tree">
-                        <div class="tree-item" data-id="main-scene">
+                    <div class="hierarchy-tree">
+                        <div class="tree-item">
                             <span class="tree-icon">📁</span>
                             <span class="tree-label">Main Scene</span>
                         </div>
-                        <div class="tree-item tree-child" data-id="player">
+                        <div class="tree-item tree-child">
                             <span class="tree-icon">🎮</span>
                             <span class="tree-label">Player</span>
                         </div>
-                        <div class="tree-item tree-child" data-id="environment">
+                        <div class="tree-item tree-child">
                             <span class="tree-icon">🌍</span>
                             <span class="tree-label">Environment</span>
                         </div>
-                        <div class="tree-item tree-child tree-child-2" data-id="buildings">
+                        <div class="tree-item tree-child tree-child-2">
                             <span class="tree-icon">🏠</span>
                             <span class="tree-label">Buildings</span>
                         </div>
-                        <div class="tree-item tree-child tree-child-2" data-id="trees">
+                        <div class="tree-item tree-child tree-child-2">
                             <span class="tree-icon">🌳</span>
                             <span class="tree-label">Trees</span>
                         </div>
-                        <div class="tree-item tree-child" data-id="lighting">
+                        <div class="tree-item tree-child">
                             <span class="tree-icon">💡</span>
                             <span class="tree-label">Lighting</span>
                         </div>
-                        <div class="tree-item tree-child" data-id="main-camera">
+                        <div class="tree-item tree-child">
                             <span class="tree-icon">📷</span>
                             <span class="tree-label">Main Camera</span>
                         </div>
@@ -83,32 +83,32 @@
                 </div>
                 <div class="panel-content">
                     <div class="assets-toolbar">
-                        <input type="search" placeholder="Search assets..." class="search-input" id="asset-search">
-                        <button class="btn-icon" id="import-asset">📁</button>
-                        <button class="btn-icon" id="create-asset">⊞</button>
+                        <input type="search" placeholder="Search assets..." class="search-input">
+                        <button class="btn-icon">📁</button>
+                        <button class="btn-icon">⊞</button>
                     </div>
-                    <div class="assets-grid" id="assets-grid">
-                        <div class="asset-item" draggable="true" data-type="texture">
+                    <div class="assets-grid">
+                        <div class="asset-item">
                             <div class="asset-thumbnail">🖼️</div>
                             <span class="asset-name">texture_01</span>
                         </div>
-                        <div class="asset-item" draggable="true" data-type="audio">
+                        <div class="asset-item">
                             <div class="asset-thumbnail">🎵</div>
                             <span class="asset-name">bgm_main</span>
                         </div>
-                        <div class="asset-item" draggable="true" data-type="model">
+                        <div class="asset-item">
                             <div class="asset-thumbnail">📐</div>
                             <span class="asset-name">player_model</span>
                         </div>
-                        <div class="asset-item" draggable="true" data-type="script">
+                        <div class="asset-item">
                             <div class="asset-thumbnail">📜</div>
                             <span class="asset-name">script_01</span>
                         </div>
-                        <div class="asset-item" draggable="true" data-type="material">
+                        <div class="asset-item">
                             <div class="asset-thumbnail">🎨</div>
                             <span class="asset-name">material_01</span>
                         </div>
-                        <div class="asset-item" draggable="true" data-type="particle">
+                        <div class="asset-item">
                             <div class="asset-thumbnail">⚡</div>
                             <span class="asset-name">particle_fx</span>
                         </div>
@@ -121,30 +121,29 @@
         <section class="preview-container">
             <div class="preview-header">
                 <div class="preview-tabs">
-                    <button class="tab active" data-tab="scene">Scene</button>
-                    <button class="tab" data-tab="game">Game</button>
-                    <button class="tab" data-tab="animation">Animation</button>
+                    <button class="tab active">Scene</button>
+                    <button class="tab">Game</button>
+                    <button class="tab">Animation</button>
                 </div>
                 <div class="preview-controls">
-                    <button class="btn-icon" id="zoom-tool" title="Zoom">🔍</button>
-                    <button class="btn-icon" id="pan-tool" title="Pan">✋</button>
-                    <button class="btn-icon" id="move-tool" title="Move">↔️</button>
-                    <button class="btn-icon" id="rotate-tool" title="Rotate">🔄</button>
-                    <button class="btn-icon" id="scale-tool" title="Scale">📏</button>
+                    <button class="btn-icon">🔍</button>
+                    <button class="btn-icon">✋</button>
+                    <button class="btn-icon">↔️</button>
+                    <button class="btn-icon">🔄</button>
+                    <button class="btn-icon">📏</button>
                 </div>
             </div>
-            <div class="preview-viewport" id="preview-viewport">
-                <canvas id="game-canvas" style="display: none;"></canvas>
+            <div class="preview-viewport">
                 <div class="viewport-content">
                     <div class="viewport-grid"></div>
                     <div class="viewport-center">
-                        <div class="preview-placeholder" id="preview-placeholder">
+                        <div class="preview-placeholder">
                             <h2>Game Preview</h2>
                             <p>3D Scene Viewport</p>
                             <div class="preview-stats">
-                                <span id="fps-counter">FPS: 60</span>
-                                <span id="triangle-counter">Triangles: 1,234</span>
-                                <span id="draw-calls">Draw Calls: 45</span>
+                                <span>FPS: 60</span>
+                                <span>Triangles: 1,234</span>
+                                <span>Draw Calls: 45</span>
                             </div>
                         </div>
                     </div>
@@ -152,46 +151,46 @@
             </div>
             <div class="preview-footer">
                 <div class="viewport-info">
-                    <span id="camera-info">Camera: Perspective</span>
-                    <span id="position-info">Position: (0, 5, -10)</span>
-                    <span id="zoom-info">Zoom: 100%</span>
+                    <span>Camera: Perspective</span>
+                    <span>Position: (0, 5, -10)</span>
+                    <span>Zoom: 100%</span>
                 </div>
             </div>
         </section>
 
         <!-- Right Sidebar -->
-        <aside class="sidebar-right" id="sidebar-right">
+        <aside class="sidebar-right">
             <!-- Inspector Panel -->
             <section class="panel">
                 <div class="panel-header">
                     <h3>Inspector</h3>
                     <button class="panel-toggle">−</button>
                 </div>
-                <div class="panel-content" id="inspector-content">
+                <div class="panel-content">
                     <div class="inspector-section">
                         <h4>Transform</h4>
                         <div class="property-group">
                             <label>Position</label>
                             <div class="vector-input">
-                                <input type="number" value="0" placeholder="X" id="pos-x">
-                                <input type="number" value="0" placeholder="Y" id="pos-y">
-                                <input type="number" value="0" placeholder="Z" id="pos-z">
+                                <input type="number" value="0" placeholder="X">
+                                <input type="number" value="0" placeholder="Y">
+                                <input type="number" value="0" placeholder="Z">
                             </div>
                         </div>
                         <div class="property-group">
                             <label>Rotation</label>
                             <div class="vector-input">
-                                <input type="number" value="0" placeholder="X" id="rot-x">
-                                <input type="number" value="0" placeholder="Y" id="rot-y">
-                                <input type="number" value="0" placeholder="Z" id="rot-z">
+                                <input type="number" value="0" placeholder="X">
+                                <input type="number" value="0" placeholder="Y">
+                                <input type="number" value="0" placeholder="Z">
                             </div>
                         </div>
                         <div class="property-group">
                             <label>Scale</label>
                             <div class="vector-input">
-                                <input type="number" value="1" placeholder="X" id="scale-x">
-                                <input type="number" value="1" placeholder="Y" id="scale-y">
-                                <input type="number" value="1" placeholder="Z" id="scale-z">
+                                <input type="number" value="1" placeholder="X">
+                                <input type="number" value="1" placeholder="Y">
+                                <input type="number" value="1" placeholder="Z">
                             </div>
                         </div>
                     </div>
@@ -200,7 +199,7 @@
                         <h4>Mesh Renderer</h4>
                         <div class="property-group">
                             <label>Material</label>
-                            <select class="property-select" id="material-select">
+                            <select class="property-select">
                                 <option>Default Material</option>
                                 <option>Metal Material</option>
                                 <option>Glass Material</option>
@@ -208,11 +207,11 @@
                         </div>
                         <div class="property-group">
                             <label>Cast Shadows</label>
-                            <input type="checkbox" checked id="cast-shadows">
+                            <input type="checkbox" checked>
                         </div>
                         <div class="property-group">
                             <label>Receive Shadows</label>
-                            <input type="checkbox" checked id="receive-shadows">
+                            <input type="checkbox" checked>
                         </div>
                     </div>
 
@@ -220,7 +219,7 @@
                         <h4>Collider</h4>
                         <div class="property-group">
                             <label>Type</label>
-                            <select class="property-select" id="collider-type">
+                            <select class="property-select">
                                 <option>Box Collider</option>
                                 <option>Sphere Collider</option>
                                 <option>Mesh Collider</option>
@@ -228,7 +227,7 @@
                         </div>
                         <div class="property-group">
                             <label>Is Trigger</label>
-                            <input type="checkbox" id="is-trigger">
+                            <input type="checkbox">
                         </div>
                     </div>
                 </div>
@@ -242,27 +241,27 @@
                 </div>
                 <div class="panel-content">
                     <div class="tools-grid">
-                        <button class="tool-btn active" data-tool="select">
+                        <button class="tool-btn active">
                             <span class="tool-icon">👆</span>
                             <span class="tool-label">Select</span>
                         </button>
-                        <button class="tool-btn" data-tool="move">
+                        <button class="tool-btn">
                             <span class="tool-icon">↔️</span>
                             <span class="tool-label">Move</span>
                         </button>
-                        <button class="tool-btn" data-tool="rotate">
+                        <button class="tool-btn">
                             <span class="tool-icon">🔄</span>
                             <span class="tool-label">Rotate</span>
                         </button>
-                        <button class="tool-btn" data-tool="scale">
+                        <button class="tool-btn">
                             <span class="tool-icon">📏</span>
                             <span class="tool-label">Scale</span>
                         </button>
-                        <button class="tool-btn" data-tool="paint">
+                        <button class="tool-btn">
                             <span class="tool-icon">🖌️</span>
                             <span class="tool-label">Paint</span>
                         </button>
-                        <button class="tool-btn" data-tool="terrain">
+                        <button class="tool-btn">
                             <span class="tool-icon">🌍</span>
                             <span class="tool-label">Terrain</span>
                         </button>
@@ -273,15 +272,14 @@
     </main>
 
     <!-- Bottom Panel -->
-    <footer class="bottom-panel" id="bottom-panel">
+    <footer class="bottom-panel">
         <div class="panel-tabs">
-            <button class="tab active" data-tab="console">Console</button>
-            <button class="tab" data-tab="timeline">Timeline</button>
-            <button class="tab" data-tab="profiler">Profiler</button>
-            <button class="tab" data-tab="script-editor">Script Editor</button>
+            <button class="tab active">Console</button>
+            <button class="tab">Timeline</button>
+            <button class="tab">Profiler</button>
         </div>
         <div class="panel-content">
-            <div class="console-output" id="console-output">
+            <div class="console-output">
                 <div class="console-line info">
                     <span class="timestamp">[14:32:15]</span>
                     <span class="message">Scene loaded successfully</span>
@@ -299,33 +297,7 @@
                     <span class="message">Build completed in 2.3 seconds</span>
                 </div>
             </div>
-            <div class="script-editor" id="script-editor" style="display: none;">
-                <div class="editor-toolbar">
-                    <button class="btn-icon" id="save-script">💾</button>
-                    <button class="btn-icon" id="run-script">▶</button>
-                    <button class="btn-icon" id="format-script">🎨</button>
-                    <span class="script-name" id="script-name">scene_script.js</span>
-                </div>
-                <textarea id="script-content" class="script-textarea" placeholder="// Write your game script here...&#10;function init() {&#10;    // Initialize game objects&#10;}&#10;&#10;function update() {&#10;    // Update game logic&#10;}&#10;&#10;function render() {&#10;    // Render game objects&#10;}"></textarea>
-            </div>
         </div>
     </footer>
-
-    <!-- Dropdown Menus -->
-    <div class="dropdown-menu" id="file-menu" style="display: none;">
-        <div class="menu-item" data-action="new">New Scene</div>
-        <div class="menu-item" data-action="open">Open Scene</div>
-        <div class="menu-item" data-action="save">Save Scene</div>
-        <div class="menu-item" data-action="export">Export Project</div>
-    </div>
-
-    <!-- Resizers -->
-    <div class="resizer resizer-left" id="resizer-left"></div>
-    <div class="resizer resizer-right" id="resizer-right"></div>
-    <div class="resizer resizer-bottom" id="resizer-bottom"></div>
-
-    <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="js/engine-tools.js"></script>
 </body>
 </html>

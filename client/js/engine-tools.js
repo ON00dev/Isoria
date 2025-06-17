@@ -3,19 +3,679 @@
 
 class EngineTools {
     constructor() {
-        this.currentMode = 'visual'; // 'visual' ou 'script'
-        this.visualTools = [];
+        this.currentMode = 'visual';
         this.selectedObject = null;
         this.isRunning = false;
         this.engine = window.IsoriaEngineInstance;
+        this.resizers = new Map();
+        this.panels = new Map();
+        this.activeTab = 'scene';
+        this.activeTool = 'select';
         
         this.initializeInterface();
         this.initializeEventListeners();
+        this.initializeResizers();
         this.loadDocumentation();
     }
 
-    /**
-     * Inicializa o sistema de ferramentas
+    initializeInterface() {
+        this.setupPanels();
+        this.setupTabs();
+        this.setupTools();
+        this.setupInspector();
+        this.setupConsole();
+        this.updateInterface();
+    }
+
+    initializeEventListeners() {
+        this.setupHeaderControls();
+        this.setupHierarchyEvents();
+        this.setupAssetsEvents();
+        this.setupPreviewEvents();
+        this.setupInspectorEvents();
+        this.setupToolsEvents();
+        this.setupConsoleEvents();
+        this.setupKeyboardShortcuts();
+     }
+
+     setupKeyboardShortcuts() {
+         document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + S - Salvar
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                this.saveProject();
+            }
+            
+            // Ctrl/Cmd + O - Abrir
+            if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
+                e.preventDefault();
+                this.openProject();
+            }
+            
+            // Ctrl/Cmd + Z - Desfazer
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+                e.preventDefault();
+                this.undo();
+            }
+            
+            // Ctrl/Cmd + Y - Refazer
+            if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+                e.preventDefault();
+                this.redo();
+            }
+            
+            // Delete - Deletar objeto selecionado
+            if (e.key === 'Delete' && this.selectedObject) {
+                this.deleteSelectedObject();
+            }
+            
+            // F5 - Play/Pause
+            if (e.key === 'F5') {
+                e.preventDefault();
+                this.togglePlayPause();
+            }
+            
+            // Escape - Deselecionar
+            if (e.key === 'Escape') {
+                this.deselectAll();
+            }
+        });
+    }
+    
+    // Métodos auxiliares para funcionalidades da interface
+    switchPreviewTab(tabName) {
+        document.querySelectorAll('.preview-tabs .tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        
+        const activeTab = Array.from(document.querySelectorAll('.preview-tabs .tab'))
+            .find(tab => tab.textContent.toLowerCase() === tabName);
+        
+        if (activeTab) {
+            activeTab.classList.add('active');
+            this.logMessage(`Aba do preview alterada para: ${tabName}`);
+        }
+    }
+    
+    switchBottomTab(tabName) {
+        document.querySelectorAll('.panel-tabs .tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        
+        const activeTab = Array.from(document.querySelectorAll('.panel-tabs .tab'))
+            .find(tab => tab.textContent.toLowerCase() === tabName);
+        
+        if (activeTab) {
+            activeTab.classList.add('active');
+            this.logMessage(`Aba do painel inferior alterada para: ${tabName}`);
+        }
+    }
+    
+    selectTool(toolName, btnElement) {
+        // Remover seleção anterior
+        document.querySelectorAll('.tool-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Selecionar ferramenta atual
+        btnElement.classList.add('active');
+        this.currentTool = toolName;
+        this.logMessage(`Ferramenta selecionada: ${toolName}`);
+    }
+    
+    selectPreviewTool(toolId) {
+        // Remover seleção anterior
+        document.querySelectorAll('.preview-controls .btn-icon').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Selecionar ferramenta atual
+        const btn = document.getElementById(toolId);
+        if (btn) {
+            btn.classList.add('active');
+            this.logMessage(`Ferramenta de preview selecionada: ${toolId}`);
+        }
+    }
+    
+    updateObjectProperty(element) {
+        const property = element.name || element.id;
+        const value = element.type === 'checkbox' ? element.checked : element.value;
+        
+        if (this.selectedObject) {
+            this.logMessage(`Propriedade ${property} do objeto ${this.selectedObject} alterada para: ${value}`);
+        }
+    }
+    
+    updateInspector(objectName) {
+        // Simular atualização do inspector com dados do objeto
+        const positionInputs = document.querySelectorAll('.vector-input input');
+        if (positionInputs.length >= 3) {
+            positionInputs[0].value = Math.random() * 10;
+            positionInputs[1].value = Math.random() * 10;
+            positionInputs[2].value = Math.random() * 10;
+        }
+        
+        this.logMessage(`Inspector atualizado para: ${objectName}`);
+    }
+    
+    filterAssets(searchTerm) {
+        const assets = document.querySelectorAll('.asset-item');
+        assets.forEach(asset => {
+            const assetName = asset.querySelector('.asset-name').textContent.toLowerCase();
+            const matches = assetName.includes(searchTerm.toLowerCase());
+            asset.style.display = matches ? 'block' : 'none';
+        });
+        
+        this.logMessage(`Filtro de assets aplicado: "${searchTerm}"`);
+    }
+    
+    addObjectToScene(assetName) {
+        // Simular adição de objeto à cena
+        const hierarchy = document.querySelector('.hierarchy-tree');
+        if (hierarchy) {
+            const newItem = document.createElement('div');
+            newItem.className = 'tree-item';
+            newItem.innerHTML = `<span class="tree-icon">📦</span> ${assetName}_${Date.now()}`;
+            hierarchy.appendChild(newItem);
+            
+            // Adicionar eventos ao novo item
+            newItem.addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('selected'));
+                newItem.classList.add('selected');
+                this.selectedObject = newItem.textContent.trim();
+                this.updateInspector(this.selectedObject);
+            });
+        }
+    }
+    
+    updatePlayControls() {
+        const playBtn = document.getElementById('play-btn');
+        const pauseBtn = document.getElementById('pause-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        
+        if (this.isRunning) {
+            if (playBtn) playBtn.classList.add('active');
+            if (pauseBtn) pauseBtn.classList.remove('active');
+        } else {
+            if (playBtn) playBtn.classList.remove('active');
+            if (pauseBtn) pauseBtn.classList.add('active');
+        }
+    }
+    
+    // Métodos para atalhos de teclado
+    saveProject() {
+        this.logMessage('Projeto salvo', 'info');
+    }
+    
+    openProject() {
+        this.logMessage('Abrindo projeto...', 'info');
+    }
+    
+    undo() {
+        this.logMessage('Desfazer última ação', 'warning');
+    }
+    
+    redo() {
+        this.logMessage('Refazer última ação', 'warning');
+    }
+    
+    deleteSelectedObject() {
+        if (this.selectedObject) {
+            this.logMessage(`Objeto ${this.selectedObject} deletado`, 'error');
+            const selectedElement = document.querySelector('.tree-item.selected');
+            if (selectedElement) {
+                selectedElement.remove();
+            }
+            this.selectedObject = null;
+        }
+    }
+    
+    togglePlayPause() {
+        this.isRunning = !this.isRunning;
+        this.logMessage(this.isRunning ? 'Jogo iniciado' : 'Jogo pausado', this.isRunning ? 'info' : 'warning');
+        this.updatePlayControls();
+    }
+    
+    deselectAll() {
+        document.querySelectorAll('.tree-item.selected').forEach(item => {
+            item.classList.remove('selected');
+        });
+        document.querySelectorAll('.asset-item.selected').forEach(item => {
+            item.classList.remove('selected');
+        });
+        this.selectedObject = null;
+        this.logMessage('Seleção removida');
+    }
+
+    setupHeaderControls() {
+        // Controles de reprodução
+        const playBtn = document.getElementById('play-btn');
+        const pauseBtn = document.getElementById('pause-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        
+        if (playBtn) {
+            playBtn.addEventListener('click', () => {
+                this.isRunning = true;
+                this.logMessage('Jogo iniciado', 'info');
+                this.updatePlayControls();
+            });
+        }
+        
+        if (pauseBtn) {
+            pauseBtn.addEventListener('click', () => {
+                this.isRunning = false;
+                this.logMessage('Jogo pausado', 'warning');
+                this.updatePlayControls();
+            });
+        }
+        
+        if (stopBtn) {
+            stopBtn.addEventListener('click', () => {
+                this.isRunning = false;
+                this.logMessage('Jogo parado', 'error');
+                this.updatePlayControls();
+            });
+        }
+    }
+
+    setupHierarchyEvents() {
+        // Eventos da árvore de hierarquia
+        document.querySelectorAll('.tree-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                
+                // Remover seleção anterior
+                document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('selected'));
+                
+                // Selecionar item atual
+                item.classList.add('selected');
+                
+                const objectName = item.textContent.trim();
+                this.selectedObject = objectName;
+                this.logMessage(`Objeto selecionado: ${objectName}`);
+                this.updateInspector(objectName);
+            });
+            
+            // Toggle de expansão para itens com filhos
+            const toggle = item.querySelector('.tree-toggle');
+            if (toggle) {
+                toggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const children = item.querySelector('.tree-children');
+                    if (children) {
+                        const isExpanded = children.style.display !== 'none';
+                        children.style.display = isExpanded ? 'none' : 'block';
+                        toggle.textContent = isExpanded ? '▶' : '▼';
+                    }
+                });
+            }
+        });
+    }
+
+    setupAssetsEvents() {
+        // Eventos do painel de assets
+        const searchInput = document.querySelector('.search-input');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.filterAssets(e.target.value);
+            });
+        }
+        
+        // Eventos dos assets
+        document.querySelectorAll('.asset-item').forEach(asset => {
+            asset.addEventListener('click', (e) => {
+                // Remover seleção anterior
+                document.querySelectorAll('.asset-item').forEach(a => a.classList.remove('selected'));
+                
+                // Selecionar asset atual
+                asset.classList.add('selected');
+                
+                const assetName = asset.querySelector('.asset-name').textContent;
+                this.logMessage(`Asset selecionado: ${assetName}`);
+            });
+            
+            // Drag and drop
+            asset.addEventListener('dragstart', (e) => {
+                const assetName = asset.querySelector('.asset-name').textContent;
+                e.dataTransfer.setData('text/plain', assetName);
+                this.logMessage(`Iniciando drag: ${assetName}`);
+            });
+        });
+    }
+
+    setupPreviewEvents() {
+        // Eventos do viewport 3D
+        const viewport = document.getElementById('viewport');
+        if (viewport) {
+            let isDragging = false;
+            let lastMouseX = 0;
+            let lastMouseY = 0;
+            
+            viewport.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+                viewport.style.cursor = 'grabbing';
+            });
+            
+            viewport.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    const deltaX = e.clientX - lastMouseX;
+                    const deltaY = e.clientY - lastMouseY;
+                    
+                    // Simular rotação da câmera
+                    this.logMessage(`Rotação da câmera: X=${deltaX}, Y=${deltaY}`);
+                    
+                    lastMouseX = e.clientX;
+                    lastMouseY = e.clientY;
+                }
+            });
+            
+            viewport.addEventListener('mouseup', () => {
+                isDragging = false;
+                viewport.style.cursor = 'grab';
+            });
+            
+            viewport.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const zoom = e.deltaY > 0 ? 'out' : 'in';
+                this.logMessage(`Zoom ${zoom}`);
+            });
+            
+            // Drop de assets no viewport
+            viewport.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                viewport.classList.add('drag-over');
+            });
+            
+            viewport.addEventListener('dragleave', () => {
+                viewport.classList.remove('drag-over');
+            });
+            
+            viewport.addEventListener('drop', (e) => {
+                e.preventDefault();
+                viewport.classList.remove('drag-over');
+                
+                const assetName = e.dataTransfer.getData('text/plain');
+                this.logMessage(`Asset ${assetName} adicionado à cena`, 'info');
+                this.addObjectToScene(assetName);
+            });
+        }
+    }
+
+    initializeResizers() {
+        this.createResizer('.sidebar-left', 'right', 200, 500);
+        this.createResizer('.sidebar-right', 'left', 200, 500);
+        this.createResizer('.bottom-panel', 'top', 100, 400);
+    }
+
+    loadDocumentation() {
+        // Placeholder for documentation loading
+    }
+
+    setupPanels() {
+        // Configurar painéis colapsáveis
+        document.querySelectorAll('.panel-toggle').forEach(toggle => {
+            toggle.addEventListener('click', (e) => {
+                const panel = e.target.closest('.panel');
+                const content = panel.querySelector('.panel-content');
+                const isCollapsed = content.style.display === 'none';
+                
+                content.style.display = isCollapsed ? 'block' : 'none';
+                e.target.textContent = isCollapsed ? '−' : '+';
+                
+                this.logMessage(`Painel ${isCollapsed ? 'expandido' : 'colapsado'}`);
+            });
+        });
+    }
+
+    setupTabs() {
+        // Configurar abas do preview
+        document.querySelectorAll('.preview-tabs .tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const tabName = e.target.textContent.toLowerCase();
+                this.switchPreviewTab(tabName);
+            });
+        });
+        
+        // Configurar abas do painel inferior
+        document.querySelectorAll('.panel-tabs .tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const tabName = e.target.textContent.toLowerCase();
+                this.switchBottomTab(tabName);
+            });
+        });
+    }
+
+    setupTools() {
+        // Configurar ferramentas do painel direito
+        document.querySelectorAll('.tool-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const toolName = btn.querySelector('.tool-label').textContent.toLowerCase();
+                this.selectTool(toolName, btn);
+            });
+        });
+        
+        // Configurar controles do preview
+        document.querySelectorAll('.preview-controls .btn-icon').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const toolId = btn.id;
+                this.selectPreviewTool(toolId);
+            });
+        });
+    }
+
+    setupInspector() {
+        // Configurar inputs do inspector
+        document.querySelectorAll('.vector-input input').forEach(input => {
+            input.addEventListener('change', (e) => {
+                this.updateObjectProperty(e.target);
+            });
+        });
+        
+        document.querySelectorAll('.property-select').forEach(select => {
+            select.addEventListener('change', (e) => {
+                this.updateObjectProperty(e.target);
+            });
+        });
+        
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                this.updateObjectProperty(e.target);
+            });
+        });
+    }
+
+    setupConsole() {
+        // Configurar console com auto-scroll
+        this.consoleOutput = document.getElementById('console-output');
+        if (this.consoleOutput) {
+            this.consoleOutput.addEventListener('scroll', () => {
+                const isAtBottom = this.consoleOutput.scrollTop + this.consoleOutput.clientHeight >= this.consoleOutput.scrollHeight - 5;
+                this.autoScroll = isAtBottom;
+            });
+        }
+    }
+
+    setupPreview() {
+        const canvas = document.getElementById('game-preview');
+        if (canvas) {
+            this.previewCanvas = canvas;
+            this.previewContext = canvas.getContext('2d');
+            this.initializePreview();
+        }
+        
+        // Setup preview controls
+        const fullscreenBtn = document.getElementById('fullscreen-preview');
+        const resetBtn = document.getElementById('reset-preview');
+        const resolutionSelect = document.getElementById('preview-resolution');
+        
+        if (fullscreenBtn) {
+            fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
+        }
+        
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => this.resetPreview());
+        }
+        
+        if (resolutionSelect) {
+            resolutionSelect.addEventListener('change', (e) => this.changeResolution(e.target.value));
+        }
+    }
+
+    setupDocumentation() {
+        const showDocsBtn = document.getElementById('show-docs');
+        if (showDocsBtn) {
+            showDocsBtn.addEventListener('click', () => this.showDocumentation());
+        }
+    }
+
+    updateInterface() {
+        // Update interface based on current mode
+    }
+
+    switchMode(mode) {
+        this.currentMode = mode;
+        this.updateInterface();
+    }
+
+    selectVisualTool(toolId) {
+        this.logMessage(`Tool selected: ${toolId}`);
+    }
+
+    runScript() {
+        this.logMessage('Running script...');
+    }
+
+    stopScript() {
+        this.logMessage('Script stopped');
+    }
+
+    clearConsole() {
+        const consoleElement = document.getElementById('console-output');
+        if (consoleElement) {
+            consoleElement.innerHTML = '';
+        }
+    }
+
+    saveScript() {
+        this.logMessage('Script saved');
+    }
+
+    loadScript() {
+        this.logMessage('Script loaded');
+    }
+
+    switchTerminalTab(tabType) {
+        this.logMessage(`Switched to ${tabType} tab`);
+    }
+
+    initializePreview() {
+        // Initialize preview canvas
+    }
+
+    toggleFullscreen() {
+        this.logMessage('Toggling fullscreen');
+    }
+
+    changeResolution(resolution) {
+        this.logMessage(`Resolution changed to ${resolution}`);
+    }
+
+    showDocumentation() {
+         const modal = document.getElementById('docs-modal');
+         if (modal) {
+             modal.style.display = 'block';
+         }
+     }
+
+     resetPreview() {
+         if (this.previewContext) {
+             this.previewContext.clearRect(0, 0, this.previewCanvas.width, this.previewCanvas.height);
+             this.previewContext.fillStyle = '#000';
+             this.previewContext.fillRect(0, 0, this.previewCanvas.width, this.previewCanvas.height);
+         }
+         this.logMessage('Preview reset');
+     }
+
+     logMessage(message, type = 'info') {
+         const consoleElement = document.getElementById('console-output');
+         if (consoleElement) {
+             const timestamp = new Date().toLocaleTimeString();
+             const messageClass = type === 'error' ? 'error' : type === 'warning' ? 'warning' : 'info';
+             const messageDiv = document.createElement('div');
+             messageDiv.className = `console-line ${messageClass}`;
+             messageDiv.innerHTML = `<span class="timestamp">${timestamp}</span><span class="message">${message}</span>`;
+             consoleElement.appendChild(messageDiv);
+             
+             if (this.autoScroll !== false) {
+                 consoleElement.scrollTop = consoleElement.scrollHeight;
+             }
+         } else {
+             console.log(message);
+         }
+     }
+     
+     createResizer(targetSelector, direction, minSize, maxSize) {
+         const target = document.querySelector(targetSelector);
+         if (!target) return;
+         
+         const resizer = document.createElement('div');
+         resizer.className = `resizer resizer-${direction}`;
+         
+         if (direction === 'right') {
+             target.appendChild(resizer);
+         } else if (direction === 'left') {
+             target.insertBefore(resizer, target.firstChild);
+         } else if (direction === 'top') {
+             target.insertBefore(resizer, target.firstChild);
+         }
+         
+         let isResizing = false;
+         let startPos = 0;
+         let startSize = 0;
+         
+         resizer.addEventListener('mousedown', (e) => {
+             isResizing = true;
+             startPos = direction === 'top' ? e.clientY : e.clientX;
+             startSize = direction === 'top' ? target.offsetHeight : target.offsetWidth;
+             
+             document.addEventListener('mousemove', handleMouseMove);
+             document.addEventListener('mouseup', handleMouseUp);
+             
+             e.preventDefault();
+         });
+         
+         const handleMouseMove = (e) => {
+             if (!isResizing) return;
+             
+             const currentPos = direction === 'top' ? e.clientY : e.clientX;
+             let delta = currentPos - startPos;
+             
+             if (direction === 'left' || direction === 'top') {
+                 delta = -delta;
+             }
+             
+             let newSize = startSize + delta;
+             newSize = Math.max(minSize, Math.min(maxSize, newSize));
+             
+             if (direction === 'top') {
+                 target.style.height = newSize + 'px';
+             } else {
+                 target.style.width = newSize + 'px';
+             }
+         };
+         
+         const handleMouseUp = () => {
+             isResizing = false;
+             document.removeEventListener('mousemove', handleMouseMove);
+             document.removeEventListener('mouseup', handleMouseUp);
+         };
+     }
+
+     /**
+      * Inicializa o sistema de ferramentas
      */
     init() {
         this.setupEventListeners();
