@@ -52,24 +52,6 @@ O servidor serve os seguintes diretórios:
 - ✅ Gerenciamento de salas e jogadores
 - ✅ Sistema de chat multiplayer
 
-## Instalação de Dependências
-
-Antes de executar, certifique-se de instalar as dependências:
-
-```bash
-npm install
-```
-
-## Desenvolvimento
-
-Para desenvolvimento, use:
-
-```bash
-npm run dev
-```
-
-Este comando iniciará o servidor completo na porta 3555 com auto-reload através do nodemon.
-
 ## Arquitetura
 
 O servidor único integra:
