@@ -43,18 +43,18 @@ app.use('/maps', express.static(path.join(__dirname, '../maps')));
 // Configura o diretório shared para acessar constantes e utilitários
 app.use('/shared', express.static(path.join(__dirname, '../shared')));
 
-// Rota principal - serve o index.html
+// Rota principal - serve o engine-tools.html
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/index.html'));
+    res.sendFile(path.join(__dirname, '../client/engine-tools.html'));
 });
 
-// Rota para servir o index.html em qualquer rota (SPA support)
+// Rota para servir o engine-tools.html em qualquer rota (SPA support)
 app.get('*', (req, res, next) => {
     // Verifica se é uma requisição para um arquivo estático
     if (req.url.includes('.') || req.url.startsWith('/socket.io')) {
         next();
     } else {
-        res.sendFile(path.join(__dirname, '../client/index.html'));
+        res.sendFile(path.join(__dirname, '../client/engine-tools.html'));
     }
 });
 
