@@ -940,6 +940,203 @@
     }
   }
   
+  /* Regras para dispositivos móveis */
+  @media (max-width: 767px) {
+    .sidebar-left,
+    .sidebar-right {
+      width: 180px;
+    }
+    
+    .panel-content {
+      padding: 8px;
+    }
+    
+    .tools-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .menu-bar {
+      padding: 4px 8px;
+      height: 40px;
+    }
+    
+    .logo h1 {
+      font-size: 16px;
+      margin-right: 12px;
+    }
+    
+    .menu-item {
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+    
+    .btn-play,
+    .btn-pause,
+    .btn-stop {
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+  }
+  
+  /* Regras específicas para dispositivos móveis na orientação horizontal (landscape) */
+  @media (max-width: 900px) and (orientation: landscape) {
+    body {
+      overflow: auto;
+    }
+    
+    .main-container {
+      flex-direction: column;
+      height: auto;
+      min-height: 100vh;
+    }
+    
+    .sidebar-left,
+    .sidebar-right {
+      width: 100%;
+      max-height: 200px;
+      flex-direction: row;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    
+    .panel {
+      min-width: 250px;
+      margin-right: 10px;
+      border-right: 1px solid #404040;
+      border-bottom: none;
+      flex-shrink: 0;
+    }
+    
+    .preview-container {
+      min-height: 60vh;
+      order: -1; /* Coloca o preview no topo */
+    }
+    
+    .bottom-panel {
+      height: 120px;
+    }
+    
+    .panel-content {
+      overflow-x: auto;
+    }
+    
+    .tools-grid {
+      grid-template-columns: repeat(6, 1fr);
+      grid-gap: 5px;
+    }
+    
+    .assets-grid {
+      grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    }
+    
+    /* Ajustes para o color picker em landscape */
+    .color-picker-container {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+    
+    .current-color-display {
+      width: 60px;
+      margin-right: 10px;
+    }
+    
+    .preset-colors {
+      flex: 1;
+      min-width: 200px;
+      margin-right: 10px;
+    }
+    
+    .custom-color-controls {
+      flex: 1;
+      min-width: 200px;
+    }
+    
+    .color-grid {
+      grid-template-columns: repeat(6, 1fr);
+    }
+    
+    .rgba-controls {
+      display: flex;
+      flex-wrap: wrap;
+    }
+    
+    .rgba-input {
+      width: 48%;
+      margin-right: 2%;
+      margin-bottom: 5px;
+    }
+    
+    /* Ajustes para o painel de layers */
+    .layers-list {
+      display: flex;
+      flex-direction: row;
+    }
+    
+    .layer-item {
+      margin-right: 10px;
+      flex-shrink: 0;
+      min-width: 120px;
+    }
+    
+    /* Ajustes para o menu e controles */
+    .menu-bar {
+      padding: 5px 10px;
+      height: auto;
+      flex-wrap: wrap;
+    }
+    
+    .main-menu ul {
+      flex-wrap: wrap;
+    }
+    
+    /* Ajustes para o painel inferior */
+    .panel-tabs {
+      flex-wrap: wrap;
+    }
+    
+    .console-output, 
+    .script-editor {
+      height: 80px;
+    }
+  }
+  
+  /* Regras específicas para dispositivos móveis muito pequenos */
+  @media (max-width: 480px) {
+    .sidebar-left,
+    .sidebar-right {
+      width: 100%;
+      max-height: 180px;
+    }
+    
+    .panel {
+      min-width: 200px;
+    }
+    
+    .tools-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .tool-label {
+      font-size: 10px;
+    }
+    
+    .menu-bar {
+      padding: 3px 5px;
+    }
+    
+    .logo h1 {
+      font-size: 14px;
+      margin-right: 8px;
+    }
+    
+    .menu-item {
+      padding: 3px 5px;
+      font-size: 11px;
+    }
+  }
+  
   /* Scrollbar Styling */
   ::-webkit-scrollbar {
     width: 8px;
