@@ -356,5 +356,3 @@ app.post('/api/project/save', (req, res) => {
     console.log('Salvando projeto:', req.body);
     res.json({ success: true });
 });
-
-// ... rest of existing code ...

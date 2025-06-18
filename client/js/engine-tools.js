@@ -5,8 +5,20 @@ class EngineTools {
         this.camera = null;
         this.renderer = null;
         this.selectedObject = null;
+        this.selectedAsset = null;
         this.isRunning = false;
+        this.isPaused = false;
         this.currentTool = 'select';
+        this.isDrawing = false;
+        this.drawStartPos = null;
+        this.currentLayer = 'ground';
+        this.layerVisibility = {
+            ground: true,
+            obstacles: true,
+            decoration: true
+        };
+        this.currentColor = 'rgba(255, 0, 0, 1)';
+        this.backgroundColor = 'rgba(43, 43, 43, 1)';
         this.gameObjects = new Map();
         this.assets = new Map();
         this.sceneData = null;
@@ -225,11 +237,67 @@ class EngineTools {
 
     // Atualizar estatísticas
     updateStats() {
-        // Atualizar estatísticas de renderização para visão isométrica
-        const fps = this.renderer?.game?.loop?.actualFps || 60;
+        // Atualizar FPS real do Phaser
+        const fps = this.renderer?.game?.loop?.actualFps || 0;
         document.getElementById('fps-counter').textContent = `FPS: ${Math.round(fps)}`;
-        document.getElementById('triangle-counter').textContent = `Tiles: ${this.sceneData?.tiles?.length || 0}`;
-        document.getElementById('draw-calls').textContent = `Objetos: ${this.sceneData?.objects?.length || 0}`;
+        
+        // Contar tiles da grade isométrica (losangos visíveis)
+        let tileCount = 0;
+        
+        // Calcular quantidade de losangos visíveis baseado na grade
+        const viewport = document.getElementById('preview-viewport');
+        if (viewport) {
+            const canvasWidth = viewport.clientWidth || 800;
+            const canvasHeight = viewport.clientHeight || 600;
+            const tileWidth = 80;
+            const tileHeight = 40;
+            
+            // Usar a mesma lógica da setupIsometricGrid para contar tiles visíveis
+            const maxDistance = Math.max(canvasWidth, canvasHeight);
+            const gridRange = Math.ceil(maxDistance / Math.min(tileWidth, tileHeight)) + 5;
+            
+            // Contar tiles que estão dentro da área visível
+            for (let y = -gridRange; y <= gridRange; y++) {
+                for (let x = -gridRange; x <= gridRange; x++) {
+                    const centerX = x * tileWidth / 2 + y * tileWidth / 2;
+                    const centerY = y * tileHeight / 2 - x * tileHeight / 2;
+                    
+                    const isoX = canvasWidth / 2 + centerX;
+                    const isoY = canvasHeight / 2 + centerY;
+                    
+                    // Verificar se o tile está dentro da área visível
+                    if (isoX >= -tileWidth && isoX <= canvasWidth + tileWidth &&
+                        isoY >= -tileHeight && isoY <= canvasHeight + tileHeight) {
+                        tileCount++;
+                    }
+                }
+            }
+        }
+        
+        document.getElementById('triangle-counter').textContent = `Tiles: ${tileCount}`;
+        
+        // Contar apenas objetos/assets adicionados (não tiles da grade)
+        let objectCount = 0;
+        if (this.sceneData?.objects) {
+            // Contar apenas objetos que são assets/sprites, não tiles da grade
+            objectCount = this.sceneData.objects.filter(obj => 
+                obj.type === 'sprite' || obj.type === 'asset' || 
+                (obj.type !== 'tile' && obj.layer !== 'ground' && obj.layer !== 'obstacles' && obj.layer !== 'decoration')
+            ).length;
+        }
+        
+        // Adicionar objetos renderizados que não são tiles
+        if (this.scene && this.scene.children) {
+            const renderedAssets = this.scene.children.list.filter(child => 
+                child.texture && 
+                child.texture.key !== 'tiles' && 
+                child.texture.key !== 'isometric-tileset' &&
+                child.texture.key !== 'grid'
+            ).length;
+            objectCount = Math.max(objectCount, renderedAssets);
+        }
+        
+        document.getElementById('draw-calls').textContent = `Objetos: ${objectCount}`;
     }
 
     // Atualizar informações da câmera
@@ -750,14 +818,19 @@ class EngineTools {
         }
     }
 
-    // Selecionar asset
+    // Selecionar asset (função original atualizada)
     selectAsset(assetId, element) {
         document.querySelectorAll('.asset-item').forEach(item => {
             item.classList.remove('selected');
         });
         
         element.classList.add('selected');
-        this.logMessage(`Asset selecionado: ${assetId}`, 'info');
+        
+        // Encontrar dados do asset
+        const assetData = this.getAssetData(assetId);
+        this.selectedAsset = assetData;
+        
+        this.logMessage(`Asset selecionado: ${assetData ? assetData.name : assetId}`, 'info');
     }
 
     // Configurar eventos da interface
@@ -794,6 +867,19 @@ class EngineTools {
         document.querySelectorAll('.preview-controls .btn-icon').forEach(btn => {
             btn.addEventListener('click', () => {
                 this.selectPreviewTool(btn.id);
+            });
+        });
+        
+        // Eventos de camadas
+        document.querySelectorAll('.layer-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.setCurrentLayer(btn.dataset.layer);
+            });
+        });
+        
+        document.querySelectorAll('.layer-visibility').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.toggleLayerVisibility(btn.dataset.layer);
             });
         });
     }
@@ -842,6 +928,12 @@ class EngineTools {
             const assetData = JSON.parse(e.dataTransfer.getData('text/plain'));
             this.addAssetToScene(assetData, e.clientX, e.clientY);
         });
+        
+        // Eventos de desenho
+        viewport.addEventListener('mousedown', (e) => this.handleCanvasMouseDown(e));
+        viewport.addEventListener('mousemove', (e) => this.handleCanvasMouseMove(e));
+        viewport.addEventListener('mouseup', (e) => this.handleCanvasMouseUp(e));
+        viewport.addEventListener('click', (e) => this.handleCanvasClick(e));
     }
 
     // Configurar eventos do menu
@@ -973,6 +1065,21 @@ class EngineTools {
         element.classList.add('active');
         this.currentTool = toolName;
         this.logMessage(`Ferramenta selecionada: ${toolName}`, 'info');
+        
+        // Mostrar/esconder seletor de cores para ferramentas de pintura
+        const colorPickerPanel = document.getElementById('color-picker-panel');
+        const paintingTools = ['paint', 'fill', 'line', 'eraser'];
+        
+        if (paintingTools.includes(toolName)) {
+            colorPickerPanel.style.display = 'block';
+            this.setupColorPicker();
+        } else {
+            colorPickerPanel.style.display = 'none';
+        }
+        
+        // Atualizar cursor baseado na ferramenta
+        const viewport = document.getElementById('preview-viewport');
+        viewport.style.cursor = this.getToolCursor(toolName);
     }
 
     selectPreviewTool(toolId) {
@@ -1597,6 +1704,624 @@ class EngineTools {
         
         this.saveSceneToServer();
         this.logMessage(`Objeto removido: ${objectId}`, 'warning');
+    }
+
+    // ===== FERRAMENTAS DE DESENHO =====
+
+    // Obter cursor para cada ferramenta
+    getToolCursor(toolName) {
+        const cursors = {
+            'select': 'default',
+            'move': 'move',
+            'rotate': 'grab',
+            'scale': 'nw-resize',
+            'paint': 'crosshair',
+            'brush': 'crosshair',
+            'fill': 'crosshair',
+            'line': 'crosshair',
+            'rectangle': 'crosshair',
+            'eraser': 'crosshair'
+        };
+        return cursors[toolName] || 'default';
+    }
+
+    setupColorPicker() {
+        // Configurar cores pré-definidas
+        const presetColors = document.querySelectorAll('.color-swatch');
+        presetColors.forEach(colorBtn => {
+            colorBtn.addEventListener('click', () => {
+                const color = colorBtn.dataset.color;
+                this.currentColor = color;
+                this.updateColorDisplay();
+            });
+        });
+
+        // Configurar sliders RGBA
+        const rSlider = document.getElementById('red-input');
+        const gSlider = document.getElementById('green-input');
+        const bSlider = document.getElementById('blue-input');
+        const aSlider = document.getElementById('alpha-input');
+
+        const updateColorFromSliders = () => {
+            const r = rSlider.value;
+            const g = gSlider.value;
+            const b = bSlider.value;
+            const a = aSlider.value;
+            this.currentColor = `rgba(${r}, ${g}, ${b}, ${a})`;
+            this.updateColorDisplay();
+        };
+
+        rSlider.addEventListener('input', updateColorFromSliders);
+        gSlider.addEventListener('input', updateColorFromSliders);
+        bSlider.addEventListener('input', updateColorFromSliders);
+        aSlider.addEventListener('input', updateColorFromSliders);
+
+        // Inicializar display da cor
+        this.updateColorDisplay();
+    }
+
+    updateColorDisplay() {
+        const colorDisplay = document.getElementById('current-color');
+        if (colorDisplay) {
+            colorDisplay.style.backgroundColor = this.currentColor;
+        }
+
+        // Atualizar valores dos sliders baseado na cor atual
+        const rgba = this.parseRGBA(this.currentColor);
+        if (rgba) {
+            // Atualizar sliders
+            document.getElementById('red-input').value = rgba.r;
+            document.getElementById('green-input').value = rgba.g;
+            document.getElementById('blue-input').value = rgba.b;
+            document.getElementById('alpha-input').value = rgba.a;
+            
+            // Atualizar valores numéricos exibidos
+            document.getElementById('red-value').textContent = rgba.r;
+            document.getElementById('green-value').textContent = rgba.g;
+            document.getElementById('blue-value').textContent = rgba.b;
+            document.getElementById('alpha-value').textContent = rgba.a.toFixed(1);
+        }
+    }
+
+    parseRGBA(rgbaString) {
+        const match = rgbaString.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+        if (match) {
+            return {
+                r: parseInt(match[1]),
+                g: parseInt(match[2]),
+                b: parseInt(match[3]),
+                a: match[4] ? parseFloat(match[4]) : 1
+            };
+        }
+        return null;
+    }
+
+    fillCanvas() {
+        // Calcular os limites da grade visível
+        const viewport = document.getElementById('preview-viewport');
+        const viewportWidth = viewport.clientWidth;
+        const viewportHeight = viewport.clientHeight;
+        
+        const tileWidth = 64;
+        const tileHeight = 32;
+        
+        const tilesX = Math.ceil(viewportWidth / (tileWidth / 2)) + 4;
+        const tilesY = Math.ceil(viewportHeight / (tileHeight / 2)) + 4;
+        
+        const startX = -Math.floor(tilesX / 2);
+        const endX = Math.floor(tilesX / 2);
+        const startY = -Math.floor(tilesY / 2);
+        const endY = Math.floor(tilesY / 2);
+        
+        // Remover todos os tiles da camada atual
+        this.sceneData.objects = this.sceneData.objects.filter(obj => 
+            !(obj.layer === this.currentLayer && obj.type === 'tile')
+        );
+        
+        // Preencher toda a área visível com a cor atual
+        for (let x = startX; x <= endX; x++) {
+            for (let y = startY; y <= endY; y++) {
+                const tileId = `fill_${x}_${y}_${this.currentLayer}`;
+                const worldCoords = this.tileToWorldCoords(x, y);
+                
+                const tileData = {
+                    id: tileId,
+                    name: `fill_${x}_${y}`,
+                    type: 'tile',
+                    color: this.currentColor,
+                    position: [worldCoords.worldX, worldCoords.worldY],
+                    tilePosition: [x, y],
+                    layer: this.currentLayer,
+                    visible: true,
+                    properties: {}
+                };
+                
+                this.sceneData.objects.push(tileData);
+            }
+        }
+        
+        this.updateSceneRender();
+        this.logMessage('Canvas preenchido com cor selecionada', 'info');
+    }
+
+    // Converter coordenadas de tela para coordenadas de tile isométrico
+    screenToTileCoords(screenX, screenY) {
+        const rect = document.getElementById('preview-viewport').getBoundingClientRect();
+        const viewportX = screenX - rect.left;
+        const viewportY = screenY - rect.top;
+        
+        // Converter para coordenadas de mundo considerando zoom e scroll da câmera
+        const worldX = (viewportX / this.phaserGame.scale.zoom) + this.phaserGame.cameras.main.scrollX;
+        const worldY = (viewportY / this.phaserGame.scale.zoom) + this.phaserGame.cameras.main.scrollY;
+        
+        // Converter para coordenadas de tile isométrico
+        const tileWidth = this.sceneData.tileConfig.width;
+        const tileHeight = this.sceneData.tileConfig.height;
+        
+        // Fórmula de conversão isométrica
+        const tileX = Math.floor((worldX / tileWidth + worldY / tileHeight) / 2);
+        const tileY = Math.floor((worldY / tileHeight - worldX / tileWidth) / 2);
+        
+        return { tileX, tileY, worldX, worldY };
+    }
+
+    // Converter coordenadas de tile para coordenadas de mundo
+    tileToWorldCoords(tileX, tileY) {
+        const tileWidth = this.sceneData.tileConfig.width;
+        const tileHeight = this.sceneData.tileConfig.height;
+        
+        const worldX = (tileX - tileY) * tileWidth / 2;
+        const worldY = (tileX + tileY) * tileHeight / 2;
+        
+        return { worldX, worldY };
+    }
+
+    // Manipuladores de eventos do canvas
+    handleCanvasMouseDown(e) {
+        if (e.button !== 0) return; // Apenas botão esquerdo
+        
+        const coords = this.screenToTileCoords(e.clientX, e.clientY);
+        this.isDrawing = true;
+        this.drawStartPos = coords;
+        
+        switch (this.currentTool) {
+            case 'brush':
+            case 'paint':
+                this.paintTile(coords.tileX, coords.tileY);
+                break;
+            case 'eraser':
+                this.eraseTile(coords.tileX, coords.tileY);
+                break;
+            case 'fill':
+                this.floodFill(coords.tileX, coords.tileY);
+                break;
+        }
+    }
+
+    handleCanvasMouseMove(e) {
+        if (!this.isDrawing) return;
+        
+        const coords = this.screenToTileCoords(e.clientX, e.clientY);
+        
+        switch (this.currentTool) {
+            case 'brush':
+            case 'paint':
+                this.paintTile(coords.tileX, coords.tileY);
+                break;
+            case 'eraser':
+                this.eraseTile(coords.tileX, coords.tileY);
+                break;
+        }
+    }
+
+    handleCanvasMouseUp(e) {
+        if (!this.isDrawing) return;
+        
+        const coords = this.screenToTileCoords(e.clientX, e.clientY);
+        
+        switch (this.currentTool) {
+            case 'line':
+                this.drawLine(this.drawStartPos.tileX, this.drawStartPos.tileY, coords.tileX, coords.tileY);
+                break;
+            case 'rectangle':
+                this.drawRectangle(this.drawStartPos.tileX, this.drawStartPos.tileY, coords.tileX, coords.tileY);
+                break;
+        }
+        
+        this.isDrawing = false;
+        this.drawStartPos = null;
+        this.saveSceneToServer();
+    }
+
+    handleCanvasClick(e) {
+        if (this.currentTool === 'select') {
+            // Lógica de seleção de objetos
+            this.selectObjectAtPosition(e.clientX, e.clientY);
+        }
+    }
+
+    // Ferramentas de desenho específicas
+    paintTile(tileX, tileY) {
+        const tileId = `tile_${tileX}_${tileY}_${this.currentLayer}`;
+        const worldCoords = this.tileToWorldCoords(tileX, tileY);
+        
+        // Remover tile existente na mesma posição e camada
+        this.sceneData.objects = this.sceneData.objects.filter(obj => 
+            !(obj.tilePosition && obj.tilePosition[0] === tileX && obj.tilePosition[1] === tileY && obj.layer === this.currentLayer)
+        );
+        
+        let tileData;
+        
+        if (this.currentTool === 'paint') {
+            // Para ferramenta paint, usar cor personalizada
+            tileData = {
+                id: tileId,
+                name: `paint_${tileX}_${tileY}`,
+                type: 'tile',
+                color: this.currentColor,
+                position: [worldCoords.worldX, worldCoords.worldY],
+                tilePosition: [tileX, tileY],
+                layer: this.currentLayer,
+                visible: true,
+                properties: {}
+            };
+        } else {
+            // Para outras ferramentas, usar asset selecionado
+            if (!this.selectedAsset) {
+                this.logMessage('Selecione um asset primeiro', 'warning');
+                return;
+            }
+            
+            tileData = {
+                id: tileId,
+                name: `${this.selectedAsset.name}_${tileX}_${tileY}`,
+                type: 'sprite',
+                key: this.selectedAsset.id,
+                position: [worldCoords.worldX, worldCoords.worldY],
+                tilePosition: [tileX, tileY],
+                layer: this.currentLayer,
+                visible: true,
+                properties: {}
+            };
+        }
+        
+        this.sceneData.objects.push(tileData);
+        this.updateSceneRender();
+    }
+
+    eraseTile(tileX, tileY) {
+        const tileId = `tile_${tileX}_${tileY}_${this.currentLayer}`;
+        const worldCoords = this.tileToWorldCoords(tileX, tileY);
+        
+        // Remover tile existente na posição e camada atual
+        this.sceneData.objects = this.sceneData.objects.filter(obj => 
+            !(obj.tilePosition && obj.tilePosition[0] === tileX && obj.tilePosition[1] === tileY && obj.layer === this.currentLayer)
+        );
+        
+        // Adicionar tile com cor de fundo (borracha)
+        const tileData = {
+            id: tileId,
+            name: `erase_${tileX}_${tileY}`,
+            type: 'tile',
+            color: this.backgroundColor,
+            position: [worldCoords.worldX, worldCoords.worldY],
+            tilePosition: [tileX, tileY],
+            layer: this.currentLayer,
+            visible: true,
+            properties: {}
+        };
+        
+        this.sceneData.objects.push(tileData);
+        this.updateSceneRender();
+    }
+
+    floodFill(startX, startY) {
+        if (this.currentTool === 'fill') {
+            // Para ferramenta fill, preencher todo o canvas como background
+            this.fillCanvas();
+            return;
+        }
+        
+        if (!this.selectedAsset) {
+            this.logMessage('Selecione um asset primeiro', 'warning');
+            return;
+        }
+        
+        // Obter o tipo de tile na posição inicial
+        const startTile = this.sceneData.objects.find(obj => 
+            obj.tilePosition && obj.tilePosition[0] === startX && obj.tilePosition[1] === startY && obj.layer === this.currentLayer
+        );
+        
+        const targetKey = startTile ? startTile.key : null;
+        const replacementKey = this.selectedAsset.id;
+        
+        if (targetKey === replacementKey) {
+            return; // Não há necessidade de preencher
+        }
+        
+        const visited = new Set();
+        const stack = [[startX, startY]];
+        const maxIterations = 1000; // Limite de segurança
+        let iterations = 0;
+        
+        while (stack.length > 0 && iterations < maxIterations) {
+            const [x, y] = stack.pop();
+            const key = `${x},${y}`;
+            
+            if (visited.has(key)) continue;
+            visited.add(key);
+            
+            const currentTile = this.sceneData.objects.find(obj => 
+                obj.tilePosition && obj.tilePosition[0] === x && obj.tilePosition[1] === y && obj.layer === this.currentLayer
+            );
+            
+            const currentKey = currentTile ? currentTile.key : null;
+            
+            if (currentKey === targetKey) {
+                this.paintTile(x, y);
+                
+                // Adicionar tiles adjacentes à pilha
+                stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+            }
+            
+            iterations++;
+        }
+        
+        this.saveSceneToServer();
+        this.logMessage(`Flood fill concluído (${iterations} tiles processados)`, 'info');
+    }
+
+    drawLine(x1, y1, x2, y2) {
+        if (this.currentTool !== 'line' && !this.selectedAsset) {
+            this.logMessage('Selecione um asset primeiro', 'warning');
+            return;
+        }
+        
+        // Algoritmo de Bresenham para linha
+        const dx = Math.abs(x2 - x1);
+        const dy = Math.abs(y2 - y1);
+        const sx = x1 < x2 ? 1 : -1;
+        const sy = y1 < y2 ? 1 : -1;
+        let err = dx - dy;
+        
+        let x = x1;
+        let y = y1;
+        
+        while (true) {
+            if (this.currentTool === 'line') {
+                // Para ferramenta line, desenhar tile com cor
+                const tileId = `line_${x}_${y}_${this.currentLayer}`;
+                const worldCoords = this.tileToWorldCoords(x, y);
+                
+                // Remover tile existente na posição
+                this.sceneData.objects = this.sceneData.objects.filter(obj => 
+                    !(obj.tilePosition && obj.tilePosition[0] === x && obj.tilePosition[1] === y && obj.layer === this.currentLayer)
+                );
+                
+                const tileData = {
+                    id: tileId,
+                    name: `line_${x}_${y}`,
+                    type: 'tile',
+                    color: this.currentColor,
+                    position: [worldCoords.worldX, worldCoords.worldY],
+                    tilePosition: [x, y],
+                    layer: this.currentLayer,
+                    visible: true,
+                    properties: {}
+                };
+                
+                this.sceneData.objects.push(tileData);
+            } else {
+                this.paintTile(x, y);
+            }
+            
+            if (x === x2 && y === y2) break;
+            
+            const e2 = 2 * err;
+            if (e2 > -dy) {
+                err -= dy;
+                x += sx;
+            }
+            if (e2 < dx) {
+                err += dx;
+                y += sy;
+            }
+        }
+        
+        this.updateSceneRender();
+        this.saveSceneToServer();
+    }
+
+    drawRectangle(x1, y1, x2, y2) {
+        const minX = Math.min(x1, x2);
+        const maxX = Math.max(x1, x2);
+        const minY = Math.min(y1, y2);
+        const maxY = Math.max(y1, y2);
+        
+        if (this.currentTool === 'rectangle') {
+            // Para ferramenta rectangle, desenhar com cor personalizada
+            for (let x = minX; x <= maxX; x++) {
+                for (let y = minY; y <= maxY; y++) {
+                    const tileId = `rect_${x}_${y}_${this.currentLayer}`;
+                    const worldCoords = this.tileToWorldCoords(x, y);
+                    
+                    // Remover tile existente na posição
+                    this.sceneData.objects = this.sceneData.objects.filter(obj => 
+                        !(obj.tilePosition && obj.tilePosition[0] === x && obj.tilePosition[1] === y && obj.layer === this.currentLayer)
+                    );
+                    
+                    const tileData = {
+                        id: tileId,
+                        name: `rect_${x}_${y}`,
+                        type: 'tile',
+                        color: this.currentColor,
+                        position: [worldCoords.worldX, worldCoords.worldY],
+                        tilePosition: [x, y],
+                        layer: this.currentLayer,
+                        visible: true,
+                        properties: {}
+                    };
+                    
+                    this.sceneData.objects.push(tileData);
+                }
+            }
+            this.updateSceneRender();
+        } else {
+            // Para outras ferramentas, usar asset selecionado
+            if (!this.selectedAsset) {
+                this.logMessage('Selecione um asset primeiro', 'warning');
+                return;
+            }
+            
+            // Desenhar retângulo preenchido com asset
+            for (let x = minX; x <= maxX; x++) {
+                for (let y = minY; y <= maxY; y++) {
+                    this.paintTile(x, y);
+                }
+            }
+        }
+        
+        this.saveSceneToServer();
+    }
+
+    // Seleção de objetos
+    selectObjectAtPosition(screenX, screenY) {
+        const coords = this.screenToTileCoords(screenX, screenY);
+        
+        // Encontrar objeto na posição clicada
+        const objectAtPosition = this.sceneData.objects.find(obj => 
+            obj.tilePosition && obj.tilePosition[0] === coords.tileX && obj.tilePosition[1] === coords.tileY
+        );
+        
+        if (objectAtPosition) {
+            this.selectedObject = objectAtPosition.id;
+            this.updateInspector(objectAtPosition);
+            this.buildSceneHierarchy();
+            this.logMessage(`Objeto selecionado: ${objectAtPosition.name}`, 'info');
+        } else {
+            this.deselectAll();
+        }
+    }
+
+    // Atualizar renderização da cena
+    updateSceneRender() {
+        if (this.phaserGame && this.phaserGame.scene.scenes[0]) {
+            const scene = this.phaserGame.scene.scenes[0];
+            // Recriar objetos da cena
+            scene.children.removeAll();
+            this.createSceneObjects(scene);
+        }
+    }
+
+    createSceneObjects(scene) {
+        // Recriar grade isométrica
+        this.setupIsometricGrid();
+        
+        // Criar objetos baseados nos dados da cena
+        this.sceneData.objects.forEach(obj => {
+            if (!this.layerVisibility[obj.layer]) return; // Pular se camada estiver oculta
+            
+            if (obj.type === 'tile' && obj.color) {
+                // Criar tile colorido
+                const graphics = scene.add.graphics();
+                const tileWidth = 64;
+                const tileHeight = 32;
+                
+                // Converter cor RGBA para formato Phaser
+                const rgba = this.parseRGBA(obj.color);
+                if (rgba) {
+                    const color = Phaser.Display.Color.GetColor(rgba.r, rgba.g, rgba.b);
+                    
+                    graphics.fillStyle(color, rgba.a);
+                    graphics.lineStyle(1, 0x666666, 0.5);
+                    
+                    // Desenhar losango
+                    graphics.beginPath();
+                    graphics.moveTo(obj.position[0], obj.position[1] - tileHeight / 2); // Top
+                    graphics.lineTo(obj.position[0] + tileWidth / 2, obj.position[1]); // Right
+                    graphics.lineTo(obj.position[0], obj.position[1] + tileHeight / 2); // Bottom
+                    graphics.lineTo(obj.position[0] - tileWidth / 2, obj.position[1]); // Left
+                    graphics.closePath();
+                    graphics.fillPath();
+                    graphics.strokePath();
+                }
+            } else if (obj.type === 'sprite' && obj.key) {
+                // Criar sprite baseado em asset
+                // Por enquanto, criar um retângulo colorido como placeholder
+                const rect = scene.add.rectangle(
+                    obj.position[0], 
+                    obj.position[1], 
+                    32, 32, 
+                    0x00ff00
+                );
+                rect.setStrokeStyle(2, 0x000000);
+            }
+        });
+    }
+
+    // ===== SISTEMA DE CAMADAS =====
+
+    // Alternar camada atual
+    setCurrentLayer(layerName) {
+        this.currentLayer = layerName;
+        this.logMessage(`Camada atual: ${layerName}`, 'info');
+        this.updateLayerInterface();
+    }
+
+    // Alternar visibilidade da camada
+    toggleLayerVisibility(layerName) {
+        this.layerVisibility[layerName] = !this.layerVisibility[layerName];
+        this.updateSceneRender();
+        this.updateLayerInterface();
+        this.logMessage(`Camada ${layerName}: ${this.layerVisibility[layerName] ? 'visível' : 'oculta'}`, 'info');
+    }
+
+    // Atualizar interface das camadas
+    updateLayerInterface() {
+        // Atualizar botões de camada na interface
+        document.querySelectorAll('.layer-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.layer === this.currentLayer) {
+                btn.classList.add('active');
+            }
+        });
+        
+        // Atualizar indicadores de visibilidade
+        document.querySelectorAll('.layer-visibility').forEach(btn => {
+            const layer = btn.dataset.layer;
+            btn.classList.toggle('hidden', !this.layerVisibility[layer]);
+        });
+    }
+
+    // Selecionar asset
+    selectAsset(assetId, element) {
+        document.querySelectorAll('.asset-item').forEach(item => {
+            item.classList.remove('selected');
+        });
+        
+        element.classList.add('selected');
+        
+        // Encontrar dados do asset
+        const assetData = this.getAssetData(assetId);
+        this.selectedAsset = assetData;
+        
+        this.logMessage(`Asset selecionado: ${assetData ? assetData.name : assetId}`, 'info');
+    }
+
+    // Obter dados do asset
+    getAssetData(assetId) {
+        // Procurar nos assets padrão
+        const defaultAssets = {
+            'grass': { id: 'grass', name: 'Grama', type: 'biome' },
+            'rock': { id: 'rock', name: 'Rocha', type: 'biome' },
+            'sand': { id: 'sand', name: 'Areia', type: 'biome' },
+            'water': { id: 'water', name: 'Água', type: 'biome' },
+            'tree': { id: 'tree', name: 'Árvore', type: 'nature' },
+            'bush': { id: 'bush', name: 'Arbusto', type: 'nature' },
+            'stone': { id: 'stone', name: 'Pedra', type: 'nature' }
+        };
+        
+        return defaultAssets[assetId] || { id: assetId, name: assetId, type: 'custom' };
     }
 }
 

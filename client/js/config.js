@@ -44,7 +44,7 @@ const CONFIG = {
     // Configurações do servidor
     server: {
         url: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-            ? `http://${window.location.hostname}:3000` 
+            ? `http://${window.location.hostname}:3555` 
             : window.location.origin,
         reconnectDelay: 1000,  // Tempo de espera para reconexão em ms
         maxReconnectAttempts: 5  // Número máximo de tentativas de reconexão

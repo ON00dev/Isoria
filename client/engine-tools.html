@@ -78,14 +78,6 @@
                             <div class="asset-thumbnail">💧</div>
                             <span class="asset-name">Água</span>
                         </div>
-                        <div class="asset-item" data-asset-id="custom-color" data-asset-type="biome">
-                            <div class="asset-thumbnail">🎨</div>
-                            <span class="asset-name">Cor Personalizada</span>
-                        </div>
-                        <div class="asset-item" data-asset-id="free-brush" data-asset-type="tool">
-                            <div class="asset-thumbnail">🖌️</div>
-                            <span class="asset-name">Pincel</span>
-                        </div>
                         <!-- Elementos Naturais -->
                         <div class="asset-item" data-asset-id="tree-oak" data-asset-type="nature">
                             <div class="asset-thumbnail">🌳</div>
@@ -186,10 +178,132 @@
                             <span class="tool-icon">🖌️</span>
                             <span class="tool-label">Paint</span>
                         </button>
+                        <button class="tool-btn" data-tool="paint">
+                            <span class="tool-icon">🎨</span>
+                            <span class="tool-label">Paint</span>
+                        </button>
+                        <button class="tool-btn" data-tool="fill">
+                            <span class="tool-icon">🪣</span>
+                            <span class="tool-label">Fill</span>
+                        </button>
+                        <button class="tool-btn" data-tool="line">
+                            <span class="tool-icon">📏</span>
+                            <span class="tool-label">Line</span>
+                        </button>
+                        <button class="tool-btn" data-tool="rectangle">
+                            <span class="tool-icon">⬜</span>
+                            <span class="tool-label">Rectangle</span>
+                        </button>
+                        <button class="tool-btn" data-tool="eraser">
+                            <span class="tool-icon">🧽</span>
+                            <span class="tool-label">Eraser</span>
+                        </button>
                         <button class="tool-btn" data-tool="terrain">
                             <span class="tool-icon">🌍</span>
                             <span class="tool-label">Terrain</span>
                         </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Color Picker Panel -->
+            <section class="panel" id="color-picker-panel" style="display: none;">
+                <div class="panel-header">
+                    <h3>Cores</h3>
+                    <button class="panel-toggle">−</button>
+                </div>
+                <div class="panel-content">
+                    <div class="color-picker-container">
+                        <!-- Cor atual selecionada -->
+                        <div class="current-color-display">
+                            <div class="current-color" id="current-color" style="background-color: rgba(255, 0, 0, 1);"></div>
+                            <span class="current-color-label">Cor Atual</span>
+                        </div>
+                        
+                        <!-- Cores pré-definidas -->
+                        <div class="preset-colors">
+                            <h4>Cores Básicas</h4>
+                            <div class="color-grid">
+                                <div class="color-swatch" data-color="rgba(255, 0, 0, 1)" style="background-color: rgba(255, 0, 0, 1);" title="Vermelho"></div>
+                                <div class="color-swatch" data-color="rgba(0, 255, 0, 1)" style="background-color: rgba(0, 255, 0, 1);" title="Verde"></div>
+                                <div class="color-swatch" data-color="rgba(0, 0, 255, 1)" style="background-color: rgba(0, 0, 255, 1);" title="Azul"></div>
+                                <div class="color-swatch" data-color="rgba(255, 255, 0, 1)" style="background-color: rgba(255, 255, 0, 1);" title="Amarelo"></div>
+                                <div class="color-swatch" data-color="rgba(255, 0, 255, 1)" style="background-color: rgba(255, 0, 255, 1);" title="Magenta"></div>
+                                <div class="color-swatch" data-color="rgba(0, 255, 255, 1)" style="background-color: rgba(0, 255, 255, 1);" title="Ciano"></div>
+                                <div class="color-swatch" data-color="rgba(255, 255, 255, 1)" style="background-color: rgba(255, 255, 255, 1);" title="Branco"></div>
+                                <div class="color-swatch" data-color="rgba(0, 0, 0, 1)" style="background-color: rgba(0, 0, 0, 1);" title="Preto"></div>
+                                <div class="color-swatch" data-color="rgba(128, 128, 128, 1)" style="background-color: rgba(128, 128, 128, 1);" title="Cinza"></div>
+                                <div class="color-swatch" data-color="rgba(165, 42, 42, 1)" style="background-color: rgba(165, 42, 42, 1);" title="Marrom"></div>
+                                <div class="color-swatch" data-color="rgba(255, 165, 0, 1)" style="background-color: rgba(255, 165, 0, 1);" title="Laranja"></div>
+                                <div class="color-swatch" data-color="rgba(128, 0, 128, 1)" style="background-color: rgba(128, 0, 128, 1);" title="Roxo"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Controles RGBA personalizados -->
+                        <div class="custom-color-controls">
+                            <h4>Cor Personalizada</h4>
+                            <div class="rgba-controls">
+                                <div class="rgba-input">
+                                    <label for="red-input">R:</label>
+                                    <input type="range" id="red-input" min="0" max="255" value="255">
+                                    <span id="red-value">255</span>
+                                </div>
+                                <div class="rgba-input">
+                                    <label for="green-input">G:</label>
+                                    <input type="range" id="green-input" min="0" max="255" value="0">
+                                    <span id="green-value">0</span>
+                                </div>
+                                <div class="rgba-input">
+                                    <label for="blue-input">B:</label>
+                                    <input type="range" id="blue-input" min="0" max="255" value="0">
+                                    <span id="blue-value">0</span>
+                                </div>
+                                <div class="rgba-input">
+                                    <label for="alpha-input">A:</label>
+                                    <input type="range" id="alpha-input" min="0" max="1" step="0.1" value="1">
+                                    <span id="alpha-value">1.0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Layers Panel -->
+            <section class="panel">
+                <div class="panel-header">
+                    <h3>Layers</h3>
+                    <button class="panel-toggle">−</button>
+                </div>
+                <div class="panel-content">
+                    <div class="layers-list">
+                        <div class="layer-item">
+                            <button class="layer-visibility" data-layer="decoration" title="Toggle visibility">
+                                <span class="visibility-icon">👁️</span>
+                            </button>
+                            <button class="layer-btn" data-layer="decoration">
+                                <span class="layer-name">Decoration</span>
+                            </button>
+                            <span class="layer-depth">Z: 3</span>
+                        </div>
+                        <div class="layer-item">
+                            <button class="layer-visibility" data-layer="obstacles" title="Toggle visibility">
+                                <span class="visibility-icon">👁️</span>
+                            </button>
+                            <button class="layer-btn" data-layer="obstacles">
+                                <span class="layer-name">Obstacles</span>
+                            </button>
+                            <span class="layer-depth">Z: 2</span>
+                        </div>
+                        <div class="layer-item">
+                            <button class="layer-visibility" data-layer="ground" title="Toggle visibility">
+                                <span class="visibility-icon">👁️</span>
+                            </button>
+                            <button class="layer-btn active" data-layer="ground">
+                                <span class="layer-name">Ground</span>
+                            </button>
+                            <span class="layer-depth">Z: 1</span>
+                        </div>
                     </div>
                 </div>
             </section>
