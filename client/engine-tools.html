@@ -2,11 +2,33 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="screen-orientation" content="any">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="screen-orientation" content="landscape">
     <meta name="orientation" content="landscape">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>Isoria Game Engine</title>
     <link rel="stylesheet" href="css/engine-tools.css">
+    <script>
+        // Script para forçar orientação horizontal em dispositivos móveis
+        function forceOrientation() {
+            if (window.screen && window.screen.orientation) {
+                try {
+                    // Tenta bloquear a orientação para landscape
+                    window.screen.orientation.lock('landscape').catch(function(error) {
+                        console.log('Não foi possível bloquear a orientação: ', error);
+                    });
+                } catch (e) {
+                    console.log('API de orientação não suportada completamente');
+                }
+            }
+        }
+        
+        // Executa ao carregar a página
+        window.addEventListener('load', forceOrientation);
+        // Executa quando a orientação mudar
+        window.addEventListener('orientationchange', forceOrientation);
+    </script>
 </head>
 <body>
     <!-- Header/Menu Bar -->

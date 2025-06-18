@@ -940,6 +940,20 @@
     }
   }
   
+  /* Regras para forçar orientação horizontal em dispositivos móveis */
+  @media screen and (orientation: portrait) {
+    html {
+      transform: rotate(-90deg);
+      transform-origin: left top;
+      width: 100vh;
+      height: 100vw;
+      overflow-x: hidden;
+      position: absolute;
+      top: 100%;
+      left: 0;
+    }
+  }
+  
   /* Regras para dispositivos móveis */
   @media (max-width: 767px) {
     .sidebar-left,
