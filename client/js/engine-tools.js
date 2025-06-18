@@ -1068,7 +1068,7 @@ class EngineTools {
         
         // Mostrar/esconder seletor de cores para ferramentas de pintura
         const colorPickerPanel = document.getElementById('color-picker-panel');
-        const paintingTools = ['paint', 'fill', 'line', 'eraser'];
+        const paintingTools = ['paint', 'fill', 'line', 'rectangle'];
         
         if (paintingTools.includes(toolName)) {
             colorPickerPanel.style.display = 'block';
