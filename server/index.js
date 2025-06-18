@@ -306,3 +306,55 @@ process.on('SIGTERM', () => {
         process.exit(0);
     });
 });
+
+// Middleware para parsing JSON
+app.use(express.json());
+
+// Rotas da API para a engine
+app.get('/api/scene/current', (req, res) => {
+    // Retornar dados da cena atual
+    res.json({
+        name: 'Main Scene',
+        objects: [
+            { id: 'main-camera', name: 'Main Camera', type: 'camera', position: [0, 5, 10] },
+            { id: 'ambient-light', name: 'Ambient Light', type: 'light', position: [0, 0, 0] },
+            { id: 'directional-light', name: 'Directional Light', type: 'light', position: [10, 10, 5] }
+        ]
+    });
+});
+
+app.post('/api/scene/save', (req, res) => {
+    // Salvar dados da cena
+    console.log('Salvando cena:', req.body);
+    res.json({ success: true });
+});
+
+app.get('/api/assets', (req, res) => {
+    // Retornar lista de assets
+    res.json([
+        { id: 'cube', name: 'Cube', type: 'geometry', icon: '📦' },
+        { id: 'sphere', name: 'Sphere', type: 'geometry', icon: '⚪' },
+        { id: 'plane', name: 'Plane', type: 'geometry', icon: '⬜' },
+        { id: 'cylinder', name: 'Cylinder', type: 'geometry', icon: '🥫' },
+        { id: 'default-material', name: 'Default Material', type: 'material', icon: '🎨' },
+        { id: 'default-texture', name: 'Default Texture', type: 'texture', icon: '🖼️' }
+    ]);
+});
+
+app.get('/api/project/current', (req, res) => {
+    // Retornar dados do projeto atual
+    res.json({
+        name: 'Isoria Project',
+        scenes: ['Main Scene'],
+        assets: [],
+        scripts: []
+    });
+});
+
+app.post('/api/project/save', (req, res) => {
+    // Salvar projeto
+    console.log('Salvando projeto:', req.body);
+    res.json({ success: true });
+});
+
+// ... rest of existing code ...

@@ -22,19 +22,9 @@ npm install
 
 | Ambiente | Comando       | Descrição                                    |
 | -------- | ------------- | -------------------------------------------- |
-| Browser  | `npm run start:web`   | Roda apenas o servidor e testa via navegador |
-| Desktop  | `npm run start:desktop` | Abre o Electron e carrega o jogo             |
-
-
-## Estrutura de Arquivos Servidos
-
-O servidor serve os seguintes diretórios:
-
-- **/** - Arquivos do cliente (`client/`)
-- **/assets** - Assets do jogo (`assets/`)
-- **/maps** - Mapas do jogo (`maps/`)
-- **/shared** - Utilitários compartilhados (`shared/`)
-- **/socket.io** - Comunicação em tempo real
+| Browser  | `npm run start:web`   | Roda servidor via navegador |
+| nodemon  | `npm run dev:web`   | Roda servidor em modo nodemon  |
+| Desktop  | `npm run start:desktop` | Abre o Electron e carrega a engine             |
 
 ## URL de Acesso
 

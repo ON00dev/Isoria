@@ -1,4 +1,18 @@
-# Isoria - Engine para Jogos Isométricos Multiplayer
+# Isoria Game Engine
+
+Engine web para desenvolvimento de jogos isométricos tile-based multiplayer online
+
+## 🌐 Versão Web Pura
+
+O Isoria Engine agora é uma aplicação web pura que utiliza a **File System Access API** para operações de arquivo locais, eliminando a necessidade do Electron.
+
+### Funcionalidades de Arquivo
+
+- **Criar/Abrir/Salvar projetos** diretamente no sistema de arquivos local
+- **Importar assets** (SVG, PNG, JPG, JSON) com drag & drop
+- **Exportar projetos** em formato JSON
+- **Abrir pastas de projeto** para acesso completo aos arquivos
+- **Fallback automático** para navegadores sem suporte à File System Access API
 
 Isoria é uma engine completa para desenvolvimento de jogos isométricos tile-based com suporte a multiplayer online. Desenvolvida com tecnologias web modernas, a engine oferece todas as ferramentas necessárias para criar jogos isométricos multiplayer de forma simples e eficiente.
 
@@ -70,7 +84,9 @@ Isoria é uma engine completa para desenvolvimento de jogos isométricos tile-ba
 # Clonar o repositório
 git clone https://github.com/seu-usuario/isoria.git
 cd isoria
+```
+Veja mais detalhes no [README_DEV](./README_DEV.md)
 
 ## Licença
 
-MIT
+[MIT](./LICENSE)

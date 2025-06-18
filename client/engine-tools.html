@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Isoria Game Engine</title>
-    <link rel="stylesheet" href="./css/engine-tools.css">
+    <link rel="stylesheet" href="css/engine-tools.css">
 </head>
 <body>
     <!-- Header/Menu Bar -->
@@ -43,34 +43,7 @@
                 </div>
                 <div class="panel-content">
                     <div class="hierarchy-tree" id="hierarchy-tree">
-                        <div class="tree-item" data-id="main-scene">
-                            <span class="tree-icon">📁</span>
-                            <span class="tree-label">Main Scene</span>
-                        </div>
-                        <div class="tree-item tree-child" data-id="player">
-                            <span class="tree-icon">🎮</span>
-                            <span class="tree-label">Player</span>
-                        </div>
-                        <div class="tree-item tree-child" data-id="environment">
-                            <span class="tree-icon">🌍</span>
-                            <span class="tree-label">Environment</span>
-                        </div>
-                        <div class="tree-item tree-child tree-child-2" data-id="buildings">
-                            <span class="tree-icon">🏠</span>
-                            <span class="tree-label">Buildings</span>
-                        </div>
-                        <div class="tree-item tree-child tree-child-2" data-id="trees">
-                            <span class="tree-icon">🌳</span>
-                            <span class="tree-label">Trees</span>
-                        </div>
-                        <div class="tree-item tree-child" data-id="lighting">
-                            <span class="tree-icon">💡</span>
-                            <span class="tree-label">Lighting</span>
-                        </div>
-                        <div class="tree-item tree-child" data-id="main-camera">
-                            <span class="tree-icon">📷</span>
-                            <span class="tree-label">Main Camera</span>
-                        </div>
+                        <!-- Dados carregados dinamicamente do servidor -->
                     </div>
                 </div>
             </section>
@@ -83,34 +56,52 @@
                 </div>
                 <div class="panel-content">
                     <div class="assets-toolbar">
-                        <input type="search" placeholder="Search assets..." class="search-input" id="asset-search">
-                        <button class="btn-icon" id="import-asset">📁</button>
-                        <button class="btn-icon" id="create-asset">⊞</button>
+                        <input type="search" placeholder="Buscar assets..." class="search-input" id="asset-search">
+                        <button class="btn-icon" id="upload-asset" title="Upload SVG">📁</button>
+                        <input type="file" id="file-upload" accept=".svg" style="display: none;">
                     </div>
-                    <div class="assets-grid" id="assets-grid">
-                        <div class="asset-item" draggable="true" data-type="texture">
-                            <div class="asset-thumbnail">🖼️</div>
-                            <span class="asset-name">texture_01</span>
+                    <div class="assets-grid">
+                        <!-- Texturas de Bioma -->
+                        <div class="asset-item" data-asset-id="grass" data-asset-type="biome">
+                            <div class="asset-thumbnail">🌱</div>
+                            <span class="asset-name">Gramado</span>
                         </div>
-                        <div class="asset-item" draggable="true" data-type="audio">
-                            <div class="asset-thumbnail">🎵</div>
-                            <span class="asset-name">bgm_main</span>
+                        <div class="asset-item" data-asset-id="rock" data-asset-type="biome">
+                            <div class="asset-thumbnail">🪨</div>
+                            <span class="asset-name">Rocha</span>
                         </div>
-                        <div class="asset-item" draggable="true" data-type="model">
-                            <div class="asset-thumbnail">📐</div>
-                            <span class="asset-name">player_model</span>
+                        <div class="asset-item" data-asset-id="sand" data-asset-type="biome">
+                            <div class="asset-thumbnail">🏖️</div>
+                            <span class="asset-name">Areia</span>
                         </div>
-                        <div class="asset-item" draggable="true" data-type="script">
-                            <div class="asset-thumbnail">📜</div>
-                            <span class="asset-name">script_01</span>
+                        <div class="asset-item" data-asset-id="water" data-asset-type="biome">
+                            <div class="asset-thumbnail">💧</div>
+                            <span class="asset-name">Água</span>
                         </div>
-                        <div class="asset-item" draggable="true" data-type="material">
+                        <div class="asset-item" data-asset-id="custom-color" data-asset-type="biome">
                             <div class="asset-thumbnail">🎨</div>
-                            <span class="asset-name">material_01</span>
+                            <span class="asset-name">Cor Personalizada</span>
                         </div>
-                        <div class="asset-item" draggable="true" data-type="particle">
-                            <div class="asset-thumbnail">⚡</div>
-                            <span class="asset-name">particle_fx</span>
+                        <div class="asset-item" data-asset-id="free-brush" data-asset-type="tool">
+                            <div class="asset-thumbnail">🖌️</div>
+                            <span class="asset-name">Pincel</span>
+                        </div>
+                        <!-- Elementos Naturais -->
+                        <div class="asset-item" data-asset-id="tree-oak" data-asset-type="nature">
+                            <div class="asset-thumbnail">🌳</div>
+                            <span class="asset-name">Árvore</span>
+                        </div>
+                        <div class="asset-item" data-asset-id="bush-small" data-asset-type="nature">
+                            <div class="asset-thumbnail">🌿</div>
+                            <span class="asset-name">Arbusto</span>
+                        </div>
+                        <div class="asset-item" data-asset-id="stone-small" data-asset-type="nature">
+                            <div class="asset-thumbnail">🪨</div>
+                            <span class="asset-name">Pedra</span>
+                        </div>
+                        <div class="asset-item" data-asset-id="flower-red" data-asset-type="nature">
+                            <div class="asset-thumbnail">🌹</div>
+                            <span class="asset-name">Flor</span>
                         </div>
                     </div>
                 </div>
@@ -134,27 +125,22 @@
                 </div>
             </div>
             <div class="preview-viewport" id="preview-viewport">
-                <canvas id="game-canvas" style="display: none;"></canvas>
+                <canvas id="game-canvas"></canvas>
                 <div class="viewport-content">
-                    <div class="viewport-grid"></div>
                     <div class="viewport-center">
-                        <div class="preview-placeholder" id="preview-placeholder">
-                            <h2>Game Preview</h2>
-                            <p>3D Scene Viewport</p>
-                            <div class="preview-stats">
-                                <span id="fps-counter">FPS: 60</span>
-                                <span id="triangle-counter">Triangles: 1,234</span>
-                                <span id="draw-calls">Draw Calls: 45</span>
-                            </div>
+                        <div class="preview-stats">
+                            <span id="fps-counter">FPS: --</span>
+                            <span id="triangle-counter">Triangles: --</span>
+                            <span id="draw-calls">Draw Calls: --</span>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="preview-footer">
                 <div class="viewport-info">
-                    <span id="camera-info">Camera: Perspective</span>
-                    <span id="position-info">Position: (0, 5, -10)</span>
-                    <span id="zoom-info">Zoom: 100%</span>
+                    <span id="camera-info">Camera: --</span>
+                    <span id="position-info">Position: --</span>
+                    <span id="zoom-info">Zoom: --</span>
                 </div>
             </div>
         </section>
@@ -168,69 +154,7 @@
                     <button class="panel-toggle">−</button>
                 </div>
                 <div class="panel-content" id="inspector-content">
-                    <div class="inspector-section">
-                        <h4>Transform</h4>
-                        <div class="property-group">
-                            <label>Position</label>
-                            <div class="vector-input">
-                                <input type="number" value="0" placeholder="X" id="pos-x">
-                                <input type="number" value="0" placeholder="Y" id="pos-y">
-                                <input type="number" value="0" placeholder="Z" id="pos-z">
-                            </div>
-                        </div>
-                        <div class="property-group">
-                            <label>Rotation</label>
-                            <div class="vector-input">
-                                <input type="number" value="0" placeholder="X" id="rot-x">
-                                <input type="number" value="0" placeholder="Y" id="rot-y">
-                                <input type="number" value="0" placeholder="Z" id="rot-z">
-                            </div>
-                        </div>
-                        <div class="property-group">
-                            <label>Scale</label>
-                            <div class="vector-input">
-                                <input type="number" value="1" placeholder="X" id="scale-x">
-                                <input type="number" value="1" placeholder="Y" id="scale-y">
-                                <input type="number" value="1" placeholder="Z" id="scale-z">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="inspector-section">
-                        <h4>Mesh Renderer</h4>
-                        <div class="property-group">
-                            <label>Material</label>
-                            <select class="property-select" id="material-select">
-                                <option>Default Material</option>
-                                <option>Metal Material</option>
-                                <option>Glass Material</option>
-                            </select>
-                        </div>
-                        <div class="property-group">
-                            <label>Cast Shadows</label>
-                            <input type="checkbox" checked id="cast-shadows">
-                        </div>
-                        <div class="property-group">
-                            <label>Receive Shadows</label>
-                            <input type="checkbox" checked id="receive-shadows">
-                        </div>
-                    </div>
-
-                    <div class="inspector-section">
-                        <h4>Collider</h4>
-                        <div class="property-group">
-                            <label>Type</label>
-                            <select class="property-select" id="collider-type">
-                                <option>Box Collider</option>
-                                <option>Sphere Collider</option>
-                                <option>Mesh Collider</option>
-                            </select>
-                        </div>
-                        <div class="property-group">
-                            <label>Is Trigger</label>
-                            <input type="checkbox" id="is-trigger">
-                        </div>
-                    </div>
+                    <div class="no-selection">Selecione um objeto para editar suas propriedades</div>
                 </div>
             </section>
 
@@ -282,22 +206,7 @@
         </div>
         <div class="panel-content">
             <div class="console-output" id="console-output">
-                <div class="console-line info">
-                    <span class="timestamp">[14:32:15]</span>
-                    <span class="message">Scene loaded successfully</span>
-                </div>
-                <div class="console-line warning">
-                    <span class="timestamp">[14:32:16]</span>
-                    <span class="message">Warning: Missing texture reference</span>
-                </div>
-                <div class="console-line error">
-                    <span class="timestamp">[14:32:17]</span>
-                    <span class="message">Error: Script compilation failed</span>
-                </div>
-                <div class="console-line info">
-                    <span class="timestamp">[14:32:18]</span>
-                    <span class="message">Build completed in 2.3 seconds</span>
-                </div>
+                <!-- Mensagens do console carregadas dinamicamente -->
             </div>
             <div class="script-editor" id="script-editor" style="display: none;">
                 <div class="editor-toolbar">
@@ -306,16 +215,22 @@
                     <button class="btn-icon" id="format-script">🎨</button>
                     <span class="script-name" id="script-name">scene_script.js</span>
                 </div>
-                <textarea id="script-content" class="script-textarea" placeholder="// Write your game script here...&#10;function init() {&#10;    // Initialize game objects&#10;}&#10;&#10;function update() {&#10;    // Update game logic&#10;}&#10;&#10;function render() {&#10;    // Render game objects&#10;}"></textarea>
+                <textarea id="script-content" class="script-textarea" placeholder="// Write your game script here..."></textarea>
             </div>
         </div>
     </footer>
 
     <!-- Dropdown Menus -->
     <div class="dropdown-menu" id="file-menu" style="display: none;">
-        <div class="menu-item" data-action="new">New Scene</div>
-        <div class="menu-item" data-action="open">Open Scene</div>
-        <div class="menu-item" data-action="save">Save Scene</div>
+        <div class="menu-item" data-action="new">New Project</div>
+        <div class="menu-separator"></div>
+        <div class="menu-item" data-action="open">Open Project</div>
+        <div class="menu-item" data-action="open-folder">Open Folder</div>
+        <div class="menu-separator"></div>
+        <div class="menu-item" data-action="save">Save</div>
+        <div class="menu-item" data-action="save-as">Save As...</div>
+        <div class="menu-separator"></div>
+        <div class="menu-item" data-action="import-assets">Import Assets</div>
         <div class="menu-item" data-action="export">Export Project</div>
     </div>
 
@@ -325,7 +240,14 @@
     <div class="resizer resizer-bottom" id="resizer-bottom"></div>
 
     <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script src="js/engine-tools.js"></script>
+    
+    <!-- Phaser controla toda a renderização do canvas isométrico -->
+    <!-- O grid isométrico agora é renderizado pelo Phaser no engine-tools.js -->
+    
+    <!-- File System Access API -->
+    <script src="js/utils/fileSystemAPI.js"></script>
 </body>
 </html>
