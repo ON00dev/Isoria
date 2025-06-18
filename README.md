@@ -2,7 +2,7 @@
 
 Engine web para desenvolvimento de jogos isométricos tile-based multiplayer online
 
-## 🌐 Versão Web Pura
+## 🌐 Versão Web
 
 O Isoria Engine agora é uma aplicação web pura que utiliza a **File System Access API** para operações de arquivo locais, eliminando a necessidade do Electron.
 
