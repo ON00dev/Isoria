@@ -409,8 +409,8 @@ class EngineTools {
         });
         hierarchyTree.appendChild(sceneItem);
         
-        // Adicionar objetos da cena
-        this.sceneData.objects.forEach(obj => {
+        // Adicionar apenas objetos que não são tiles (pinturas)
+        this.sceneData.objects.filter(obj => obj.type !== 'tile').forEach(obj => {
             const item = this.createHierarchyItem({
                 id: obj.id,
                 name: obj.name,
