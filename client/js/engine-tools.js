@@ -29,6 +29,11 @@ class EngineTools {
             scripts: []
         };
         
+        // Histórico de ações para desfazer/refazer
+        this.actionHistory = [];
+        this.currentHistoryIndex = -1;
+        this.maxHistorySize = 50; // Limitar o tamanho do histórico para evitar uso excessivo de memória
+        
         this.initializeConnection();
         this.initializeIsometricRenderer();
         this.initializeInterface();
@@ -993,6 +998,9 @@ class EngineTools {
         
         // Inicializar ferramentas de desenho com Fabric.js
         this.initializeFabricDrawingTools();
+        
+        // Inicializar estado dos botões de desfazer/refazer
+        this.updateUndoRedoButtons();
     }
     
     // Configurar a funcionalidade de busca de assets
@@ -1055,7 +1063,13 @@ class EngineTools {
         
         document.querySelectorAll('.preview-controls .btn-icon').forEach(btn => {
             btn.addEventListener('click', () => {
-                this.selectPreviewTool(btn.id);
+                if (btn.id === 'undo-tool') {
+                    this.undo();
+                } else if (btn.id === 'redo-tool') {
+                    this.redo();
+                } else {
+                    this.selectPreviewTool(btn.id);
+                }
             });
         });
         
@@ -1096,6 +1110,89 @@ class EngineTools {
         });
     }
 
+    // Funções para gerenciar o histórico de ações
+    addToHistory(action) {
+        // Se estamos no meio do histórico, remover todas as ações futuras
+        if (this.currentHistoryIndex < this.actionHistory.length - 1) {
+            this.actionHistory = this.actionHistory.slice(0, this.currentHistoryIndex + 1);
+        }
+        
+        // Adicionar a nova ação ao histórico
+        this.actionHistory.push(action);
+        
+        // Limitar o tamanho do histórico
+        if (this.actionHistory.length > this.maxHistorySize) {
+            this.actionHistory.shift();
+        } else {
+            this.currentHistoryIndex++;
+        }
+        
+        // Atualizar estado dos botões de desfazer/refazer
+        this.updateUndoRedoButtons();
+    }
+    
+    undo() {
+        if (this.currentHistoryIndex >= 0) {
+            const action = this.actionHistory[this.currentHistoryIndex];
+            
+            // Restaurar o estado anterior
+            if (action.type === 'paint' || action.type === 'erase' || action.type === 'fill' || 
+                action.type === 'line' || action.type === 'rectangle') {
+                // Restaurar o estado anterior da cena
+                this.sceneData.objects = JSON.parse(JSON.stringify(action.prevState));
+                this.updateSceneRender();
+            }
+            
+            this.currentHistoryIndex--;
+            
+            // Atualizar estado dos botões de desfazer/refazer
+            this.updateUndoRedoButtons();
+            
+            // Log para depuração
+            console.log('Ação desfeita:', action.type);
+        } else {
+            this.logMessage('Não há ações para desfazer', 'info');
+        }
+    }
+    
+    redo() {
+        if (this.currentHistoryIndex < this.actionHistory.length - 1) {
+            this.currentHistoryIndex++;
+            const action = this.actionHistory[this.currentHistoryIndex];
+            
+            // Aplicar a ação novamente
+            if (action.type === 'paint' || action.type === 'erase' || action.type === 'fill' || 
+                action.type === 'line' || action.type === 'rectangle') {
+                // Restaurar o estado posterior da cena
+                this.sceneData.objects = JSON.parse(JSON.stringify(action.nextState));
+                this.updateSceneRender();
+            }
+            
+            // Atualizar estado dos botões de desfazer/refazer
+            this.updateUndoRedoButtons();
+            
+            // Log para depuração
+            console.log('Ação refeita:', action.type);
+        } else {
+            this.logMessage('Não há ações para refazer', 'info');
+        }
+    }
+    
+    updateUndoRedoButtons() {
+        const undoBtn = document.getElementById('undo-tool');
+        const redoBtn = document.getElementById('redo-tool');
+        
+        if (undoBtn) {
+            undoBtn.disabled = this.currentHistoryIndex < 0;
+            undoBtn.style.opacity = this.currentHistoryIndex < 0 ? '0.5' : '1';
+        }
+        
+        if (redoBtn) {
+            redoBtn.disabled = this.currentHistoryIndex >= this.actionHistory.length - 1;
+            redoBtn.style.opacity = this.currentHistoryIndex >= this.actionHistory.length - 1 ? '0.5' : '1';
+        }
+    }
+    
     // Configurar eventos do viewport
     setupViewportEvents() {
         const viewport = document.getElementById('preview-viewport');
@@ -2002,6 +2099,9 @@ class EngineTools {
     }
 
     fillCanvas() {
+        // Salvar o estado atual antes de modificar
+        const prevState = JSON.parse(JSON.stringify(this.sceneData.objects));
+        
         // Calcular os limites da grade visível
         const viewport = document.getElementById('preview-viewport');
         const viewportWidth = viewport.clientWidth;
@@ -2044,6 +2144,17 @@ class EngineTools {
                 this.sceneData.objects.push(tileData);
             }
         }
+        
+        // Salvar o estado após a modificação
+        const nextState = JSON.parse(JSON.stringify(this.sceneData.objects));
+        
+        // Adicionar a ação ao histórico
+        this.addToHistory({
+            type: 'fillCanvas',
+            layer: this.currentLayer,
+            prevState: prevState,
+            nextState: nextState
+        });
         
         this.updateSceneRender();
         this.logMessage('Canvas preenchido com cor selecionada', 'info');
@@ -2153,13 +2264,36 @@ class EngineTools {
         
         const coords = this.screenToTileCoords(e.clientX, e.clientY);
         
-        switch (this.currentTool) {
-            case 'line':
-                this.drawLine(this.drawStartPos.tileX, this.drawStartPos.tileY, coords.tileX, coords.tileY);
-                break;
-            case 'rectangle':
-                this.drawRectangle(this.drawStartPos.tileX, this.drawStartPos.tileY, coords.tileX, coords.tileY);
-                break;
+        // Salvar o estado atual antes de modificar para ferramentas que criam múltiplos tiles
+        if (this.currentTool === 'line' || this.currentTool === 'rectangle') {
+            const prevState = JSON.parse(JSON.stringify(this.sceneData.objects));
+            
+            switch (this.currentTool) {
+                case 'line':
+                    this.drawLine(this.drawStartPos.tileX, this.drawStartPos.tileY, coords.tileX, coords.tileY);
+                    break;
+                case 'rectangle':
+                    this.drawRectangle(this.drawStartPos.tileX, this.drawStartPos.tileY, coords.tileX, coords.tileY);
+                    break;
+            }
+            
+            // Salvar o estado após a modificação
+            const nextState = JSON.parse(JSON.stringify(this.sceneData.objects));
+            
+            // Adicionar a ação ao histórico
+            this.addToHistory({
+                type: this.currentTool,
+                startPosition: { x: this.drawStartPos.tileX, y: this.drawStartPos.tileY },
+                endPosition: { x: coords.tileX, y: coords.tileY },
+                layer: this.currentLayer,
+                prevState: prevState,
+                nextState: nextState
+            });
+        } else {
+            // Para outras ferramentas como paint e eraser, já registramos as ações individuais
+            // Limpar o último tile registrado para permitir novas ações
+            this.lastPaintedTile = null;
+            this.lastErasedTile = null;
         }
         
         this.isDrawing = false;
@@ -2178,6 +2312,9 @@ class EngineTools {
     paintTile(tileX, tileY) {
         const tileId = `tile_${tileX}_${tileY}_${this.currentLayer}`;
         const worldCoords = this.tileToWorldCoords(tileX, tileY);
+        
+        // Salvar o estado atual antes de modificar
+        const prevState = JSON.parse(JSON.stringify(this.sceneData.objects));
         
         // Remover tile existente na mesma posição e camada
         this.sceneData.objects = this.sceneData.objects.filter(obj => 
@@ -2220,10 +2357,34 @@ class EngineTools {
         }
         
         this.sceneData.objects.push(tileData);
+        
+        // Salvar o estado após a modificação
+        const nextState = JSON.parse(JSON.stringify(this.sceneData.objects));
+        
+        // Adicionar a ação ao histórico se não estiver desenhando continuamente
+        // (para evitar muitas entradas no histórico durante o desenho com o mouse)
+        if (!this.isDrawing || !this.lastPaintedTile || 
+            this.lastPaintedTile.x !== tileX || this.lastPaintedTile.y !== tileY) {
+            this.addToHistory({
+                type: 'paint',
+                tool: this.currentTool,
+                position: { x: tileX, y: tileY },
+                layer: this.currentLayer,
+                prevState: prevState,
+                nextState: nextState
+            });
+        }
+        
+        // Registrar o último tile pintado
+        this.lastPaintedTile = { x: tileX, y: tileY };
+        
         this.updateSceneRender();
     }
 
     eraseTile(tileX, tileY) {
+        // Salvar o estado atual antes de modificar
+        const prevState = JSON.parse(JSON.stringify(this.sceneData.objects));
+        
         // Remover tile existente na posição e camada atual
         const tilesRemovidos = this.sceneData.objects.filter(obj => 
             obj.tilePosition && obj.tilePosition[0] === tileX && obj.tilePosition[1] === tileY && obj.layer === this.currentLayer
@@ -2235,6 +2396,24 @@ class EngineTools {
                 !(obj.tilePosition && obj.tilePosition[0] === tileX && obj.tilePosition[1] === tileY && obj.layer === this.currentLayer)
             );
             
+            // Salvar o estado após a modificação
+            const nextState = JSON.parse(JSON.stringify(this.sceneData.objects));
+            
+            // Adicionar a ação ao histórico se não estiver apagando continuamente
+            if (!this.isDrawing || !this.lastErasedTile || 
+                this.lastErasedTile.x !== tileX || this.lastErasedTile.y !== tileY) {
+                this.addToHistory({
+                    type: 'erase',
+                    position: { x: tileX, y: tileY },
+                    layer: this.currentLayer,
+                    prevState: prevState,
+                    nextState: nextState
+                });
+            }
+            
+            // Registrar o último tile apagado
+            this.lastErasedTile = { x: tileX, y: tileY };
+            
             // Log para depuração
             console.log(`Tile removido na posição [${tileX}, ${tileY}] da camada ${this.currentLayer}`);
             
@@ -2244,9 +2423,25 @@ class EngineTools {
     }
 
     floodFill(startX, startY) {
+        // Salvar o estado atual antes de modificar
+        const prevState = JSON.parse(JSON.stringify(this.sceneData.objects));
+        
         if (this.currentTool === 'fill') {
             // Para ferramenta fill, preencher todo o canvas como background
             this.fillCanvas();
+            
+            // Salvar o estado após a modificação
+            const nextState = JSON.parse(JSON.stringify(this.sceneData.objects));
+            
+            // Adicionar a ação ao histórico
+            this.addToHistory({
+                type: 'fill',
+                position: { x: startX, y: startY },
+                layer: this.currentLayer,
+                prevState: prevState,
+                nextState: nextState
+            });
+            
             return;
         }
         
@@ -2294,6 +2489,18 @@ class EngineTools {
             
             iterations++;
         }
+        
+        // Salvar o estado após a modificação
+        const nextState = JSON.parse(JSON.stringify(this.sceneData.objects));
+        
+        // Adicionar a ação ao histórico
+        this.addToHistory({
+            type: 'floodFill',
+            position: { x: startX, y: startY },
+            layer: this.currentLayer,
+            prevState: prevState,
+            nextState: nextState
+        });
         
         this.saveSceneToServer();
         this.logMessage(`Flood fill concluído (${iterations} tiles processados)`, 'info');

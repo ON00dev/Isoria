@@ -39,3 +39,4 @@ coverage/
 *.pem
 .vercel
 .netlify
+*.wasm
