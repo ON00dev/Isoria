@@ -23,8 +23,6 @@ class FabricDrawingTools {
             select: { cursor: 'default' },
             paint: { cursor: 'crosshair' },
             fill: { cursor: 'cell' },
-            line: { cursor: 'crosshair' },
-            rectangle: { cursor: 'crosshair' },
             eraser: { cursor: 'not-allowed' }
         };
     }
@@ -143,7 +141,7 @@ class FabricDrawingTools {
         
         // Mostrar/ocultar o seletor de cores para ferramentas de pintura
         const colorPickerPanel = document.getElementById('color-picker-panel');
-        if (['paint', 'fill', 'line', 'rectangle'].includes(tool)) {
+        if (['paint', 'fill'].includes(tool)) {
             colorPickerPanel.style.display = 'block';
         } else {
             colorPickerPanel.style.display = 'none';
@@ -182,15 +180,7 @@ class FabricDrawingTools {
                 this.canvas.freeDrawingBrush.width = 5;
                 break;
                 
-            case 'line':
-                this.canvas.selection = false;
-                // Configurado nos eventos do mouse
-                break;
-                
-            case 'rectangle':
-                this.canvas.selection = false;
-                // Configurado nos eventos do mouse
-                break;
+            // Casos 'line' e 'rectangle' foram removidos
                 
             case 'eraser':
                 this.canvas.isDrawingMode = true;
@@ -219,13 +209,7 @@ class FabricDrawingTools {
         
         // Configurar eventos com base na ferramenta atual
         switch (this.currentTool) {
-            case 'line':
-                this.setupLineEvents();
-                break;
-                
-            case 'rectangle':
-                this.setupRectangleEvents();
-                break;
+            // Casos 'line' e 'rectangle' foram removidos
                 
             case 'fill':
                 this.setupFillEvents();
@@ -233,109 +217,7 @@ class FabricDrawingTools {
         }
     }
     
-    /**
-     * Configura eventos para a ferramenta de linha
-     */
-    setupLineEvents() {
-        let line;
-        
-        this.canvas.on('mouse:down', (o) => {
-            this.isDrawing = true;
-            const pointer = this.canvas.getPointer(o.e);
-            
-            // Criar uma nova linha
-            line = new fabric.Line([pointer.x, pointer.y, pointer.x, pointer.y], {
-                stroke: this.currentColor,
-                strokeWidth: 3,
-                selectable: true
-            });
-            
-            this.canvas.add(line);
-            this.canvas.renderAll();
-        });
-        
-        this.canvas.on('mouse:move', (o) => {
-            if (!this.isDrawing) return;
-            
-            const pointer = this.canvas.getPointer(o.e);
-            
-            // Atualizar o ponto final da linha
-            line.set({
-                x2: pointer.x,
-                y2: pointer.y
-            });
-            
-            this.canvas.renderAll();
-        });
-        
-        this.canvas.on('mouse:up', () => {
-            this.isDrawing = false;
-            
-            // Converter para o formato do Phaser se necessário
-            this.convertToPhaser();
-        });
-    }
-    
-    /**
-     * Configura eventos para a ferramenta de retângulo
-     */
-    setupRectangleEvents() {
-        let rect;
-        let startPoint;
-        
-        this.canvas.on('mouse:down', (o) => {
-            this.isDrawing = true;
-            startPoint = this.canvas.getPointer(o.e);
-            
-            // Criar um novo retângulo
-            rect = new fabric.Rect({
-                left: startPoint.x,
-                top: startPoint.y,
-                width: 0,
-                height: 0,
-                fill: this.currentColor,
-                selectable: true
-            });
-            
-            this.canvas.add(rect);
-        });
-        
-        this.canvas.on('mouse:move', (o) => {
-            if (!this.isDrawing) return;
-            
-            const pointer = this.canvas.getPointer(o.e);
-            
-            // Calcular largura e altura
-            let width = pointer.x - startPoint.x;
-            let height = pointer.y - startPoint.y;
-            
-            // Ajustar posição se necessário
-            if (width < 0) {
-                rect.set('left', pointer.x);
-                width = Math.abs(width);
-            }
-            
-            if (height < 0) {
-                rect.set('top', pointer.y);
-                height = Math.abs(height);
-            }
-            
-            // Atualizar dimensões
-            rect.set({
-                width: width,
-                height: height
-            });
-            
-            this.canvas.renderAll();
-        });
-        
-        this.canvas.on('mouse:up', () => {
-            this.isDrawing = false;
-            
-            // Converter para o formato do Phaser se necessário
-            this.convertToPhaser();
-        });
-    }
+    // As funções setupLineEvents e setupRectangleEvents foram removidas
     
     /**
      * Configura eventos para a ferramenta de preenchimento
@@ -408,7 +290,7 @@ class FabricDrawingTools {
      */
     toggleCanvasVisibility(tool) {
         // Ferramentas que usam o Fabric.js
-        const fabricTools = ['paint', 'line', 'rectangle', 'eraser', 'fill'];
+        const fabricTools = ['paint', 'eraser', 'fill'];
         
         if (fabricTools.includes(tool)) {
             // Mostrar canvas do Fabric.js e ocultar canvas do Phaser

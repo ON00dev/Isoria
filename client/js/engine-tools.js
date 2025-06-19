@@ -10,6 +10,8 @@ class EngineTools {
         this.isPaused = false;
         this.currentTool = 'select';
         this.isDrawing = false;
+        this.isPanning = false;
+        this.panStartPos = null;
         this.drawStartPos = null;
         this.currentLayer = 'ground';
         this.layerVisibility = {
@@ -142,6 +144,8 @@ class EngineTools {
          
          // Criar grupo para os elementos da grade
          this.gridGroup = this.scene.add.group();
+         // Definir uma profundidade baixa para a grade para garantir que fique abaixo dos sprites
+         this.gridGroup.setDepth(0);
          
          // Calcular limites para preencher completamente o viewport
          const maxDistance = Math.max(canvasWidth, canvasHeight);
@@ -1136,8 +1140,7 @@ class EngineTools {
             const action = this.actionHistory[this.currentHistoryIndex];
             
             // Restaurar o estado anterior
-            if (action.type === 'paint' || action.type === 'erase' || action.type === 'fill' || 
-                action.type === 'line' || action.type === 'rectangle') {
+            if (action.type === 'paint' || action.type === 'erase' || action.type === 'fill') {
                 // Restaurar o estado anterior da cena
                 this.sceneData.objects = JSON.parse(JSON.stringify(action.prevState));
                 this.updateSceneRender();
@@ -1161,8 +1164,7 @@ class EngineTools {
             const action = this.actionHistory[this.currentHistoryIndex];
             
             // Aplicar a ação novamente
-            if (action.type === 'paint' || action.type === 'erase' || action.type === 'fill' || 
-                action.type === 'line' || action.type === 'rectangle') {
+            if (action.type === 'paint' || action.type === 'erase' || action.type === 'fill') {
                 // Restaurar o estado posterior da cena
                 this.sceneData.objects = JSON.parse(JSON.stringify(action.nextState));
                 this.updateSceneRender();
@@ -1354,7 +1356,7 @@ class EngineTools {
         
         // Mostrar/esconder seletor de cores para ferramentas de pintura
         const colorPickerPanel = document.getElementById('color-picker-panel');
-        const paintingTools = ['paint', 'fill', 'line', 'rectangle'];
+        const paintingTools = ['paint', 'fill'];
         
         if (paintingTools.includes(toolName)) {
             colorPickerPanel.style.display = 'block';
@@ -1792,30 +1794,13 @@ class EngineTools {
     addAssetToScene(assetData, x, y) {
         let objectType, objectKey, objectName;
         
-        switch (assetData.id) {
-            case 'tile':
-                objectType = 'tile';
-                objectKey = 'grass';
-                break;
-            case 'player':
-                objectType = 'sprite';
-                objectKey = 'player';
-                break;
-            case 'npc':
-                objectType = 'sprite';
-                objectKey = 'npc';
-                break;
-            case 'chest':
-                objectType = 'sprite';
-                objectKey = 'chest';
-                break;
-            case 'tree':
-                objectType = 'sprite';
-                objectKey = 'tree';
-                break;
-            default:
-                objectType = 'sprite';
-                objectKey = 'default';
+        // Determinar o tipo e a chave do objeto
+        if (assetData.id === 'tile') {
+            objectType = 'tile';
+            objectKey = 'grass';
+        } else {
+            objectType = 'sprite';
+            objectKey = assetData.id; // Usar o ID do asset como chave
         }
         
         objectName = `${assetData.name}_${Date.now()}`;
@@ -1849,7 +1834,8 @@ class EngineTools {
             position: [worldX, worldY],
             tilePosition: [tileX, tileY],
             visible: true,
-            properties: {}
+            properties: {},
+            svgPath: assetData.path || null // Armazenar o caminho do SVG se disponível
         };
         
         // Adicionar à cena do Phaser (será feito no próximo render)
@@ -2015,9 +2001,8 @@ class EngineTools {
             'paint': 'crosshair',
             'brush': 'crosshair',
             'fill': 'crosshair',
-            'line': 'crosshair',
-            'rectangle': 'crosshair',
-            'eraser': 'crosshair'
+            'eraser': 'crosshair',
+            'pan': 'grab'
         };
         return cursors[toolName] || 'default';
     }
@@ -2102,21 +2087,21 @@ class EngineTools {
         // Salvar o estado atual antes de modificar
         const prevState = JSON.parse(JSON.stringify(this.sceneData.objects));
         
-        // Calcular os limites da grade visível
-        const viewport = document.getElementById('preview-viewport');
-        const viewportWidth = viewport.clientWidth;
-        const viewportHeight = viewport.clientHeight;
+        // Obter o tamanho do grid a partir das configurações da cena
+        const gridSize = this.sceneData.settings.gridSize || 20;
+        const gridHalfSize = Math.floor(gridSize / 2);
         
-        const tileWidth = 64;
-        const tileHeight = 32;
+        // Definir limites do grid
+        const minX = -gridHalfSize;
+        const maxX = gridHalfSize;
+        const minY = -gridHalfSize;
+        const maxY = gridHalfSize;
         
-        const tilesX = Math.ceil(viewportWidth / (tileWidth / 2)) + 4;
-        const tilesY = Math.ceil(viewportHeight / (tileHeight / 2)) + 4;
-        
-        const startX = -Math.floor(tilesX / 2);
-        const endX = Math.floor(tilesX / 2);
-        const startY = -Math.floor(tilesY / 2);
-        const endY = Math.floor(tilesY / 2);
+        // Usar os limites do grid em vez de calcular com base no viewport
+        const startX = minX;
+        const endX = maxX;
+        const startY = minY;
+        const endY = maxY;
         
         // Remover todos os tiles da camada atual
         this.sceneData.objects = this.sceneData.objects.filter(obj => 
@@ -2124,9 +2109,13 @@ class EngineTools {
         );
         
         // Preencher toda a área visível com a cor atual
+        // Importante: A lógica opera no grid cartesiano (x,y)
+        // A transformação isométrica é usada apenas para renderização
         for (let x = startX; x <= endX; x++) {
             for (let y = startY; y <= endY; y++) {
                 const tileId = `fill_${x}_${y}_${this.currentLayer}`;
+                
+                // Transformar coordenadas cartesianas para isométricas apenas para renderização
                 const worldCoords = this.tileToWorldCoords(x, y);
                 
                 const tileData = {
@@ -2229,6 +2218,15 @@ class EngineTools {
         this.isDrawing = true;
         this.drawStartPos = coords;
         
+        // Armazenar a posição inicial do mouse para o modo panorâmico
+        if (this.currentTool === 'pan') {
+            this.isPanning = true;
+            this.panStartPos = { x: e.clientX, y: e.clientY };
+            // Mudar o cursor para indicar que está arrastando
+            document.getElementById('preview-viewport').style.cursor = 'grabbing';
+            return;
+        }
+        
         switch (this.currentTool) {
             case 'brush':
             case 'paint':
@@ -2244,6 +2242,25 @@ class EngineTools {
     }
 
     handleCanvasMouseMove(e) {
+        // Verificar se estamos no modo panorâmico e arrastando
+        if (this.isPanning && this.currentTool === 'pan') {
+            const deltaX = e.clientX - this.panStartPos.x;
+            const deltaY = e.clientY - this.panStartPos.y;
+            
+            // Mover a câmera na visão isométrica
+            if (this.scene && this.scene.cameras && this.scene.cameras.main) {
+                this.scene.cameras.main.scrollX -= deltaX;
+                this.scene.cameras.main.scrollY -= deltaY;
+                
+                // Atualizar a posição inicial para o próximo movimento
+                this.panStartPos = { x: e.clientX, y: e.clientY };
+                
+                // Atualizar informações da câmera na interface
+                this.updateCameraInfo();
+            }
+            return;
+        }
+        
         if (!this.isDrawing) return;
         
         const coords = this.screenToTileCoords(e.clientX, e.clientY);
@@ -2260,41 +2277,22 @@ class EngineTools {
     }
 
     handleCanvasMouseUp(e) {
+        // Finalizar o modo panorâmico
+        if (this.isPanning && this.currentTool === 'pan') {
+            this.isPanning = false;
+            // Restaurar o cursor para o estado normal do modo panorâmico
+            document.getElementById('preview-viewport').style.cursor = this.getToolCursor('pan');
+            return;
+        }
+        
         if (!this.isDrawing) return;
         
         const coords = this.screenToTileCoords(e.clientX, e.clientY);
         
-        // Salvar o estado atual antes de modificar para ferramentas que criam múltiplos tiles
-        if (this.currentTool === 'line' || this.currentTool === 'rectangle') {
-            const prevState = JSON.parse(JSON.stringify(this.sceneData.objects));
-            
-            switch (this.currentTool) {
-                case 'line':
-                    this.drawLine(this.drawStartPos.tileX, this.drawStartPos.tileY, coords.tileX, coords.tileY);
-                    break;
-                case 'rectangle':
-                    this.drawRectangle(this.drawStartPos.tileX, this.drawStartPos.tileY, coords.tileX, coords.tileY);
-                    break;
-            }
-            
-            // Salvar o estado após a modificação
-            const nextState = JSON.parse(JSON.stringify(this.sceneData.objects));
-            
-            // Adicionar a ação ao histórico
-            this.addToHistory({
-                type: this.currentTool,
-                startPosition: { x: this.drawStartPos.tileX, y: this.drawStartPos.tileY },
-                endPosition: { x: coords.tileX, y: coords.tileY },
-                layer: this.currentLayer,
-                prevState: prevState,
-                nextState: nextState
-            });
-        } else {
-            // Para outras ferramentas como paint e eraser, já registramos as ações individuais
-            // Limpar o último tile registrado para permitir novas ações
-            this.lastPaintedTile = null;
-            this.lastErasedTile = null;
-        }
+        // Para ferramentas como paint e eraser, já registramos as ações individuais
+        // Limpar o último tile registrado para permitir novas ações
+        this.lastPaintedTile = null;
+        this.lastErasedTile = null;
         
         this.isDrawing = false;
         this.drawStartPos = null;
@@ -2310,7 +2308,23 @@ class EngineTools {
 
     // Ferramentas de desenho específicas
     paintTile(tileX, tileY) {
+        // Obter o tamanho do grid a partir das configurações da cena
+        const gridSize = this.sceneData.settings.gridSize || 20;
+        const gridHalfSize = Math.floor(gridSize / 2);
+        
+        // Definir limites do grid
+        const gridMinX = -gridHalfSize;
+        const gridMaxX = gridHalfSize;
+        const gridMinY = -gridHalfSize;
+        const gridMaxY = gridHalfSize;
+        
+        // Verificar se as coordenadas estão dentro dos limites do grid
+        if (tileX < gridMinX || tileX > gridMaxX || tileY < gridMinY || tileY > gridMaxY) {
+            return; // Não pintar fora dos limites do grid
+        }
+        
         const tileId = `tile_${tileX}_${tileY}_${this.currentLayer}`;
+        // A transformação isométrica é usada apenas para renderização
         const worldCoords = this.tileToWorldCoords(tileX, tileY);
         
         // Salvar o estado atual antes de modificar
@@ -2462,13 +2476,30 @@ class EngineTools {
             return; // Não há necessidade de preencher
         }
         
+        // Trabalhar diretamente com coordenadas cartesianas do grid
+        // Importante: Toda a lógica do algoritmo de preenchimento deve operar no grid cartesiano
+        // A transformação isométrica é usada apenas para renderização
         const visited = new Set();
         const stack = [[startX, startY]];
         const maxIterations = 1000; // Limite de segurança
         let iterations = 0;
         
+        // Obter o tamanho do grid a partir das configurações da cena
+        const gridSize = this.sceneData.settings.gridSize || 20;
+        const gridHalfSize = Math.floor(gridSize / 2);
+        
+        // Definir limites do grid
+        const minX = -gridHalfSize;
+        const maxX = gridHalfSize;
+        const minY = -gridHalfSize;
+        const maxY = gridHalfSize;
+        
         while (stack.length > 0 && iterations < maxIterations) {
             const [x, y] = stack.pop();
+            
+            // Verificar se as coordenadas estão dentro dos limites do grid
+            if (x < minX || x > maxX || y < minY || y > maxY) continue;
+            
             const key = `${x},${y}`;
             
             if (visited.has(key)) continue;
@@ -2481,10 +2512,15 @@ class EngineTools {
             const currentKey = currentTile ? currentTile.key : null;
             
             if (currentKey === targetKey) {
+                // Usar diretamente as coordenadas cartesianas para pintar o tile
                 this.paintTile(x, y);
                 
-                // Adicionar tiles adjacentes à pilha
-                stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+                // Adicionar tiles adjacentes à pilha (apenas se estiverem dentro dos limites)
+                // Movimentos apenas nas 4 direções cardeais (norte, sul, leste, oeste)
+                if (x + 1 <= maxX) stack.push([x + 1, y]);
+                if (x - 1 >= minX) stack.push([x - 1, y]);
+                if (y + 1 <= maxY) stack.push([x, y + 1]);
+                if (y - 1 >= minY) stack.push([x, y - 1]);
             }
             
             iterations++;
@@ -2506,118 +2542,9 @@ class EngineTools {
         this.logMessage(`Flood fill concluído (${iterations} tiles processados)`, 'info');
     }
 
-    drawLine(x1, y1, x2, y2) {
-        if (this.currentTool !== 'line' && !this.selectedAsset) {
-            this.logMessage('Selecione um asset primeiro', 'warning');
-            return;
-        }
-        
-        // Algoritmo de Bresenham para linha
-        const dx = Math.abs(x2 - x1);
-        const dy = Math.abs(y2 - y1);
-        const sx = x1 < x2 ? 1 : -1;
-        const sy = y1 < y2 ? 1 : -1;
-        let err = dx - dy;
-        
-        let x = x1;
-        let y = y1;
-        
-        while (true) {
-            if (this.currentTool === 'line') {
-                // Para ferramenta line, desenhar tile com cor
-                const tileId = `line_${x}_${y}_${this.currentLayer}`;
-                const worldCoords = this.tileToWorldCoords(x, y);
-                
-                // Remover tile existente na posição
-                this.sceneData.objects = this.sceneData.objects.filter(obj => 
-                    !(obj.tilePosition && obj.tilePosition[0] === x && obj.tilePosition[1] === y && obj.layer === this.currentLayer)
-                );
-                
-                const tileData = {
-                    id: tileId,
-                    name: `line_${x}_${y}`,
-                    type: 'tile',
-                    color: this.currentColor,
-                    position: [worldCoords.worldX, worldCoords.worldY],
-                    tilePosition: [x, y],
-                    layer: this.currentLayer,
-                    visible: true,
-                    properties: {}
-                };
-                
-                this.sceneData.objects.push(tileData);
-            } else {
-                this.paintTile(x, y);
-            }
-            
-            if (x === x2 && y === y2) break;
-            
-            const e2 = 2 * err;
-            if (e2 > -dy) {
-                err -= dy;
-                x += sx;
-            }
-            if (e2 < dx) {
-                err += dx;
-                y += sy;
-            }
-        }
-        
-        this.updateSceneRender();
-        this.saveSceneToServer();
-    }
+    // A função drawLine foi removida
 
-    drawRectangle(x1, y1, x2, y2) {
-        const minX = Math.min(x1, x2);
-        const maxX = Math.max(x1, x2);
-        const minY = Math.min(y1, y2);
-        const maxY = Math.max(y1, y2);
-        
-        if (this.currentTool === 'rectangle') {
-            // Para ferramenta rectangle, desenhar com cor personalizada
-            for (let x = minX; x <= maxX; x++) {
-                for (let y = minY; y <= maxY; y++) {
-                    const tileId = `rect_${x}_${y}_${this.currentLayer}`;
-                    const worldCoords = this.tileToWorldCoords(x, y);
-                    
-                    // Remover tile existente na posição
-                    this.sceneData.objects = this.sceneData.objects.filter(obj => 
-                        !(obj.tilePosition && obj.tilePosition[0] === x && obj.tilePosition[1] === y && obj.layer === this.currentLayer)
-                    );
-                    
-                    const tileData = {
-                        id: tileId,
-                        name: `rect_${x}_${y}`,
-                        type: 'tile',
-                        color: this.currentColor,
-                        position: [worldCoords.worldX, worldCoords.worldY],
-                        tilePosition: [x, y],
-                        layer: this.currentLayer,
-                        visible: true,
-                        properties: {}
-                    };
-                    
-                    this.sceneData.objects.push(tileData);
-                }
-            }
-            this.updateSceneRender();
-        } else {
-            // Para outras ferramentas, usar asset selecionado
-            if (!this.selectedAsset) {
-                this.logMessage('Selecione um asset primeiro', 'warning');
-                return;
-            }
-            
-            // Desenhar retângulo preenchido com asset
-            for (let x = minX; x <= maxX; x++) {
-                for (let y = minY; y <= maxY; y++) {
-                    this.paintTile(x, y);
-                }
-            }
-        }
-        
-        this.saveSceneToServer();
-    }
+    // A função drawRectangle foi removida
 
     // Seleção de objetos
     selectObjectAtPosition(screenX, screenY) {
@@ -2680,22 +2607,106 @@ class EngineTools {
                     graphics.closePath();
                     graphics.fillPath();
                     graphics.strokePath();
+                    
+                    // Definir uma profundidade intermediária para os tiles
+                    // Acima da grade (0), mas abaixo dos sprites (100)
+                    graphics.setDepth(50);
                 }
             } else if (obj.type === 'sprite' && obj.key) {
-                // Criar sprite baseado em asset
-                // Por enquanto, criar um retângulo colorido como placeholder
-                const rect = scene.add.rectangle(
-                    obj.position[0], 
-                    obj.position[1], 
-                    32, 32, 
-                    0x00ff00
-                );
-                rect.setStrokeStyle(2, 0x000000);
+                // Carregar e exibir o SVG como sprite
+                // Primeiro, verificar se temos o caminho do SVG no objeto
+                const svgPath = this.getSVGPathForKey(obj.key);
+                
+                if (svgPath) {
+                    // Criar um container para o SVG
+                    const container = scene.add.container(obj.position[0], obj.position[1]);
+                    // Definir uma profundidade alta para garantir que o sprite apareça acima das grades
+                    container.setDepth(100);
+                    
+                    // Carregar o SVG como textura
+                    this.loadSVGAsTexture(scene, obj.id, svgPath, (texture) => {
+                        // Criar sprite com a textura
+                        const sprite = scene.add.image(0, 0, obj.id);
+                        sprite.setScale(0.5); // Ajustar escala conforme necessário
+                        container.add(sprite);
+                    });
+                } else {
+                    // Fallback: criar um retângulo colorido como placeholder
+                    const rect = scene.add.rectangle(
+                        obj.position[0], 
+                        obj.position[1], 
+                        32, 32, 
+                        0x00ff00
+                    );
+                    rect.setStrokeStyle(2, 0x000000);
+                    // Definir uma profundidade alta para garantir que o retângulo apareça acima das grades
+                    rect.setDepth(100);
+                }
             }
         });
     }
 
 
+    // Obter o caminho do SVG com base na chave do objeto
+    getSVGPathForKey(key) {
+        // Primeiro, verificar se temos o objeto na cena com este ID e se ele tem um caminho SVG
+        const sceneObject = this.sceneData.objects.find(obj => obj.id === key || obj.key === key);
+        if (sceneObject && sceneObject.svgPath) {
+            return sceneObject.svgPath;
+        }
+        
+        // Procurar nos itens do grid de assets
+        const assetItems = document.querySelectorAll('.asset-item');
+        for (const item of assetItems) {
+            if (item.dataset.assetId === key) {
+                return item.dataset.assetPath;
+            }
+        }
+        
+        // Se não encontrar, verificar se é um dos tipos padrão
+        const defaultPaths = {
+            'player': '/assets/svg/player.svg',
+            'npc': '/assets/svg/npc.svg',
+            'chest': '/assets/svg/chest.svg',
+            'tree': '/assets/svg/tree.svg'
+        };
+        
+        return defaultPaths[key] || null;
+    }
+    
+    // Carregar SVG como textura para o Phaser
+    loadSVGAsTexture(scene, key, svgPath, callback) {
+        // Verificar se a textura já existe
+        if (scene.textures.exists(key)) {
+            if (callback) callback(scene.textures.get(key));
+            return;
+        }
+        
+        // Carregar o SVG
+        fetch(svgPath)
+            .then(response => response.text())
+            .then(svgContent => {
+                // Criar um elemento de imagem para o SVG
+                const img = new Image();
+                const svg64 = btoa(svgContent);
+                const b64Start = 'data:image/svg+xml;base64,';
+                img.src = b64Start + svg64;
+                
+                // Quando a imagem carregar, criar a textura
+                img.onload = () => {
+                    scene.textures.addImage(key, img);
+                    if (callback) callback(scene.textures.get(key));
+                };
+                
+                img.onerror = (err) => {
+                    console.error('Erro ao carregar SVG:', err);
+                };
+            })
+            .catch(error => {
+                console.error('Erro ao buscar SVG:', error);
+            });
+    }
+    
     // ===== SISTEMA DE CAMADAS =====
 
     // Alternar camada atual
