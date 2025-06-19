@@ -7,8 +7,13 @@
     <meta name="orientation" content="landscape">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Isoria Game Engine</title>
     <link rel="stylesheet" href="css/engine-tools.css">
+    <!-- Fabric.js para ferramentas de desenho -->
+    <script src="https://cdn.jsdelivr.net/npm/fabric@latest/dist/fabric.min.js"></script>
     <script>
         // Script para forçar orientação horizontal em dispositivos móveis
         function forceOrientation() {
@@ -84,41 +89,8 @@
                         <button class="btn-icon" id="upload-asset" title="Upload SVG">📁</button>
                         <input type="file" id="file-upload" accept=".svg" style="display: none;">
                     </div>
-                    <div class="assets-grid">
-                        <!-- Texturas de Bioma -->
-                        <div class="asset-item" data-asset-id="grass" data-asset-type="biome">
-                            <div class="asset-thumbnail">🌱</div>
-                            <span class="asset-name">Gramado</span>
-                        </div>
-                        <div class="asset-item" data-asset-id="rock" data-asset-type="biome">
-                            <div class="asset-thumbnail">🗻</div>
-                            <span class="asset-name">Rocha</span>
-                        </div>
-                        <div class="asset-item" data-asset-id="sand" data-asset-type="biome">
-                            <div class="asset-thumbnail">🏖️</div>
-                            <span class="asset-name">Areia</span>
-                        </div>
-                        <div class="asset-item" data-asset-id="water" data-asset-type="biome">
-                            <div class="asset-thumbnail">💧</div>
-                            <span class="asset-name">Água</span>
-                        </div>
-                        <!-- Elementos Naturais -->
-                        <div class="asset-item" data-asset-id="tree-oak" data-asset-type="nature">
-                            <div class="asset-thumbnail">🌳</div>
-                            <span class="asset-name">Árvore</span>
-                        </div>
-                        <div class="asset-item" data-asset-id="bush-small" data-asset-type="nature">
-                            <div class="asset-thumbnail">🌿</div>
-                            <span class="asset-name">Arbusto</span>
-                        </div>
-                        <div class="asset-item" data-asset-id="stone-small" data-asset-type="nature">
-                            <div class="asset-thumbnail">🗿</div>
-                            <span class="asset-name">Pedra</span>
-                        </div>
-                        <div class="asset-item" data-asset-id="flower-red" data-asset-type="nature">
-                            <div class="asset-thumbnail">🌹</div>
-                            <span class="asset-name">Flor</span>
-                        </div>
+                    <div class="assets-grid" id="svg-assets-grid">
+                        <!-- Os SVGs serão carregados dinamicamente aqui -->
                     </div>
                 </div>
             </section>
@@ -142,6 +114,7 @@
             </div>
             <div class="preview-viewport" id="preview-viewport">
                 <canvas id="game-canvas"></canvas>
+                <canvas id="fabric-canvas" style="display: none;"></canvas>
                 <div class="viewport-content">
                     <div class="viewport-center">
                         <div class="preview-stats">
@@ -371,6 +344,74 @@
         <div class="menu-item" data-action="import-assets">Import Assets</div>
         <div class="menu-item" data-action="export">Export Project</div>
     </div>
+    
+    <style>
+        .asset-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 100px;
+            margin: 5px;
+            padding: 5px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            background-color: #333;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .asset-item:hover {
+            background-color: #444;
+            transform: scale(1.05);
+        }
+        
+        .asset-item.selected {
+            border: 2px solid #4CAF50;
+            background-color: #3c3c3c;
+        }
+        
+        .asset-thumbnail {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            margin-bottom: 5px;
+            font-size: 24px;
+        }
+        
+        .asset-thumbnail svg {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+        }
+        
+        .asset-name {
+            font-size: 11px;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+            max-height: 40px;
+            word-wrap: break-word;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+        
+        .assets-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            align-items: flex-start;
+            max-height: calc(100vh - 250px);
+            overflow-y: auto;
+            padding: 5px;
+        }
+    </style>
 
     <!-- Resizers -->
     <div class="resizer resizer-left" id="resizer-left"></div>
@@ -380,6 +421,19 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        // Limpar cache do navegador
+        if (window.performance && window.performance.navigation.type === 0) {
+            // Limpar cache apenas em carregamentos diretos (não em recargas)
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            // Forçar recarregamento sem cache
+            if (location.href.indexOf('nocache') === -1) {
+                location.href = location.href + (location.href.indexOf('?') === -1 ? '?' : '&') + 'nocache=' + new Date().getTime();
+            }
+        }
+    </script>
     <script src="js/engine-tools.js"></script>
     
     <!-- Phaser controla toda a renderização do canvas isométrico -->

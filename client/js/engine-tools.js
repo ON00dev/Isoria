@@ -75,6 +75,9 @@ class EngineTools {
             }
         });
         
+        // Definir phaserGame como referência ao renderer para compatibilidade
+        this.phaserGame = this.renderer;
+        
         // Configurar cena isométrica
         this.scene = null; // Será definido em createIsometricScene
         
@@ -107,6 +110,11 @@ class EngineTools {
                 tileWidth: 80,
                 tileHeight: 40,
                 gridSize: 20
+            },
+            // Adicionar tileConfig para compatibilidade com funções de conversão de coordenadas
+            tileConfig: {
+                width: 80,
+                height: 40
             }
         };
         
@@ -363,11 +371,7 @@ class EngineTools {
                 tileHeight: 32,
                 gridSize: 20
             },
-            objects: [
-                { id: 'player', name: 'Player', type: 'sprite', position: [5, 5], texture: 'player' },
-                { id: 'npc-1', name: 'NPC 1', type: 'sprite', position: [8, 3], texture: 'npc' },
-                { id: 'chest', name: 'Treasure Chest', type: 'sprite', position: [2, 7], texture: 'chest' }
-            ],
+            objects: [],
             tiles: [],
             layers: [
                 {
@@ -569,22 +573,164 @@ class EngineTools {
     // Carregar assets do servidor
     async loadAssets() {
         try {
-            const response = await fetch('/api/assets');
-            if (response.ok) {
-                const assets = await response.json();
-                this.buildAssetsPanel(assets);
-            } else {
-                this.createDefaultAssets();
-            }
+            console.log('Iniciando carregamento de assets...');
+            // Carregar SVGs da pasta pack
+            await this.loadSVGAssets();
         } catch (error) {
-            this.logMessage('Erro ao carregar assets', 'error');
-            this.createDefaultAssets();
+            console.error('Erro ao carregar assets:', error);
+            this.logMessage('Erro ao carregar assets: ' + error.message, 'error');
+        }
+    }
+    
+    // Carregar SVGs da pasta pack
+    async loadSVGAssets() {
+        try {
+            console.log('Buscando SVGs da API...');
+            // Obter lista de arquivos SVG da pasta pack usando a API
+            const fetchOptions = {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                },
+                cache: 'no-store'
+            };
+            
+            // Adicionar timestamp para evitar cache
+            const timestamp = new Date().getTime();
+            const randomValue = Math.random().toString(36).substring(2, 15);
+            console.log(`Fazendo requisição para /api/assets/svg com timestamp=${timestamp} e nocache=${randomValue}`);
+            // Forçar uma nova requisição com um timestamp único
+            const response = await fetch(`/api/assets/svg?t=${timestamp}&nocache=${randomValue}`, fetchOptions);
+            console.log('Resposta da API:', response);
+            
+            if (!response.ok) {
+                throw new Error(`Falha ao acessar a pasta de SVGs: ${response.status} ${response.statusText}`);
+            }
+            
+            // Obter a lista de SVGs diretamente da API
+            const links = await response.json();
+            console.log('SVGs encontrados:', links);
+            
+            // Remover SVGs duplicados (mantendo apenas a primeira ocorrência de cada nome)
+            const uniqueLinks = [];
+            const uniqueNames = new Set();
+            
+            for (const svg of links) {
+                if (!uniqueNames.has(svg.name)) {
+                    uniqueNames.add(svg.name);
+                    uniqueLinks.push(svg);
+                }
+            }
+            
+            // Limpar grid de assets
+            const assetsGrid = document.getElementById('svg-assets-grid');
+            if (assetsGrid) {
+                assetsGrid.innerHTML = '';
+            }
+            
+            // Adicionar cada SVG único ao grid
+            for (const svg of uniqueLinks) {
+                await this.addSVGToGrid(svg, assetsGrid);
+            }
+            
+            const removedCount = links.length - uniqueLinks.length;
+            this.logMessage(`Carregados ${uniqueLinks.length} SVGs com sucesso (${removedCount} duplicados removidos)`, 'success');
+        } catch (error) {
+            this.logMessage('Erro ao carregar SVGs: ' + error.message, 'error');
         }
     }
 
-    // Criar assets padrão para biomas e elementos naturais
+    // Adicionar SVG ao grid de assets
+    async addSVGToGrid(svg, grid) {
+        if (!grid) return;
+        
+        try {
+            // Criar elemento para o SVG
+            const assetItem = document.createElement('div');
+            assetItem.className = 'asset-item';
+            assetItem.draggable = true;
+            
+            // Usar o nome do arquivo como ID do asset
+            const assetId = svg.name.replace(/\s+/g, '-').toLowerCase();
+            assetItem.dataset.assetId = assetId;
+            assetItem.dataset.assetType = 'svg';
+            
+            // Usar o caminho direto para os SVGs na pasta pública
+            const svgPath = svg.path;
+            assetItem.dataset.assetPath = svgPath;
+            
+            // Adicionar timestamp e valor aleatório para evitar cache
+            const timestamp = new Date().getTime();
+            const randomValue = Math.random().toString(36).substring(2, 15);
+            console.log(`Carregando SVG: ${svgPath} com timestamp=${timestamp} e nocache=${randomValue}`);
+            
+            // Carregar o SVG usando o caminho direto com parâmetros anti-cache
+            const svgResponse = await fetch(`${svgPath}?t=${timestamp}&nocache=${randomValue}`, {
+                cache: 'no-store',
+                headers: {
+                    'Accept': 'image/svg+xml',
+                    'Cache-Control': 'no-cache, no-store, must-revalidate, proxy-revalidate, max-age=0',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            });
+            const svgContent = await svgResponse.text();
+            
+            // Criar thumbnail com o SVG
+            const thumbnail = document.createElement('div');
+            thumbnail.className = 'asset-thumbnail';
+            thumbnail.innerHTML = svgContent;
+            
+            // Ajustar o SVG para caber no thumbnail
+            const svgElement = thumbnail.querySelector('svg');
+            if (svgElement) {
+                svgElement.setAttribute('width', '100%');
+                svgElement.setAttribute('height', '100%');
+                svgElement.style.maxWidth = '40px';
+                svgElement.style.maxHeight = '40px';
+            }
+            
+            // Adicionar nome do asset
+            const nameElement = document.createElement('div');
+            nameElement.className = 'asset-name';
+            nameElement.textContent = svg.name;
+            
+            // Montar o item
+            assetItem.appendChild(thumbnail);
+            assetItem.appendChild(nameElement);
+            
+            // Adicionar eventos
+            assetItem.addEventListener('click', () => {
+                this.selectAsset(assetId, assetItem);
+            });
+            
+            assetItem.addEventListener('dragstart', (e) => {
+                const assetData = {
+                    id: assetId,
+                    name: svg.name,
+                    type: 'svg',
+                    path: svg.path
+                };
+                e.dataTransfer.setData('text/plain', JSON.stringify(assetData));
+            });
+            
+            // Adicionar ao grid
+            grid.appendChild(assetItem);
+            
+            return assetItem;
+        } catch (error) {
+            console.error(`Erro ao adicionar SVG ${svg.name}:`, error);
+            return null;
+        }
+    }
+    
+    // Criar assets padrão para biomas e elementos naturais (função mantida para compatibilidade)
     createDefaultAssets() {
-        // Assets já estão definidos no HTML, apenas configurar eventos
+        // Agora os assets são carregados dinamicamente da pasta pack
         const assetItems = document.querySelectorAll('.asset-item');
         
         assetItems.forEach(item => {
@@ -843,6 +989,49 @@ class EngineTools {
         this.setupMenuEvents();
         this.setupKeyboardShortcuts();
         this.setupResizers();
+        this.setupAssetSearch();
+        
+        // Inicializar ferramentas de desenho com Fabric.js
+        this.initializeFabricDrawingTools();
+    }
+    
+    // Configurar a funcionalidade de busca de assets
+    setupAssetSearch() {
+        const searchInput = document.getElementById('asset-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase().trim();
+                const assetItems = document.querySelectorAll('#svg-assets-grid .asset-item');
+                
+                // Primeiro, vamos apenas atualizar a visibilidade dos itens
+                // sem remover ou reordenar elementos no DOM
+                assetItems.forEach(item => {
+                    const assetName = item.querySelector('.asset-name')?.textContent.toLowerCase() || '';
+                    
+                    // Mostrar apenas itens que começam com o termo de busca
+                    if (searchTerm === '' || assetName.startsWith(searchTerm)) {
+                        item.style.display = 'flex';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+                
+                // Registrar no console para depuração
+                console.log(`Filtrando por: "${searchTerm}". Itens visíveis: ${Array.from(assetItems).filter(item => item.style.display !== 'none').length}`);
+            });
+        }
+    }
+    
+    // Inicializar ferramentas de desenho com Fabric.js
+    initializeFabricDrawingTools() {
+        // Verificar se o objeto global fabricDrawingTools existe
+        if (typeof fabricDrawingTools !== 'undefined') {
+            // Inicializar com a instância atual do EngineTools
+            fabricDrawingTools.initialize(this);
+            this.logMessage('Fabric.js Drawing Tools inicializado', 'info');
+        } else {
+            this.logMessage('Fabric.js Drawing Tools não encontrado', 'error');
+        }
     }
 
     // Configurar controles do cabeçalho
@@ -1080,6 +1269,11 @@ class EngineTools {
         // Atualizar cursor baseado na ferramenta
         const viewport = document.getElementById('preview-viewport');
         viewport.style.cursor = this.getToolCursor(toolName);
+        
+        // Sincronizar com as ferramentas de desenho do Fabric.js
+        if (typeof fabricDrawingTools !== 'undefined') {
+            fabricDrawingTools.selectTool(toolName);
+        }
     }
 
     selectPreviewTool(toolId) {
@@ -1536,12 +1730,18 @@ class EngineTools {
         
         // Converter coordenadas de tela para coordenadas de mundo isométrico
         // Ajustar com base no scroll e zoom da câmera
-        const worldX = (viewportX / this.phaserGame.scale.zoom) + this.phaserGame.cameras.main.scrollX;
-        const worldY = (viewportY / this.phaserGame.scale.zoom) + this.phaserGame.cameras.main.scrollY;
+        // Usar this.scene.cameras.main em vez de this.phaserGame.cameras.main
+        const zoom = this.scene && this.scene.cameras && this.scene.cameras.main ? this.scene.cameras.main.zoom : 1;
+        const scrollX = this.scene && this.scene.cameras && this.scene.cameras.main ? this.scene.cameras.main.scrollX : 0;
+        const scrollY = this.scene && this.scene.cameras && this.scene.cameras.main ? this.scene.cameras.main.scrollY : 0;
+        
+        const worldX = (viewportX / zoom) + scrollX;
+        const worldY = (viewportY / zoom) + scrollY;
         
         // Converter para coordenadas de tile isométrico (se necessário)
-        const tileX = Math.floor(worldX / this.sceneData.tileConfig.width);
-        const tileY = Math.floor(worldY / this.sceneData.tileConfig.height);
+        // Adicionar verificações de segurança para evitar erros quando tileConfig não estiver definido
+        const tileX = Math.floor(worldX / (this.sceneData && this.sceneData.tileConfig ? this.sceneData.tileConfig.width : 80));
+        const tileY = Math.floor(worldY / (this.sceneData && this.sceneData.tileConfig ? this.sceneData.tileConfig.height : 40));
         
         // Criar objeto de dados para o novo elemento
         const objectData = {
@@ -1781,6 +1981,11 @@ class EngineTools {
             document.getElementById('blue-value').textContent = rgba.b;
             document.getElementById('alpha-value').textContent = rgba.a.toFixed(1);
         }
+        
+        // Sincronizar com as ferramentas de desenho do Fabric.js
+        if (typeof fabricDrawingTools !== 'undefined') {
+            fabricDrawingTools.selectColor(this.currentColor);
+        }
     }
 
     parseRGBA(rgbaString) {
@@ -1845,33 +2050,50 @@ class EngineTools {
     }
 
     // Converter coordenadas de tela para coordenadas de tile isométrico
-    screenToTileCoords(screenX, screenY) {
-        const rect = document.getElementById('preview-viewport').getBoundingClientRect();
-        const viewportX = screenX - rect.left;
-        const viewportY = screenY - rect.top;
+    screenToTileCoords(screenX, screenY) { 
+        const rect = document.getElementById('preview-viewport').getBoundingClientRect(); 
+        const viewportX = screenX - rect.left; 
+        const viewportY = screenY - rect.top; 
+    
+        // Obter zoom e scroll da câmera 
+        const zoom = this.scene?.cameras?.main?.zoom || 1; 
+        const scrollX = this.scene?.cameras?.main?.scrollX || 0; 
+        const scrollY = this.scene?.cameras?.main?.scrollY || 0; 
+    
+        // Obter dimensões do viewport
+        const viewport = document.getElementById('preview-viewport');
+        const canvasWidth = viewport.clientWidth || 800;
+        const canvasHeight = viewport.clientHeight || 600;
         
-        // Converter para coordenadas de mundo considerando zoom e scroll da câmera
-        const worldX = (viewportX / this.phaserGame.scale.zoom) + this.phaserGame.cameras.main.scrollX;
-        const worldY = (viewportY / this.phaserGame.scale.zoom) + this.phaserGame.cameras.main.scrollY;
-        
-        // Converter para coordenadas de tile isométrico
-        const tileWidth = this.sceneData.tileConfig.width;
-        const tileHeight = this.sceneData.tileConfig.height;
-        
-        // Fórmula de conversão isométrica
-        const tileX = Math.floor((worldX / tileWidth + worldY / tileHeight) / 2);
-        const tileY = Math.floor((worldY / tileHeight - worldX / tileWidth) / 2);
-        
+        // Converter para coordenadas de mundo considerando o offset do centro do canvas
+        const worldX = (viewportX / zoom) + scrollX - (canvasWidth / 2);
+        const worldY = (viewportY / zoom) + scrollY - (canvasHeight / 2);
+    
+        // Dimensões dos tiles 
+        const tileWidth = this.sceneData?.tileConfig?.width || 80; 
+        const tileHeight = this.sceneData?.tileConfig?.height || 40; 
+    
+        // Conversão padrão isométrica 
+        const tileX = Math.floor((worldX / (tileWidth / 2) + worldY / (tileHeight / 2)) / 2); 
+        const tileY = Math.floor((worldY / (tileHeight / 2) - worldX / (tileWidth / 2)) / 2); 
+    
         return { tileX, tileY, worldX, worldY };
     }
 
     // Converter coordenadas de tile para coordenadas de mundo
     tileToWorldCoords(tileX, tileY) {
-        const tileWidth = this.sceneData.tileConfig.width;
-        const tileHeight = this.sceneData.tileConfig.height;
+        // Adicionar verificações de segurança para evitar erros quando tileConfig não estiver definido
+        const tileWidth = this.sceneData?.tileConfig?.width || 80;
+        const tileHeight = this.sceneData?.tileConfig?.height || 40;
         
-        const worldX = (tileX - tileY) * tileWidth / 2;
-        const worldY = (tileX + tileY) * tileHeight / 2;
+        // Obter dimensões do viewport
+        const viewport = document.getElementById('preview-viewport');
+        const canvasWidth = viewport.clientWidth || 800;
+        const canvasHeight = viewport.clientHeight || 600;
+        
+        // Calcular coordenadas de mundo e adicionar o offset do centro do canvas
+        const worldX = (tileX - tileY) * tileWidth / 2 + (canvasWidth / 2);
+        const worldY = (tileX + tileY) * tileHeight / 2 + (canvasHeight / 2);
         
         return { worldX, worldY };
     }
@@ -1990,29 +2212,23 @@ class EngineTools {
     }
 
     eraseTile(tileX, tileY) {
-        const tileId = `tile_${tileX}_${tileY}_${this.currentLayer}`;
-        const worldCoords = this.tileToWorldCoords(tileX, tileY);
-        
         // Remover tile existente na posição e camada atual
-        this.sceneData.objects = this.sceneData.objects.filter(obj => 
-            !(obj.tilePosition && obj.tilePosition[0] === tileX && obj.tilePosition[1] === tileY && obj.layer === this.currentLayer)
+        const tilesRemovidos = this.sceneData.objects.filter(obj => 
+            obj.tilePosition && obj.tilePosition[0] === tileX && obj.tilePosition[1] === tileY && obj.layer === this.currentLayer
         );
         
-        // Adicionar tile com cor de fundo (borracha)
-        const tileData = {
-            id: tileId,
-            name: `erase_${tileX}_${tileY}`,
-            type: 'tile',
-            color: this.backgroundColor,
-            position: [worldCoords.worldX, worldCoords.worldY],
-            tilePosition: [tileX, tileY],
-            layer: this.currentLayer,
-            visible: true,
-            properties: {}
-        };
-        
-        this.sceneData.objects.push(tileData);
-        this.updateSceneRender();
+        if (tilesRemovidos.length > 0) {
+            // Remover os tiles encontrados
+            this.sceneData.objects = this.sceneData.objects.filter(obj => 
+                !(obj.tilePosition && obj.tilePosition[0] === tileX && obj.tilePosition[1] === tileY && obj.layer === this.currentLayer)
+            );
+            
+            // Log para depuração
+            console.log(`Tile removido na posição [${tileX}, ${tileY}] da camada ${this.currentLayer}`);
+            
+            // Atualizar a renderização da cena
+            this.updateSceneRender();
+        }
     }
 
     floodFill(startX, startY) {
@@ -2224,8 +2440,9 @@ class EngineTools {
             if (obj.type === 'tile' && obj.color) {
                 // Criar tile colorido
                 const graphics = scene.add.graphics();
-                const tileWidth = 64;
-                const tileHeight = 32;
+                // Usar as mesmas dimensões da grade isométrica
+                const tileWidth = 80;
+                const tileHeight = 40;
                 
                 // Converter cor RGBA para formato Phaser
                 const rgba = this.parseRGBA(obj.color);
@@ -2258,6 +2475,7 @@ class EngineTools {
             }
         });
     }
+
 
     // ===== SISTEMA DE CAMADAS =====
 

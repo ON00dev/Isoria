@@ -25,17 +25,96 @@ const server = http.createServer(app);
 // Configura o CORS
 app.use(cors());
 
-// Middleware para logs de requisições
+// Middleware para desabilitar cache
+app.use((req, res, next) => {
+    // Desabilitar cache para todas as requisições
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+    next();
+});
+
+// Middleware para redirecionar requisições de /assets/pack/ para /assets/svgs/
 app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    console.log(`Referer: ${req.get('Referer') || 'Nenhum'}`);
+    console.log(`User-Agent: ${req.get('User-Agent') || 'Nenhum'}`);
+    if (req.url.includes('/assets/pack/')) {
+        console.log('Requisição para /assets/pack/ detectada!');
+        console.log('Headers:', JSON.stringify(req.headers, null, 2));
+        
+        // Redirecionar para a nova localização
+        const fileName = req.url.split('/assets/pack/')[1];
+        if (fileName) {
+            console.log(`Redirecionando requisição de /assets/pack/${fileName} para /assets/svgs/${fileName}`);
+            return res.redirect(`/assets/svgs/${fileName}?t=${Date.now()}`);
+        } else {
+            // Se não houver nome de arquivo, redirecionar para a lista de SVGs
+            console.log('Redirecionando requisição de /assets/pack/ para /api/assets/svg');
+            return res.redirect(`/api/assets/svg?t=${Date.now()}`);
+        }
+    }
+    if (req.url.includes('/api/assets/svg')) {
+        console.log('Requisição para /api/assets/svg detectada!');
+        console.log('Headers:', JSON.stringify(req.headers, null, 2));
+    }
     next();
 });
 
 // Configura o diretório estático para servir os arquivos do cliente
 app.use(express.static(path.join(__dirname, '../client')));
 
-// Configura o diretório de assets
-app.use('/assets', express.static(path.join(__dirname, '../assets')));
+// Configura o diretório estático para servir os arquivos públicos
+app.use(express.static(path.join(__dirname, '../public')));
+
+// Removemos a rota estática para /assets/pack/ para forçar o uso da API
+
+// Configura o diretório de assets, excluindo a pasta pack
+app.use('/assets', (req, res, next) => {
+    // Se a requisição for para a pasta pack, bloqueamos
+    if (req.url.startsWith('/pack/')) {
+        console.log('Bloqueando acesso direto a /assets/pack/', req.url);
+        return res.status(404).json({ error: 'Esta pasta agora é acessível apenas via API' });
+    }
+    // Para outras pastas de assets, permitimos o acesso normalmente
+    next();
+}, express.static(path.join(__dirname, '../assets')));
+
+// Rota para listar arquivos SVG na pasta pública
+app.get('/api/assets/svg', (req, res) => {
+    const svgsDir = path.join(__dirname, '../public/assets/svgs');
+    const fs = require('fs');
+    
+    fs.readdir(svgsDir, (err, files) => {
+        if (err) {
+            console.error('Erro ao ler diretório de SVGs:', err);
+            return res.status(500).json({ error: 'Erro ao ler diretório de SVGs' });
+        }
+        
+        // Filtrar apenas arquivos SVG
+        const svgFiles = files.filter(file => file.toLowerCase().endsWith('.svg'));
+        
+        // Retornar lista de arquivos SVG apenas com os nomes dos arquivos
+        const svgList = svgFiles.map(file => ({
+            name: file.replace('.svg', ''),
+            path: `/assets/svgs/${file}`
+        }));
+        
+        res.json(svgList);
+    });
+});
+
+// Rota para obter o conteúdo de um arquivo SVG específico
+app.get('/api/assets/svg/:filename', (req, res) => {
+    const filename = req.params.filename;
+    
+    console.log(`[API] Requisição para SVG filename: ${filename}`);
+    console.log(`[API] Query params:`, req.query);
+    
+    // Redirecionar para o arquivo estático na pasta pública
+    res.redirect(`/assets/svgs/${filename}`);
+});
 
 // Configura o diretório de mapas
 app.use('/maps', express.static(path.join(__dirname, '../maps')));
