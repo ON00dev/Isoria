@@ -2065,9 +2065,18 @@ class EngineTools {
         const canvasWidth = viewport.clientWidth || 800;
         const canvasHeight = viewport.clientHeight || 600;
         
-        // Converter para coordenadas de mundo considerando o offset do centro do canvas
-        const worldX = (viewportX / zoom) + scrollX - (canvasWidth / 2);
-        const worldY = (viewportY / zoom) + scrollY - (canvasHeight / 2);
+        // Calcular o centro do viewport
+        const centerX = canvasWidth / 2;
+        const centerY = canvasHeight / 2;
+        
+        // Converter para coordenadas de mundo considerando o zoom e o centro do viewport
+        // Primeiro, calcular a distância do ponto clicado ao centro do viewport
+        const deltaX = viewportX - centerX;
+        const deltaY = viewportY - centerY;
+        
+        // Aplicar o zoom a essa distância e adicionar ao centro do mundo + scroll
+        const worldX = (deltaX / zoom) + scrollX;
+        const worldY = (deltaY / zoom) + scrollY;
     
         // Dimensões dos tiles 
         const tileWidth = this.sceneData?.tileConfig?.width || 80; 
@@ -2076,6 +2085,9 @@ class EngineTools {
         // Conversão padrão isométrica 
         const tileX = Math.floor((worldX / (tileWidth / 2) + worldY / (tileHeight / 2)) / 2); 
         const tileY = Math.floor((worldY / (tileHeight / 2) - worldX / (tileWidth / 2)) / 2); 
+        
+        // Log para depuração
+        console.log(`Zoom: ${zoom}, Clique: (${viewportX}, ${viewportY}), Mundo: (${worldX}, ${worldY}), Tile: (${tileX}, ${tileY})`);
     
         return { tileX, tileY, worldX, worldY };
     }
