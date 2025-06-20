@@ -1970,6 +1970,13 @@ class EngineTools {
         document.querySelectorAll('.tree-item.selected, .asset-item.selected').forEach(item => {
             item.classList.remove('selected');
         });
+        
+        // Remover destaque visual
+        if (this.selectionHighlight) {
+            this.selectionHighlight.destroy();
+            this.selectionHighlight = null;
+        }
+        
         this.selectedObject = null;
         this.updateInspector(null);
     }
@@ -2078,6 +2085,9 @@ class EngineTools {
         
         // Remover dos dados da cena
         this.sceneData.objects = this.sceneData.objects.filter(obj => obj.id !== objectId);
+        
+        // Atualizar renderização da cena
+        this.updateSceneRender();
         
         // Atualizar interface
         this.buildSceneHierarchy();
@@ -2445,7 +2455,84 @@ class EngineTools {
         if (this.currentTool === 'select') {
             // Lógica de seleção de objetos
             this.selectObjectAtPosition(e.clientX, e.clientY);
+        } else if (this.currentTool === 'move') {
+            // Lógica de movimentação de objetos
+            this.handleObjectMove(e.clientX, e.clientY);
         }
+    }
+    
+    // Manipular movimentação de objetos
+    handleObjectMove(screenX, screenY) {
+        const coords = this.screenToTileCoords(screenX, screenY);
+        
+        if (!this.isValidTile(coords.tileX, coords.tileY)) {
+            this.logMessage('Posição inválida para movimentação', 'warning');
+            return;
+        }
+        
+        if (this.selectedObject) {
+            // Mover objeto selecionado para nova posição
+            this.moveObjectToPosition(this.selectedObject, coords.tileX, coords.tileY);
+        } else {
+            // Selecionar objeto na posição clicada para movimentação
+            this.selectObjectAtPosition(screenX, screenY);
+            if (this.selectedObject) {
+                this.logMessage('Objeto selecionado para movimentação. Clique na nova posição.', 'info');
+            }
+        }
+    }
+    
+    // Mover objeto para nova posição
+    moveObjectToPosition(objectId, newTileX, newTileY) {
+        const objectIndex = this.sceneData.objects.findIndex(obj => obj.id === objectId);
+        
+        if (objectIndex === -1) {
+            this.logMessage('Objeto não encontrado', 'error');
+            return;
+        }
+        
+        const object = this.sceneData.objects[objectIndex];
+        const oldPosition = object.tilePosition ? [...object.tilePosition] : [0, 0];
+        
+        // Verificar se já existe um objeto na posição de destino
+        const existingObject = this.sceneData.objects.find(obj => 
+            obj.id !== objectId && 
+            obj.tilePosition && 
+            obj.tilePosition[0] === newTileX && 
+            obj.tilePosition[1] === newTileY &&
+            obj.layer === object.layer
+        );
+        
+        if (existingObject) {
+            this.logMessage('Já existe um objeto nesta posição', 'warning');
+            return;
+        }
+        
+        // Atualizar posições
+        const worldCoords = this.tileToWorldCoords(newTileX, newTileY);
+        object.position = [worldCoords.worldX, worldCoords.worldY];
+        object.tilePosition = [newTileX, newTileY];
+        
+        // Adicionar ao histórico
+        this.addToHistory({
+            type: 'moveObject',
+            objectId: objectId,
+            oldPosition: oldPosition,
+            newPosition: [newTileX, newTileY],
+            prevState: JSON.parse(JSON.stringify(this.sceneData.objects)),
+            nextState: null // Será preenchido após a modificação
+        });
+        
+        // Atualizar renderização
+        this.updateSceneRender();
+        this.buildSceneHierarchy();
+        this.updateInspector(object);
+        this.saveSceneToServer();
+        
+        this.logMessage(`Objeto movido de (${oldPosition[0]}, ${oldPosition[1]}) para (${newTileX}, ${newTileY})`, 'success');
+        
+        // Limpar seleção após movimentação
+        this.selectedObject = null;
     }
 
     // Verificar se um tile está dentro dos limites do mapa
@@ -2701,9 +2788,33 @@ class EngineTools {
             this.selectedObject = objectAtPosition.id;
             this.updateInspector(objectAtPosition);
             this.buildSceneHierarchy();
+            this.highlightSelectedObject(objectAtPosition);
             this.logMessage(`Objeto selecionado: ${objectAtPosition.name}`, 'info');
         } else {
             this.deselectAll();
+        }
+    }
+    
+    // Destacar objeto selecionado visualmente
+    highlightSelectedObject(object) {
+        if (this.phaserGame && this.phaserGame.scene.scenes[0]) {
+            const scene = this.phaserGame.scene.scenes[0];
+            
+            // Remover destaque anterior
+            if (this.selectionHighlight) {
+                this.selectionHighlight.destroy();
+            }
+            
+            // Criar novo destaque
+            this.selectionHighlight = scene.add.graphics();
+            this.selectionHighlight.lineStyle(3, 0x00ff00, 1);
+            this.selectionHighlight.strokeRect(
+                object.position[0] - 20, 
+                object.position[1] - 20, 
+                40, 
+                40
+            );
+            this.selectionHighlight.setDepth(200); // Acima de tudo
         }
     }
 
