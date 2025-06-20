@@ -132,62 +132,56 @@ class EngineTools {
     }
     
     // Configurar grade isométrica
-     setupIsometricGrid() {
-         // Esta função será chamada após a cena ser criada
-         if (!this.scene) return;
-         
-         const tileWidth = 80;
-         const tileHeight = 40;
-         const viewport = document.getElementById('preview-viewport');
-         const canvasWidth = viewport.clientWidth || 800;
-         const canvasHeight = viewport.clientHeight || 600;
-         
-         // Criar grupo para os elementos da grade
-         this.gridGroup = this.scene.add.group();
-         // Definir uma profundidade baixa para a grade para garantir que fique abaixo dos sprites
-         this.gridGroup.setDepth(0);
-         
-         // Calcular limites para preencher completamente o viewport
-         const maxDistance = Math.max(canvasWidth, canvasHeight);
-         const gridRange = Math.ceil(maxDistance / Math.min(tileWidth, tileHeight)) + 5;
-         
-         // Desenhar grade isométrica cobrindo todo o viewport
-         for (let y = -gridRange; y <= gridRange; y++) {
-             for (let x = -gridRange; x <= gridRange; x++) {
-                 const centerX = x * tileWidth / 2 + y * tileWidth / 2;
-                 const centerY = y * tileHeight / 2 - x * tileHeight / 2;
-                 
-                 const isoX = canvasWidth / 2 + centerX;
-                 const isoY = canvasHeight / 2 + centerY;
-                 
-                 // Verificar se o tile está dentro da área visível (com margem)
-                 if (isoX >= -tileWidth && isoX <= canvasWidth + tileWidth &&
-                     isoY >= -tileHeight && isoY <= canvasHeight + tileHeight) {
-                     
-                     // Criar losango usando gráficos do Phaser
-                     const diamond = this.scene.add.graphics();
-                     diamond.lineStyle(1, 0xcccccc, 1);
-                     diamond.beginPath();
-                     diamond.moveTo(isoX, isoY - tileHeight / 2); // Top
-                     diamond.lineTo(isoX + tileWidth / 2, isoY);  // Right
-                     diamond.lineTo(isoX, isoY + tileHeight / 2); // Bottom
-                     diamond.lineTo(isoX - tileWidth / 2, isoY);  // Left
-                     diamond.closePath();
-                     diamond.strokePath();
-                     
-                     // Criar ponto central
-                     const dot = this.scene.add.graphics();
-                     dot.fillStyle(0x999999, 1);
-                     dot.fillCircle(isoX, isoY, 1.5);
-                     
-                     this.gridGroup.add(diamond);
-                     this.gridGroup.add(dot);
-                 }
-             }
-         }
-         
-         this.logMessage('Grade isométrica configurada com Phaser', 'info');
-     }
+    setupIsometricGrid() {
+        if (!this.scene) return;
+
+        const tileWidth = 80;
+        const tileHeight = 40;
+        const mapWidth = 15;
+        const mapHeight = 15;
+
+        const viewport = document.getElementById('preview-viewport');
+        const canvasWidth = viewport.clientWidth || 800;
+        const canvasHeight = viewport.clientHeight || 600;
+
+        this.gridGroup = this.scene.add.group();
+        this.gridGroup.setDepth(0);
+
+        // Centralizar grade no meio do canvas
+        const offsetX = canvasWidth / 2;
+        const offsetY = canvasHeight / 2;
+
+        // Loops para cobrir os tiles do mundo real, começando do canto superior esquerdo (0,0)
+        for (let y = 0; y < mapHeight; y++) {
+            for (let x = 0; x < mapWidth; x++) {
+                // Calcular coordenadas isométricas a partir das coordenadas do mundo (0,0 a 14,14)
+                const centerX = (x - y) * tileWidth / 2;
+                const centerY = (x + y) * tileHeight / 2;
+
+                const isoX = offsetX + centerX;
+                const isoY = offsetY + centerY;
+
+                const diamond = this.scene.add.graphics();
+                diamond.lineStyle(1, 0xcccccc, 1);
+                diamond.beginPath();
+                diamond.moveTo(isoX, isoY - tileHeight / 2);
+                diamond.lineTo(isoX + tileWidth / 2, isoY);
+                diamond.lineTo(isoX, isoY + tileHeight / 2);
+                diamond.lineTo(isoX - tileWidth / 2, isoY);
+                diamond.closePath();
+                diamond.strokePath();
+
+                const dot = this.scene.add.graphics();
+                dot.fillStyle(0x999999, 1);
+                dot.fillCircle(isoX, isoY, 1.5);
+
+                this.gridGroup.add(diamond);
+                this.gridGroup.add(dot);
+            }
+        }
+
+        this.logMessage('Grade isométrica completa (15x15) configurada com Phaser', 'info');
+    }
 
     // Configurar controles de câmera
     setupCameraControls() {
@@ -258,36 +252,17 @@ class EngineTools {
         const fps = this.renderer?.game?.loop?.actualFps || 0;
         document.getElementById('fps-counter').textContent = `FPS: ${Math.round(fps)}`;
         
-        // Contar tiles da grade isométrica (losangos visíveis)
+        // Contar tiles da grade isométrica (todos os tiles da grade 15x15)
         let tileCount = 0;
         
-        // Calcular quantidade de losangos visíveis baseado na grade
-        const viewport = document.getElementById('preview-viewport');
-        if (viewport) {
-            const canvasWidth = viewport.clientWidth || 800;
-            const canvasHeight = viewport.clientHeight || 600;
-            const tileWidth = 80;
-            const tileHeight = 40;
-            
-            // Usar a mesma lógica da setupIsometricGrid para contar tiles visíveis
-            const maxDistance = Math.max(canvasWidth, canvasHeight);
-            const gridRange = Math.ceil(maxDistance / Math.min(tileWidth, tileHeight)) + 5;
-            
-            // Contar tiles que estão dentro da área visível
-            for (let y = -gridRange; y <= gridRange; y++) {
-                for (let x = -gridRange; x <= gridRange; x++) {
-                    const centerX = x * tileWidth / 2 + y * tileWidth / 2;
-                    const centerY = y * tileHeight / 2 - x * tileHeight / 2;
-                    
-                    const isoX = canvasWidth / 2 + centerX;
-                    const isoY = canvasHeight / 2 + centerY;
-                    
-                    // Verificar se o tile está dentro da área visível
-                    if (isoX >= -tileWidth && isoX <= canvasWidth + tileWidth &&
-                        isoY >= -tileHeight && isoY <= canvasHeight + tileHeight) {
-                        tileCount++;
-                    }
-                }
+        // Tamanho fixo do mapa: 15x15 tiles
+        const fixedMapSize = 15;
+        
+        // Contar todos os tiles da grade 15x15 começando de (0,0)
+        for (let y = 0; y < fixedMapSize; y++) {
+            for (let x = 0; x < fixedMapSize; x++) {
+                // Todos os tiles dentro da grade 15x15 são válidos
+                tileCount++;
             }
         }
         
@@ -378,7 +353,9 @@ class EngineTools {
             settings: {
                 tileWidth: 64,
                 tileHeight: 32,
-                gridSize: 20
+                gridSize: 15,
+                mapWidth: 15,
+                mapHeight: 15
             },
             objects: [],
             tiles: [],
@@ -1354,6 +1331,14 @@ class EngineTools {
         this.currentTool = toolName;
         this.logMessage(`Ferramenta selecionada: ${toolName}`, 'info');
         
+        // Resetar estados de desenho e panorâmica ao trocar de ferramenta
+        this.isDrawing = false;
+        this.isPanning = false;
+        this.drawStartPos = null;
+        this.panStartPos = null;
+        this.lastPaintedTile = null;
+        this.lastErasedTile = null;
+        
         // Mostrar/esconder seletor de cores para ferramentas de pintura
         const colorPickerPanel = document.getElementById('color-picker-panel');
         const paintingTools = ['paint', 'fill'];
@@ -2087,21 +2072,14 @@ class EngineTools {
         // Salvar o estado atual antes de modificar
         const prevState = JSON.parse(JSON.stringify(this.sceneData.objects));
         
-        // Obter o tamanho do grid a partir das configurações da cena
-        const gridSize = this.sceneData.settings.gridSize || 20;
-        const gridHalfSize = Math.floor(gridSize / 2);
+        // Definir tamanho fixo do mapa (15x15)
+        const fixedMapSize = 15;
         
-        // Definir limites do grid
-        const minX = -gridHalfSize;
-        const maxX = gridHalfSize;
-        const minY = -gridHalfSize;
-        const maxY = gridHalfSize;
-        
-        // Usar os limites do grid em vez de calcular com base no viewport
-        const startX = minX;
-        const endX = maxX;
-        const startY = minY;
-        const endY = maxY;
+        // Definir limites do grid (0 a 14)
+        const minX = 0;
+        const maxX = fixedMapSize - 1;
+        const minY = 0;
+        const maxY = fixedMapSize - 1;
         
         // Remover todos os tiles da camada atual
         this.sceneData.objects = this.sceneData.objects.filter(obj => 
@@ -2109,10 +2087,13 @@ class EngineTools {
         );
         
         // Preencher toda a área visível com a cor atual
-        // Importante: A lógica opera no grid cartesiano (x,y)
+        // Importante: A lógica opera no grid cartesiano (x,y) de 0 a 14
         // A transformação isométrica é usada apenas para renderização
-        for (let x = startX; x <= endX; x++) {
-            for (let y = startY; y <= endY; y++) {
+        for (let x = minX; x <= maxX; x++) {
+            for (let y = minY; y <= maxY; y++) {
+                // Verificar se o tile está dentro do losango antes de adicioná-lo
+                if (!this.isValidTile(x, y)) continue;
+                
                 const tileId = `fill_${x}_${y}_${this.currentLayer}`;
                 
                 // Transformar coordenadas cartesianas para isométricas apenas para renderização
@@ -2182,33 +2163,66 @@ class EngineTools {
         const tileWidth = this.sceneData?.tileConfig?.width || 80; 
         const tileHeight = this.sceneData?.tileConfig?.height || 40; 
     
-        // Conversão padrão isométrica 
-        const tileX = Math.floor((worldX / (tileWidth / 2) + worldY / (tileHeight / 2)) / 2); 
-        const tileY = Math.floor((worldY / (tileHeight / 2) - worldX / (tileWidth / 2)) / 2); 
+        // Conversão isométrica inversa
+        // Aplicar a fórmula inversa da projeção isométrica diretamente às coordenadas de mundo
+        const isoX = (worldX / (tileWidth / 2) + worldY / (tileHeight / 2)) / 2;
+        const isoY = (worldY / (tileHeight / 2) - worldX / (tileWidth / 2)) / 2;
         
-        // Log para depuração
-        console.log(`Zoom: ${zoom}, Clique: (${viewportX}, ${viewportY}), Mundo: (${worldX}, ${worldY}), Tile: (${tileX}, ${tileY})`);
+        // Arredondar para obter as coordenadas do tile
+        const centeredTileX = Math.floor(isoX);
+        const centeredTileY = Math.floor(isoY);
+        
+        // Converter para coordenadas começando de (0,0)
+        // Considerando um mapa 15x15, o canto superior esquerdo seria (-7,-7) nas coordenadas centradas
+        const fixedMapSize = 15;
+        const halfMapSize = Math.floor(fixedMapSize / 2);
+        
+        // Ajustar as coordenadas para começar de (0,0)
+        const tileX = centeredTileX + halfMapSize;
+        const tileY = centeredTileY + halfMapSize;
+        
+        // Log para depuração detalhado
+        console.log(`Conversão de coordenadas:`);
+        console.log(`- Zoom: ${zoom}`);
+        console.log(`- Clique na tela: (${viewportX}, ${viewportY})`);
+        console.log(`- Centro do viewport: (${centerX}, ${centerY})`);
+        console.log(`- Delta do centro: (${deltaX}, ${deltaY})`);
+        console.log(`- Coordenadas de mundo: (${worldX}, ${worldY})`);
+        console.log(`- Coordenadas isométricas: (${isoX}, ${isoY})`);
+        console.log(`- Tile centrado: (${centeredTileX}, ${centeredTileY})`);
+        console.log(`- Tile final: (${tileX}, ${tileY})`);
+        
+        // Verificar se o tile está dentro dos limites válidos
+        if (!this.isValidTile(tileX, tileY)) {
+            console.warn(`Tile (${tileX}, ${tileY}) está fora dos limites válidos!`);
+        }
     
         return { tileX, tileY, worldX, worldY };
     }
 
     // Converter coordenadas de tile para coordenadas de mundo
-    tileToWorldCoords(tileX, tileY) {
+    tileToWorldCoords(x, y) {
         // Adicionar verificações de segurança para evitar erros quando tileConfig não estiver definido
         const tileWidth = this.sceneData?.tileConfig?.width || 80;
         const tileHeight = this.sceneData?.tileConfig?.height || 40;
-        
-        // Obter dimensões do viewport
+    
         const viewport = document.getElementById('preview-viewport');
         const canvasWidth = viewport.clientWidth || 800;
         const canvasHeight = viewport.clientHeight || 600;
+    
+        // Usar o mesmo offset da grid para centralização
+        const offsetX = canvasWidth / 2;
+        const offsetY = canvasHeight / 2;
+    
+        const worldX = (x - y) * tileWidth / 2 + offsetX;
+        const worldY = (x + y) * tileHeight / 2 + offsetY;
         
-        // Calcular coordenadas de mundo e adicionar o offset do centro do canvas
-        const worldX = (tileX - tileY) * tileWidth / 2 + (canvasWidth / 2);
-        const worldY = (tileX + tileY) * tileHeight / 2 + (canvasHeight / 2);
-        
+        // Log para depuração
+        console.log(`Convertendo tile (${x}, ${y}) para mundo: (${worldX}, ${worldY})`);
+    
         return { worldX, worldY };
     }
+    
 
     // Manipuladores de eventos do canvas
     handleCanvasMouseDown(e) {
@@ -2306,21 +2320,21 @@ class EngineTools {
         }
     }
 
+    // Verificar se um tile está dentro dos limites do mapa
+    isValidTile(tileX, tileY) {
+        // Tamanho fixo do mapa: 15x15 tiles
+        const fixedMapSize = 15;
+        
+        // Verificar se as coordenadas estão dentro da grade 15x15 começando de (0,0)
+        // Coordenadas válidas: 0 <= x < 15 e 0 <= y < 15
+        return tileX >= 0 && tileX < fixedMapSize && tileY >= 0 && tileY < fixedMapSize;
+    }
+    
     // Ferramentas de desenho específicas
     paintTile(tileX, tileY) {
-        // Obter o tamanho do grid a partir das configurações da cena
-        const gridSize = this.sceneData.settings.gridSize || 20;
-        const gridHalfSize = Math.floor(gridSize / 2);
-        
-        // Definir limites do grid
-        const gridMinX = -gridHalfSize;
-        const gridMaxX = gridHalfSize;
-        const gridMinY = -gridHalfSize;
-        const gridMaxY = gridHalfSize;
-        
-        // Verificar se as coordenadas estão dentro dos limites do grid
-        if (tileX < gridMinX || tileX > gridMaxX || tileY < gridMinY || tileY > gridMaxY) {
-            return; // Não pintar fora dos limites do grid
+        // Verificar se as coordenadas estão dentro dos limites do mapa
+        if (!this.isValidTile(tileX, tileY)) {
+            return; // Não pintar fora dos limites do mapa
         }
         
         const tileId = `tile_${tileX}_${tileY}_${this.currentLayer}`;
@@ -2396,6 +2410,11 @@ class EngineTools {
     }
 
     eraseTile(tileX, tileY) {
+        // Verificar se as coordenadas estão dentro dos limites do mapa
+        if (!this.isValidTile(tileX, tileY)) {
+            return; // Não apagar fora dos limites do mapa
+        }
+        
         // Salvar o estado atual antes de modificar
         const prevState = JSON.parse(JSON.stringify(this.sceneData.objects));
         
@@ -2437,6 +2456,11 @@ class EngineTools {
     }
 
     floodFill(startX, startY) {
+        // Verificar se as coordenadas iniciais estão dentro dos limites do mapa
+        if (!this.isValidTile(startX, startY)) {
+            return; // Não iniciar preenchimento fora dos limites do mapa
+        }
+        
         // Salvar o estado atual antes de modificar
         const prevState = JSON.parse(JSON.stringify(this.sceneData.objects));
         
@@ -2484,21 +2508,11 @@ class EngineTools {
         const maxIterations = 1000; // Limite de segurança
         let iterations = 0;
         
-        // Obter o tamanho do grid a partir das configurações da cena
-        const gridSize = this.sceneData.settings.gridSize || 20;
-        const gridHalfSize = Math.floor(gridSize / 2);
-        
-        // Definir limites do grid
-        const minX = -gridHalfSize;
-        const maxX = gridHalfSize;
-        const minY = -gridHalfSize;
-        const maxY = gridHalfSize;
-        
         while (stack.length > 0 && iterations < maxIterations) {
             const [x, y] = stack.pop();
             
-            // Verificar se as coordenadas estão dentro dos limites do grid
-            if (x < minX || x > maxX || y < minY || y > maxY) continue;
+            // Verificar se as coordenadas estão dentro dos limites do mapa
+            if (!this.isValidTile(x, y)) continue;
             
             const key = `${x},${y}`;
             
@@ -2515,12 +2529,12 @@ class EngineTools {
                 // Usar diretamente as coordenadas cartesianas para pintar o tile
                 this.paintTile(x, y);
                 
-                // Adicionar tiles adjacentes à pilha (apenas se estiverem dentro dos limites)
+                // Adicionar tiles adjacentes à pilha (a verificação de limites será feita na próxima iteração)
                 // Movimentos apenas nas 4 direções cardeais (norte, sul, leste, oeste)
-                if (x + 1 <= maxX) stack.push([x + 1, y]);
-                if (x - 1 >= minX) stack.push([x - 1, y]);
-                if (y + 1 <= maxY) stack.push([x, y + 1]);
-                if (y - 1 >= minY) stack.push([x, y - 1]);
+                stack.push([x + 1, y]);
+                stack.push([x - 1, y]);
+                stack.push([x, y + 1]);
+                stack.push([x, y - 1]);
             }
             
             iterations++;

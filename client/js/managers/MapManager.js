@@ -105,22 +105,59 @@ class MapManager {
         const width = this.map.width;
         const height = this.map.height;
         
+        // Calcular o raio do losango
+        let radius;
+        if (this.scene.engineTools && this.scene.engineTools.sceneData && this.scene.engineTools.sceneData.settings) {
+            if (this.scene.engineTools.sceneData.settings.mapRadius) {
+                // Usar raio explícito do mapa se disponível
+                radius = this.scene.engineTools.sceneData.settings.mapRadius;
+            } else if (this.scene.engineTools.sceneData.settings.mapWidth && this.scene.engineTools.sceneData.settings.mapHeight) {
+                // Calcular o raio com base nas dimensões do mapa
+                const halfWidth = Math.floor(this.scene.engineTools.sceneData.settings.mapWidth / 2);
+                const halfHeight = Math.floor(this.scene.engineTools.sceneData.settings.mapHeight / 2);
+                radius = Math.min(halfWidth, halfHeight);
+            } else {
+                // Fallback para o gridSize
+                const gridSize = this.scene.engineTools.sceneData.settings.gridSize || 20;
+                radius = Math.floor(gridSize / 2);
+            }
+        } else {
+            // Se não tiver acesso ao engineTools, usar as dimensões do mapa
+            radius = Math.min(Math.floor(width / 2), Math.floor(height / 2));
+        }
+        
+        // Função para verificar se um tile está dentro do losango
+        const isValidTile = (x, y) => {
+            // Converter para coordenadas relativas ao centro
+            const centerX = Math.floor(width / 2);
+            const centerY = Math.floor(height / 2);
+            const relX = x - centerX;
+            const relY = y - centerY;
+            
+            // Verificar se está dentro do losango
+            return Math.abs(relX) + Math.abs(relY) <= radius;
+        };
+        
         // Cria o grid vazio
         this.grid = new Array(height);
         for (let y = 0; y < height; y++) {
             this.grid[y] = new Array(width);
             for (let x = 0; x < width; x++) {
                 // 0 = caminho livre, 1 = obstáculo
-                this.grid[y][x] = 0;
+                // Marcar como obstáculo se estiver fora do losango
+                this.grid[y][x] = isValidTile(x, y) ? 0 : 1;
             }
         }
         
-        // Preenche o grid com os obstáculos
+        // Preenche o grid com os obstáculos do mapa
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
-                const tile = this.collisionLayer.getTileAt(x, y);
-                if (tile && this.collisionTiles.includes(tile.index)) {
-                    this.grid[y][x] = 1;
+                // Só verificar tiles dentro do losango
+                if (isValidTile(x, y)) {
+                    const tile = this.collisionLayer.getTileAt(x, y);
+                    if (tile && this.collisionTiles.includes(tile.index)) {
+                        this.grid[y][x] = 1;
+                    }
                 }
             }
         }
@@ -142,6 +179,44 @@ class MapManager {
             endX < 0 || endX >= this.map.width ||
             endY < 0 || endY >= this.map.height
         ) {
+            return null;
+        }
+        
+        // Calcular o raio do losango
+        let radius;
+        if (this.scene.engineTools && this.scene.engineTools.sceneData && this.scene.engineTools.sceneData.settings) {
+            if (this.scene.engineTools.sceneData.settings.mapRadius) {
+                // Usar raio explícito do mapa se disponível
+                radius = this.scene.engineTools.sceneData.settings.mapRadius;
+            } else if (this.scene.engineTools.sceneData.settings.mapWidth && this.scene.engineTools.sceneData.settings.mapHeight) {
+                // Calcular o raio com base nas dimensões do mapa
+                const halfWidth = Math.floor(this.scene.engineTools.sceneData.settings.mapWidth / 2);
+                const halfHeight = Math.floor(this.scene.engineTools.sceneData.settings.mapHeight / 2);
+                radius = Math.min(halfWidth, halfHeight);
+            } else {
+                // Fallback para o gridSize
+                const gridSize = this.scene.engineTools.sceneData.settings.gridSize || 20;
+                radius = Math.floor(gridSize / 2);
+            }
+        } else {
+            // Se não tiver acesso ao engineTools, usar as dimensões do mapa
+            radius = Math.min(Math.floor(this.map.width / 2), Math.floor(this.map.height / 2));
+        }
+        
+        // Função para verificar se um tile está dentro do losango
+        const isValidTile = (x, y) => {
+            // Converter para coordenadas relativas ao centro
+            const centerX = Math.floor(this.map.width / 2);
+            const centerY = Math.floor(this.map.height / 2);
+            const relX = x - centerX;
+            const relY = y - centerY;
+            
+            // Verificar se está dentro do losango
+            return Math.abs(relX) + Math.abs(relY) <= radius;
+        };
+        
+        // Verifica se as coordenadas estão dentro do losango
+        if (!isValidTile(startX, startY) || !isValidTile(endX, endY)) {
             return null;
         }
         
@@ -246,35 +321,99 @@ class MapManager {
         // Desenha o grid
         this.debugGraphics.lineStyle(1, 0x00ff00, 0.5);
         
-        // Desenha as linhas horizontais
-        for (let y = 0; y <= this.map.height; y++) {
-            for (let x = 0; x <= this.map.width; x++) {
-                const worldCoords = this.tileToWorldCoordinates(x, y);
-                if (x === 0) {
-                    this.debugGraphics.moveTo(worldCoords.x, worldCoords.y);
-                } else {
-                    this.debugGraphics.lineTo(worldCoords.x, worldCoords.y);
+        // Calcular o raio do losango
+        let radius;
+        if (this.scene.engineTools && this.scene.engineTools.sceneData && this.scene.engineTools.sceneData.settings) {
+            if (this.scene.engineTools.sceneData.settings.mapRadius) {
+                // Usar raio explícito do mapa se disponível
+                radius = this.scene.engineTools.sceneData.settings.mapRadius;
+            } else if (this.scene.engineTools.sceneData.settings.mapWidth && this.scene.engineTools.sceneData.settings.mapHeight) {
+                // Calcular o raio com base nas dimensões do mapa
+                const halfWidth = Math.floor(this.scene.engineTools.sceneData.settings.mapWidth / 2);
+                const halfHeight = Math.floor(this.scene.engineTools.sceneData.settings.mapHeight / 2);
+                radius = Math.min(halfWidth, halfHeight);
+            } else {
+                // Fallback para o gridSize
+                const gridSize = this.scene.engineTools.sceneData.settings.gridSize || 20;
+                radius = Math.floor(gridSize / 2);
+            }
+        } else {
+            // Se não tiver acesso ao engineTools, usar as dimensões do mapa
+            radius = Math.min(Math.floor(this.map.width / 2), Math.floor(this.map.height / 2));
+        }
+        
+        // Função para verificar se um tile está dentro do losango
+        const isValidTile = (x, y) => {
+            // Converter para coordenadas relativas ao centro
+            const centerX = Math.floor(this.map.width / 2);
+            const centerY = Math.floor(this.map.height / 2);
+            const relX = x - centerX;
+            const relY = y - centerY;
+            
+            // Verificar se está dentro do losango
+            return Math.abs(relX) + Math.abs(relY) <= radius;
+        };
+        
+        // Desenhar apenas os tiles dentro do losango
+        // Primeiro, determinar os limites do grid
+        const minX = 0;
+        const maxX = this.map.width;
+        const minY = 0;
+        const maxY = this.map.height;
+        
+        // Desenhar linhas horizontais apenas para tiles válidos
+        for (let y = minY; y <= maxY; y++) {
+            let lineStarted = false;
+            let lastX = null;
+            
+            for (let x = minX; x <= maxX; x++) {
+                if (isValidTile(x, y)) {
+                    const worldCoords = this.tileToWorldCoordinates(x, y);
+                    
+                    if (!lineStarted) {
+                        this.debugGraphics.moveTo(worldCoords.x, worldCoords.y);
+                        lineStarted = true;
+                    } else {
+                        this.debugGraphics.lineTo(worldCoords.x, worldCoords.y);
+                    }
+                    
+                    lastX = x;
+                } else if (lineStarted) {
+                    // Terminar a linha se sair do losango
+                    lineStarted = false;
                 }
             }
         }
         
-        // Desenha as linhas verticais
-        for (let x = 0; x <= this.map.width; x++) {
-            for (let y = 0; y <= this.map.height; y++) {
-                const worldCoords = this.tileToWorldCoordinates(x, y);
-                if (y === 0) {
-                    this.debugGraphics.moveTo(worldCoords.x, worldCoords.y);
-                } else {
-                    this.debugGraphics.lineTo(worldCoords.x, worldCoords.y);
+        // Desenhar linhas verticais apenas para tiles válidos
+        for (let x = minX; x <= maxX; x++) {
+            let lineStarted = false;
+            let lastY = null;
+            
+            for (let y = minY; y <= maxY; y++) {
+                if (isValidTile(x, y)) {
+                    const worldCoords = this.tileToWorldCoordinates(x, y);
+                    
+                    if (!lineStarted) {
+                        this.debugGraphics.moveTo(worldCoords.x, worldCoords.y);
+                        lineStarted = true;
+                    } else {
+                        this.debugGraphics.lineTo(worldCoords.x, worldCoords.y);
+                    }
+                    
+                    lastY = y;
+                } else if (lineStarted) {
+                    // Terminar a linha se sair do losango
+                    lineStarted = false;
                 }
             }
         }
         
-        // Desenha os obstáculos
+        // Desenha os obstáculos apenas dentro do losango
         this.debugGraphics.fillStyle(0xff0000, 0.3);
-        for (let y = 0; y < this.map.height; y++) {
-            for (let x = 0; x < this.map.width; x++) {
-                if (this.grid[y][x] === 1) {
+        for (let y = minY; y < maxY; y++) {
+            for (let x = minX; x < maxX; x++) {
+                if (isValidTile(x, y) && this.grid[y][x] === 1) {
                     // Desenha um retângulo para cada obstáculo
                     const worldCoords = this.tileToWorldCoordinates(x, y);
                     const tileWidth = this.map.tileWidth;
