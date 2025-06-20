@@ -17,6 +17,9 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
   }
   
   /* Header Styles */
@@ -940,17 +943,37 @@
     }
   }
   
-  /* Regras para forçar orientação horizontal em dispositivos móveis */
-  @media screen and (orientation: portrait) {
-    html {
-      transform: rotate(-90deg);
-      transform-origin: left top;
-      width: 100vh;
-      height: 100vw;
-      overflow-x: hidden;
-      position: absolute;
-      top: 100%;
-      left: 0;
+  /* Layout responsivo para dispositivos móveis - manter horizontal */
+  @media screen and (max-width: 768px) {
+    .main-container {
+      flex-direction: row;
+    }
+    
+    .sidebar-left,
+    .sidebar-right {
+      width: 200px;
+      min-width: 180px;
+      max-width: 220px;
+    }
+    
+    .preview-container {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .panel-content {
+      padding: 8px;
+    }
+    
+    .assets-grid {
+      grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+      gap: 6px;
+    }
+    
+    .asset-thumbnail {
+      width: 40px;
+      height: 40px;
+      font-size: 14px;
     }
   }
   
@@ -959,19 +982,37 @@
     .sidebar-left,
     .sidebar-right {
       width: 180px;
+      min-width: 160px;
+      max-width: 200px;
     }
     
     .panel-content {
-      padding: 8px;
+      padding: 12px;
     }
     
     .tools-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    
+    .tool-btn {
+      padding: 16px 8px;
+      min-height: 60px;
+    }
+    
+    .tool-icon {
+      font-size: 20px;
+      margin-bottom: 4px;
+    }
+    
+    .tool-label {
+      font-size: 12px;
     }
     
     .menu-bar {
-      padding: 4px 8px;
-      height: 40px;
+      padding: 8px 12px;
+      height: 48px;
+      flex-wrap: wrap;
     }
     
     .logo h1 {
@@ -980,15 +1021,36 @@
     }
     
     .menu-item {
-      padding: 4px 8px;
-      font-size: 12px;
+      padding: 6px 12px;
+      font-size: 14px;
+      min-height: 32px;
     }
     
     .btn-play,
     .btn-pause,
     .btn-stop {
-      padding: 4px 8px;
-      font-size: 12px;
+      padding: 8px 12px;
+      font-size: 14px;
+      min-height: 36px;
+    }
+    
+    .assets-grid {
+      grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+      gap: 12px;
+    }
+    
+    .asset-item {
+      padding: 12px 8px;
+    }
+    
+    .asset-thumbnail {
+      width: 50px;
+      height: 50px;
+      font-size: 18px;
+    }
+    
+    .preview-viewport {
+      touch-action: manipulation;
     }
   }
   
@@ -1118,18 +1180,38 @@
   
   /* Regras específicas para dispositivos móveis muito pequenos */
   @media (max-width: 480px) {
-    .sidebar-left,
-    .sidebar-right {
-      width: 100%;
-      max-height: 180px;
+    .main-container {
+      flex-direction: row;
     }
     
-    .panel {
-      min-width: 200px;
+    .sidebar-left,
+    .sidebar-right {
+      width: 160px;
+      min-width: 140px;
+      max-width: 180px;
+    }
+    
+    .preview-container {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .panel-content {
+      padding: 6px;
     }
     
     .tools-grid {
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    
+    .tool-btn {
+      padding: 12px 4px;
+      min-height: 50px;
+    }
+    
+    .tool-icon {
+      font-size: 16px;
     }
     
     .tool-label {
@@ -1137,7 +1219,8 @@
     }
     
     .menu-bar {
-      padding: 3px 5px;
+      padding: 6px 8px;
+      height: 44px;
     }
     
     .logo h1 {
@@ -1146,10 +1229,64 @@
     }
     
     .menu-item {
-      padding: 3px 5px;
-      font-size: 11px;
+      padding: 4px 8px;
+      font-size: 12px;
+      min-height: 28px;
+    }
+    
+    .btn-play,
+    .btn-pause,
+    .btn-stop {
+      padding: 6px 8px;
+      font-size: 12px;
+      min-height: 32px;
+    }
+    
+    .assets-grid {
+      grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+      gap: 8px;
+    }
+    
+    .asset-thumbnail {
+      width: 40px;
+      height: 40px;
+      font-size: 14px;
+    }
+    
+    .header-controls {
+      flex-wrap: wrap;
+      gap: 4px;
     }
   }
+  
+  /* Media query para tablets */
+  @media (min-width: 481px) and (max-width: 1024px) {
+    .sidebar-left,
+    .sidebar-right {
+      width: 220px;
+    }
+    
+    .tools-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    
+    .tool-btn {
+      padding: 14px 8px;
+      min-height: 55px;
+    }
+    
+    .assets-grid {
+      grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
+    }
+    
+    .asset-thumbnail {
+      width: 45px;
+      height: 45px;
+    }
+  }
+
+
   
   /* Scrollbar Styling */
   ::-webkit-scrollbar {

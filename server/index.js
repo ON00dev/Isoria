@@ -359,8 +359,13 @@ app.use((err, req, res, next) => {
 
 // Inicia o servidor
 const PORT = process.env.FRONTEND_PORT || 3555;
-server.listen(PORT, '127.0.0.1', () => {
-    console.log(`[Servidor] Rodando em http://127.0.0.1:${PORT}`);
+const HOST = process.env.HOST || '0.0.0.0';
+
+server.listen(PORT, HOST, () => {
+    console.log(`[Servidor] Rodando em:`);
+    console.log(`  - Local: http://127.0.0.1:${PORT}`);
+    console.log(`  - Rede: http://${getLocalIP()}:${PORT}`);
+    console.log(`  - Mobile: Acesse o IP da rede no seu dispositivo móvel`);
   }).on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
       console.error(`[Servidor] Porta ${PORT} já está em uso.`);
@@ -368,6 +373,29 @@ server.listen(PORT, '127.0.0.1', () => {
       throw err;
     }
   });
+
+// Função para obter o IP local da máquina
+function getLocalIP() {
+    const { networkInterfaces } = require('os');
+    const nets = networkInterfaces();
+    const results = {};
+    
+    for (const name of Object.keys(nets)) {
+        for (const net of nets[name]) {
+            // Pular endereços internos (localhost) e não IPv4
+            if (net.family === 'IPv4' && !net.internal) {
+                if (!results[name]) {
+                    results[name] = [];
+                }
+                results[name].push(net.address);
+            }
+        }
+    }
+    
+    // Retornar o primeiro IP encontrado ou localhost como fallback
+    const firstInterface = Object.keys(results)[0];
+    return firstInterface ? results[firstInterface][0] : '127.0.0.1';
+}
 
 // Tratamento de encerramento gracioso
 process.on('SIGINT', () => {

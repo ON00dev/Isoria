@@ -1201,11 +1201,96 @@ class EngineTools {
             this.addAssetToScene(assetData, e.clientX, e.clientY);
         });
         
-        // Eventos de desenho
+        // Eventos de desenho - Mouse
         viewport.addEventListener('mousedown', (e) => this.handleCanvasMouseDown(e));
         viewport.addEventListener('mousemove', (e) => this.handleCanvasMouseMove(e));
         viewport.addEventListener('mouseup', (e) => this.handleCanvasMouseUp(e));
         viewport.addEventListener('click', (e) => this.handleCanvasClick(e));
+        
+        // Eventos de desenho - Touch (Mobile)
+        viewport.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousedown', {
+                clientX: touch.clientX,
+                clientY: touch.clientY,
+                button: 0
+            });
+            this.handleCanvasMouseDown(mouseEvent);
+        }, { passive: false });
+        
+        viewport.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousemove', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            this.handleCanvasMouseMove(mouseEvent);
+        }, { passive: false });
+        
+        viewport.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            const mouseEvent = new MouseEvent('mouseup', {
+                clientX: 0,
+                clientY: 0,
+                button: 0
+            });
+            this.handleCanvasMouseUp(mouseEvent);
+        }, { passive: false });
+        
+        // Eventos de zoom - Wheel (Desktop)
+        viewport.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            this.handleZoom(e.deltaY > 0 ? -0.1 : 0.1);
+        });
+        
+        // Eventos de zoom - Pinch (Mobile)
+        let lastTouchDistance = 0;
+        viewport.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                lastTouchDistance = Math.sqrt(
+                    Math.pow(touch2.clientX - touch1.clientX, 2) +
+                    Math.pow(touch2.clientY - touch1.clientY, 2)
+                );
+            }
+        });
+        
+        viewport.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const currentDistance = Math.sqrt(
+                    Math.pow(touch2.clientX - touch1.clientX, 2) +
+                    Math.pow(touch2.clientY - touch1.clientY, 2)
+                );
+                
+                if (lastTouchDistance > 0) {
+                    const deltaDistance = currentDistance - lastTouchDistance;
+                    const zoomFactor = deltaDistance > 0 ? 0.05 : -0.05;
+                    this.handleZoom(zoomFactor);
+                }
+                
+                lastTouchDistance = currentDistance;
+            }
+        }, { passive: false });
+    }
+
+    // Função para manipular zoom da câmera
+    handleZoom(zoomFactor) {
+        if (this.scene && this.scene.cameras && this.scene.cameras.main) {
+            const currentZoom = this.scene.cameras.main.zoom;
+            const newZoom = currentZoom + zoomFactor;
+            
+            // Limitar o zoom entre 0.5x e 3x
+            this.scene.cameras.main.zoom = Math.max(0.5, Math.min(3, newZoom));
+            
+            // Atualizar informações da câmera
+            this.updateCameraInfo();
+        }
     }
 
     // Configurar eventos do menu
