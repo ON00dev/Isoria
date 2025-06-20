@@ -137,12 +137,18 @@ class EngineTools {
 
         const tileWidth = 80;
         const tileHeight = 40;
-        const mapWidth = 15;
-        const mapHeight = 15;
+        const mapSize = 15; // Grid 15x15
+        const halfMapSize = Math.floor(mapSize / 2); // 7
 
         const viewport = document.getElementById('preview-viewport');
         const canvasWidth = viewport.clientWidth || 800;
         const canvasHeight = viewport.clientHeight || 600;
+        
+        // Armazenar as dimensões usadas para criar o grid
+        this.gridDimensions = {
+            width: canvasWidth,
+            height: canvasHeight
+        };
 
         this.gridGroup = this.scene.add.group();
         this.gridGroup.setDepth(0);
@@ -151,10 +157,11 @@ class EngineTools {
         const offsetX = canvasWidth / 2;
         const offsetY = canvasHeight / 2;
 
-        // Loops para cobrir os tiles do mundo real, começando do canto superior esquerdo (0,0)
-        for (let y = 0; y < mapHeight; y++) {
-            for (let x = 0; x < mapWidth; x++) {
-                // Calcular coordenadas isométricas a partir das coordenadas do mundo (0,0 a 14,14)
+        // Criar grid centralizado onde (0,0) é o centro
+        // Coordenadas vão de (-7,-7) a (7,7) para um grid 15x15
+        for (let y = -halfMapSize; y <= halfMapSize; y++) {
+            for (let x = -halfMapSize; x <= halfMapSize; x++) {
+                // Calcular coordenadas isométricas usando o sistema centralizado
                 const centerX = (x - y) * tileWidth / 2;
                 const centerY = (x + y) * tileHeight / 2;
 
@@ -2072,31 +2079,25 @@ class EngineTools {
         // Salvar o estado atual antes de modificar
         const prevState = JSON.parse(JSON.stringify(this.sceneData.objects));
         
-        // Definir tamanho fixo do mapa (15x15)
-        const fixedMapSize = 15;
-        
-        // Definir limites do grid (0 a 14)
-        const minX = 0;
-        const maxX = fixedMapSize - 1;
-        const minY = 0;
-        const maxY = fixedMapSize - 1;
+        // Definir limites do grid centralizado (-7 a +7)
+        const halfMapSize = 7;
+        const minX = -halfMapSize;
+        const maxX = halfMapSize;
+        const minY = -halfMapSize;
+        const maxY = halfMapSize;
         
         // Remover todos os tiles da camada atual
         this.sceneData.objects = this.sceneData.objects.filter(obj => 
             !(obj.layer === this.currentLayer && obj.type === 'tile')
         );
         
-        // Preencher toda a área visível com a cor atual
-        // Importante: A lógica opera no grid cartesiano (x,y) de 0 a 14
-        // A transformação isométrica é usada apenas para renderização
+        // Preencher toda a área do grid com a cor atual
+        // Agora preenchemos todo o grid quadrado 15x15 sem filtro de losango
         for (let x = minX; x <= maxX; x++) {
             for (let y = minY; y <= maxY; y++) {
-                // Verificar se o tile está dentro do losango antes de adicioná-lo
-                if (!this.isValidTile(x, y)) continue;
-                
                 const tileId = `fill_${x}_${y}_${this.currentLayer}`;
                 
-                // Transformar coordenadas cartesianas para isométricas apenas para renderização
+                // Transformar coordenadas do grid centralizado para coordenadas de mundo
                 const worldCoords = this.tileToWorldCoords(x, y);
                 
                 const tileData = {
@@ -2141,12 +2142,25 @@ class EngineTools {
         const scrollX = this.scene?.cameras?.main?.scrollX || 0; 
         const scrollY = this.scene?.cameras?.main?.scrollY || 0; 
     
-        // Obter dimensões do viewport
+        // CORREÇÃO: Usar dimensões fixas ou armazenar as dimensões do grid
+        // Em vez de recalcular, usar as mesmas dimensões usadas na criação do grid
         const viewport = document.getElementById('preview-viewport');
-        const canvasWidth = viewport.clientWidth || 800;
-        const canvasHeight = viewport.clientHeight || 600;
         
-        // Calcular o centro do viewport
+        // Se o grid foi criado, usar suas dimensões armazenadas
+        // Caso contrário, usar as dimensões atuais
+        let canvasWidth, canvasHeight;
+        
+        if (this.gridDimensions) {
+            // Usar dimensões armazenadas quando o grid foi criado
+            canvasWidth = this.gridDimensions.width;
+            canvasHeight = this.gridDimensions.height;
+        } else {
+            // Fallback para dimensões atuais
+            canvasWidth = viewport.clientWidth || 800;
+            canvasHeight = viewport.clientHeight || 600;
+        }
+        
+        // Calcular o centro do viewport usando as mesmas dimensões do grid
         const centerX = canvasWidth / 2;
         const centerY = canvasHeight / 2;
         
@@ -2168,33 +2182,27 @@ class EngineTools {
         const isoX = (worldX / (tileWidth / 2) + worldY / (tileHeight / 2)) / 2;
         const isoY = (worldY / (tileHeight / 2) - worldX / (tileWidth / 2)) / 2;
         
-        // Arredondar para obter as coordenadas do tile
-        const centeredTileX = Math.floor(isoX);
-        const centeredTileY = Math.floor(isoY);
+        // Arredondar para obter as coordenadas do tile no sistema centralizado
+        const tileX = Math.round(isoX);
+        const tileY = Math.round(isoY);
         
-        // Converter para coordenadas começando de (0,0)
-        // Considerando um mapa 15x15, o canto superior esquerdo seria (-7,-7) nas coordenadas centradas
-        const fixedMapSize = 15;
-        const halfMapSize = Math.floor(fixedMapSize / 2);
-        
-        // Ajustar as coordenadas para começar de (0,0)
-        const tileX = centeredTileX + halfMapSize;
-        const tileY = centeredTileY + halfMapSize;
+        // Definir limites do grid centralizado (-7 a 7)
+        const halfMapSize = 7;
         
         // Log para depuração detalhado
-        console.log(`Conversão de coordenadas:`);
+        console.log(`Conversão de coordenadas (SISTEMA CENTRALIZADO):`);
         console.log(`- Zoom: ${zoom}`);
         console.log(`- Clique na tela: (${viewportX}, ${viewportY})`);
+        console.log(`- Dimensões usadas: ${canvasWidth}x${canvasHeight}`);
         console.log(`- Centro do viewport: (${centerX}, ${centerY})`);
         console.log(`- Delta do centro: (${deltaX}, ${deltaY})`);
         console.log(`- Coordenadas de mundo: (${worldX}, ${worldY})`);
         console.log(`- Coordenadas isométricas: (${isoX}, ${isoY})`);
-        console.log(`- Tile centrado: (${centeredTileX}, ${centeredTileY})`);
-        console.log(`- Tile final: (${tileX}, ${tileY})`);
+        console.log(`- Tile centralizado: (${tileX}, ${tileY})`);
         
-        // Verificar se o tile está dentro dos limites válidos
-        if (!this.isValidTile(tileX, tileY)) {
-            console.warn(`Tile (${tileX}, ${tileY}) está fora dos limites válidos!`);
+        // Verificar se o tile está dentro dos limites válidos (-7 a 7)
+        if (tileX < -halfMapSize || tileX > halfMapSize || tileY < -halfMapSize || tileY > halfMapSize) {
+            console.warn(`Tile (${tileX}, ${tileY}) está fora dos limites válidos (-${halfMapSize} a ${halfMapSize})!`);
         }
     
         return { tileX, tileY, worldX, worldY };
@@ -2206,19 +2214,28 @@ class EngineTools {
         const tileWidth = this.sceneData?.tileConfig?.width || 80;
         const tileHeight = this.sceneData?.tileConfig?.height || 40;
     
-        const viewport = document.getElementById('preview-viewport');
-        const canvasWidth = viewport.clientWidth || 800;
-        const canvasHeight = viewport.clientHeight || 600;
+        // Usar as mesmas dimensões do grid armazenadas
+        let canvasWidth, canvasHeight;
+        
+        if (this.gridDimensions) {
+            canvasWidth = this.gridDimensions.width;
+            canvasHeight = this.gridDimensions.height;
+        } else {
+            const viewport = document.getElementById('preview-viewport');
+            canvasWidth = viewport.clientWidth || 800;
+            canvasHeight = viewport.clientHeight || 600;
+        }
     
         // Usar o mesmo offset da grid para centralização
         const offsetX = canvasWidth / 2;
         const offsetY = canvasHeight / 2;
     
+        // Converter coordenadas do sistema centralizado para mundo
         const worldX = (x - y) * tileWidth / 2 + offsetX;
         const worldY = (x + y) * tileHeight / 2 + offsetY;
         
         // Log para depuração
-        console.log(`Convertendo tile (${x}, ${y}) para mundo: (${worldX}, ${worldY})`);
+        console.log(`Convertendo tile centralizado (${x}, ${y}) para mundo: (${worldX}, ${worldY})`);
     
         return { worldX, worldY };
     }
@@ -2322,12 +2339,12 @@ class EngineTools {
 
     // Verificar se um tile está dentro dos limites do mapa
     isValidTile(tileX, tileY) {
-        // Tamanho fixo do mapa: 15x15 tiles
-        const fixedMapSize = 15;
+        // Sistema de coordenadas centralizado: grid 15x15 com coordenadas de -7 a 7
+        const halfMapSize = 7;
         
-        // Verificar se as coordenadas estão dentro da grade 15x15 começando de (0,0)
-        // Coordenadas válidas: 0 <= x < 15 e 0 <= y < 15
-        return tileX >= 0 && tileX < fixedMapSize && tileY >= 0 && tileY < fixedMapSize;
+        // Verificar se as coordenadas estão dentro da grade centralizada
+        // Coordenadas válidas: -7 <= x <= 7 e -7 <= y <= 7
+        return tileX >= -halfMapSize && tileX <= halfMapSize && tileY >= -halfMapSize && tileY <= halfMapSize;
     }
     
     // Ferramentas de desenho específicas
