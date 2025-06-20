@@ -824,6 +824,16 @@ class EngineTools {
         assetItem.dataset.assetId = asset.id;
         assetItem.dataset.assetType = asset.type;
         
+        // Adicionar caminho do asset se disponível
+        if (asset.path) {
+            assetItem.dataset.assetPath = asset.path;
+        } else if (asset.svgContent) {
+            const blob = new Blob([asset.svgContent], { type: 'image/svg+xml' });
+            const svgUrl = URL.createObjectURL(blob);
+            assetItem.dataset.assetPath = svgUrl;
+            asset.path = svgUrl;
+        }
+        
         assetItem.innerHTML = `
             <div class="asset-thumbnail">${asset.icon}</div>
             <span class="asset-name">${asset.name}</span>
@@ -890,6 +900,14 @@ class EngineTools {
         assetItem.dataset.assetId = asset.id;
         assetItem.dataset.assetType = asset.type;
         
+        // Criar um blob URL para o SVG se disponível
+        if (asset.svgContent) {
+            const blob = new Blob([asset.svgContent], { type: 'image/svg+xml' });
+            const svgUrl = URL.createObjectURL(blob);
+            assetItem.dataset.assetPath = svgUrl;
+            asset.path = svgUrl; // Adicionar o caminho ao objeto asset
+        }
+        
         assetItem.innerHTML = `
             <div class="asset-thumbnail">📄</div>
             <span class="asset-name">${asset.name}</span>
@@ -920,14 +938,20 @@ class EngineTools {
 
     // Criar textura de cor personalizada
     createCustomColorTexture(color) {
+        const svgContent = this.generateColorSVG(color);
         const customAsset = {
             id: `color-${color.substring(1)}`,
             name: `Cor ${color}`,
             type: 'biome',
             icon: '🎨',
             color: color,
-            svgContent: this.generateColorSVG(color)
+            svgContent: svgContent
         };
+        
+        // Criar blob URL para o SVG
+        const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+        const svgUrl = URL.createObjectURL(blob);
+        customAsset.path = svgUrl;
         
         this.addAssetToCategory(customAsset, 'custom-assets');
         this.logMessage(`Textura de cor ${color} criada`, 'info');
@@ -1911,6 +1935,7 @@ class EngineTools {
             position: [worldX, worldY],
             tilePosition: [tileX, tileY],
             visible: true,
+            layer: this.currentLayer || 'ground', // Adicionar camada atual
             properties: {},
             svgPath: assetData.path || null // Armazenar o caminho do SVG se disponível
         };
@@ -1920,6 +1945,7 @@ class EngineTools {
         
         // Atualizar a interface
         this.buildSceneHierarchy();
+        this.updateSceneRender(); // Renderizar o novo objeto na cena
         this.saveSceneToServer();
         
         this.logMessage(`Asset ${assetData.name} adicionado à cena`, 'info');
@@ -2697,7 +2723,8 @@ class EngineTools {
         
         // Criar objetos baseados nos dados da cena
         this.sceneData.objects.forEach(obj => {
-            if (!this.layerVisibility[obj.layer]) return; // Pular se camada estiver oculta
+            // Pular se camada estiver oculta (permitir objetos sem camada definida)
+            if (obj.layer && !this.layerVisibility[obj.layer]) return;
             
             if (obj.type === 'tile' && obj.color) {
                 // Criar tile colorido
@@ -2779,6 +2806,14 @@ class EngineTools {
             }
         }
         
+        // Procurar no mapa de assets carregados
+        if (this.assets && this.assets.has(key)) {
+            const asset = this.assets.get(key);
+            if (asset.path) {
+                return asset.path;
+            }
+        }
+        
         // Se não encontrar, verificar se é um dos tipos padrão
         const defaultPaths = {
             'player': '/assets/svg/player.svg',
@@ -2798,29 +2833,83 @@ class EngineTools {
             return;
         }
         
-        // Carregar o SVG
-        fetch(svgPath)
-            .then(response => response.text())
-            .then(svgContent => {
-                // Criar um elemento de imagem para o SVG
-                const img = new Image();
-                const svg64 = btoa(svgContent);
-                const b64Start = 'data:image/svg+xml;base64,';
-                img.src = b64Start + svg64;
-                
-                // Quando a imagem carregar, criar a textura
-                img.onload = () => {
-                    scene.textures.addImage(key, img);
-                    if (callback) callback(scene.textures.get(key));
-                };
-                
-                img.onerror = (err) => {
-                    console.error('Erro ao carregar SVG:', err);
-                };
-            })
-            .catch(error => {
-                console.error('Erro ao buscar SVG:', error);
-            });
+        console.log('Carregando SVG:', key, svgPath);
+        
+        // Verificar se é um blob URL
+        if (svgPath.startsWith('blob:')) {
+            // Para blob URLs, carregar diretamente como imagem
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.src = svgPath;
+            
+            img.onload = () => {
+                console.log('SVG blob carregado com sucesso:', key);
+                scene.textures.addImage(key, img);
+                if (callback) callback(scene.textures.get(key));
+            };
+            
+            img.onerror = (err) => {
+                console.error('Erro ao carregar SVG blob:', key, err);
+                // Fallback: criar textura vazia
+                this.createFallbackTexture(scene, key, callback);
+            };
+        } else {
+            // Para URLs normais, usar fetch
+            fetch(svgPath)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.text();
+                })
+                .then(svgContent => {
+                    // Criar um elemento de imagem para o SVG
+                    const img = new Image();
+                    const svg64 = btoa(svgContent);
+                    const b64Start = 'data:image/svg+xml;base64,';
+                    img.src = b64Start + svg64;
+                    
+                    // Quando a imagem carregar, criar a textura
+                    img.onload = () => {
+                        console.log('SVG carregado com sucesso:', key);
+                        scene.textures.addImage(key, img);
+                        if (callback) callback(scene.textures.get(key));
+                    };
+                    
+                    img.onerror = (err) => {
+                        console.error('Erro ao carregar SVG:', key, err);
+                        this.createFallbackTexture(scene, key, callback);
+                    };
+                })
+                .catch(error => {
+                    console.error('Erro ao buscar SVG:', key, error);
+                    this.createFallbackTexture(scene, key, callback);
+                });
+        }
+    }
+    
+    // Criar textura de fallback
+    createFallbackTexture(scene, key, callback) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 64;
+        canvas.height = 64;
+        const ctx = canvas.getContext('2d');
+        
+        // Desenhar um quadrado colorido como fallback
+        ctx.fillStyle = '#ff6b6b';
+        ctx.fillRect(0, 0, 64, 64);
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(0, 0, 64, 64);
+        
+        // Adicionar texto
+        ctx.fillStyle = '#fff';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('?', 32, 36);
+        
+        scene.textures.addCanvas(key, canvas);
+        if (callback) callback(scene.textures.get(key));
     }
     
     // ===== SISTEMA DE CAMADAS =====
