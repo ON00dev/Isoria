@@ -24,6 +24,7 @@ class EngineTools {
         this.gameObjects = new Map();
         this.assets = new Map();
         this.sceneData = null;
+        this.hoverHighlight = null;
         this.projectData = {
             name: 'Untitled Project',
             scenes: [],
@@ -465,9 +466,18 @@ class EngineTools {
             item.classList.remove('selected');
         });
         
+        // Remover highlight de hover ao selecionar
+        this.removeHoverHighlight();
+        
         // Selecionar novo objeto
         element.classList.add('selected');
         this.selectedObject = objectId;
+        
+        // Destacar objeto no mundo visual
+        const objectData = this.getObjectData(objectId);
+        if (objectData) {
+            this.highlightSelectedObject(objectData);
+        }
         
         // Atualizar inspector
         this.updateInspector(objectId);
@@ -514,12 +524,20 @@ class EngineTools {
                         <input type="number" value="${objectData.scale ? objectData.scale[2] : 1}" data-property="scale.z" data-object="${objectId}">
                     </div>
                 </div>
+                <div class="property-group">
+                    <label>Depth Override</label>
+                    <select data-property="depthOverride" data-object="${objectId}">
+                        <option value="" ${!objectData.depthOverride && objectData.depthOverride !== 0 ? 'selected' : ''}>Auto (isométrico)</option>
+                        <option value="0" ${objectData.depthOverride === 0 ? 'selected' : ''}>Trás</option>
+                        <option value="1" ${objectData.depthOverride === 1 ? 'selected' : ''}>Frente</option>
+                    </select>
+                </div>
             </div>
         `;
         
-        // Adicionar eventos aos inputs
-        inspectorContent.querySelectorAll('input').forEach(input => {
-            input.addEventListener('change', (e) => {
+        // Adicionar eventos aos inputs e selects
+        inspectorContent.querySelectorAll('input, select').forEach(element => {
+            element.addEventListener('change', (e) => {
                 this.updateObjectProperty(e.target.dataset.object, e.target.dataset.property, e.target.value);
             });
         });
@@ -534,6 +552,23 @@ class EngineTools {
     updateObjectProperty(objectId, property, value) {
         const objectData = this.getObjectData(objectId);
         if (!objectData) return;
+        
+        // Lidar com propriedades simples como depthOverride
+        if (!property.includes('.')) {
+            if (property === 'depthOverride') {
+                if (value === '') {
+                    objectData.depthOverride = null;
+                } else {
+                    const numValue = parseInt(value);
+                    objectData.depthOverride = (numValue === 0 || numValue === 1) ? numValue : null;
+                }
+                // Atualizar renderização para aplicar nova profundidade
+                this.updateSceneRender();
+                return;
+            }
+            objectData[property] = parseFloat(value);
+            return;
+        }
         
         const [prop, axis] = property.split('.');
         const numValue = parseFloat(value);
@@ -555,6 +590,11 @@ class EngineTools {
             } else if (prop === 'scale') {
                 object3D.scale.fromArray(objectData.scale);
             }
+        }
+        
+        // Atualizar modal Scale se estiver aberto e a propriedade for escala
+        if (prop === 'scale') {
+            this.updateScaleModalIfOpen(objectId);
         }
         
         // Salvar no servidor
@@ -1921,10 +1961,10 @@ class EngineTools {
         const worldX = (viewportX / zoom) + scrollX;
         const worldY = (viewportY / zoom) + scrollY;
         
-        // Converter para coordenadas de tile isométrico (se necessário)
-        // Adicionar verificações de segurança para evitar erros quando tileConfig não estiver definido
-        const tileX = Math.floor(worldX / (this.sceneData && this.sceneData.tileConfig ? this.sceneData.tileConfig.width : 80));
-        const tileY = Math.floor(worldY / (this.sceneData && this.sceneData.tileConfig ? this.sceneData.tileConfig.height : 40));
+        // Converter para coordenadas de tile isométrico usando o mesmo método do screenToTileCoords
+        const coords = this.screenToTileCoords(x, y);
+        const tileX = coords.tileX;
+        const tileY = coords.tileY;
         
         // Criar objeto de dados para o novo elemento
         const objectData = {
@@ -1959,6 +1999,7 @@ class EngineTools {
         
         // Atualizar interface
         this.buildSceneHierarchy();
+        this.updateSceneRender(); // Atualizar renderização para remover visualmente
         this.updateInspector(null);
         this.selectedObject = null;
         
@@ -1976,6 +2017,9 @@ class EngineTools {
             this.selectionHighlight.destroy();
             this.selectionHighlight = null;
         }
+        
+        // Remover highlight de hover
+        this.removeHoverHighlight();
         
         this.selectedObject = null;
         this.updateInspector(null);
@@ -2107,10 +2151,10 @@ class EngineTools {
     // Obter cursor para cada ferramenta
     getToolCursor(toolName) {
         const cursors = {
-            'select': 'default',
+            'select': 'pointer',
             'move': 'move',
             'rotate': 'grab',
-            'scale': 'nw-resize',
+            'scale': 'pointer',
             'paint': 'crosshair',
             'brush': 'crosshair',
             'fill': 'crosshair',
@@ -2413,6 +2457,14 @@ class EngineTools {
             return;
         }
         
+        // Detectar hover sobre objetos apenas quando a ferramenta Select estiver ativa
+        if (this.currentTool === 'select') {
+            this.handleObjectHover(e.clientX, e.clientY);
+        } else {
+            // Remover highlight de hover se não estiver na ferramenta Select
+            this.removeHoverHighlight();
+        }
+        
         if (!this.isDrawing) return;
         
         const coords = this.screenToTileCoords(e.clientX, e.clientY);
@@ -2454,11 +2506,20 @@ class EngineTools {
     handleCanvasClick(e) {
         if (this.currentTool === 'select') {
             // Lógica de seleção de objetos
-            this.selectObjectAtPosition(e.clientX, e.clientY);
+            this.handleObjectSelect(e.clientX, e.clientY);
         } else if (this.currentTool === 'move') {
             // Lógica de movimentação de objetos
             this.handleObjectMove(e.clientX, e.clientY);
+        } else if (this.currentTool === 'scale') {
+            // Lógica de redimensionamento de objetos
+            this.handleObjectScale(e.clientX, e.clientY);
         }
+    }
+    
+    // Manipular seleção de objetos
+    handleObjectSelect(screenX, screenY) {
+        // Simplesmente selecionar o objeto na posição clicada
+        this.selectObjectAtPosition(screenX, screenY);
     }
     
     // Manipular movimentação de objetos
@@ -2480,6 +2541,60 @@ class EngineTools {
                 this.logMessage('Objeto selecionado para movimentação. Clique na nova posição.', 'info');
             }
         }
+    }
+    
+    // Manipular redimensionamento de objetos
+    handleObjectScale(screenX, screenY) {
+        if (this.selectedObject) {
+            // Mostrar modal para escala
+            this.showScaleModal();
+        } else {
+            // Selecionar objeto na posição clicada para redimensionamento
+            this.selectObjectAtPosition(screenX, screenY);
+            if (this.selectedObject) {
+                this.logMessage('Objeto selecionado para redimensionamento. Clique novamente para alterar a escala.', 'info');
+            }
+        }
+    }
+    
+    // Obter escala atual do objeto
+    getObjectScale(objectId) {
+        const objectData = this.sceneData.objects.find(obj => obj.id === objectId);
+        if (objectData && objectData.scale) {
+            return objectData.scale[0]; // Assumindo escala uniforme
+        }
+        return 1; // Escala padrão
+    }
+    
+    // Redimensionar objeto
+    scaleObject(objectId, newScale) {
+        const objectIndex = this.sceneData.objects.findIndex(obj => obj.id === objectId);
+        
+        if (objectIndex === -1) {
+            this.logMessage('Objeto não encontrado para redimensionamento', 'error');
+            return;
+        }
+        
+        const objectData = this.sceneData.objects[objectIndex];
+        
+        // Atualizar escala nos dados
+        objectData.scale = [newScale, newScale, newScale];
+        
+        // Atualizar objeto 3D se existir
+        if (this.scene && this.scene.children) {
+            const object3D = this.scene.children.getByName(objectId);
+            if (object3D) {
+                object3D.scale.set(newScale, newScale, newScale);
+            }
+        }
+        
+        // Atualizar renderização
+        this.updateSceneRender();
+        this.buildSceneHierarchy();
+        this.updateInspector(objectId);
+        this.saveSceneToServer();
+        
+        this.logMessage(`Objeto redimensionado para escala ${newScale}`, 'success');
     }
     
     // Mover objeto para nova posição
@@ -2785,9 +2900,24 @@ class EngineTools {
         );
         
         if (objectAtPosition) {
+            // Remover highlight de hover ao selecionar
+            this.removeHoverHighlight();
+            
+            // Remover seleção anterior na hierarquia
+            document.querySelectorAll('.tree-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
             this.selectedObject = objectAtPosition.id;
-            this.updateInspector(objectAtPosition);
+            this.updateInspector(objectAtPosition.id);
             this.buildSceneHierarchy();
+            
+            // Selecionar o item correspondente na hierarquia
+            const hierarchyItem = document.querySelector(`[data-id="${objectAtPosition.id}"]`);
+            if (hierarchyItem) {
+                hierarchyItem.classList.add('selected');
+            }
+            
             this.highlightSelectedObject(objectAtPosition);
             this.logMessage(`Objeto selecionado: ${objectAtPosition.name}`, 'info');
         } else {
@@ -2815,6 +2945,55 @@ class EngineTools {
                 40
             );
             this.selectionHighlight.setDepth(200); // Acima de tudo
+        }
+    }
+
+    // Detectar hover sobre objetos e mostrar highlight temporário
+    handleObjectHover(screenX, screenY) {
+        const coords = this.screenToTileCoords(screenX, screenY);
+        
+        // Encontrar objeto na posição do mouse
+        const objectAtPosition = this.sceneData.objects.find(obj => 
+            obj.tilePosition && obj.tilePosition[0] === coords.tileX && obj.tilePosition[1] === coords.tileY
+        );
+        
+        if (objectAtPosition && objectAtPosition.id !== this.selectedObject) {
+            // Mostrar highlight de hover se não for o objeto já selecionado
+            this.showHoverHighlight(objectAtPosition);
+        } else {
+            // Remover highlight de hover se não há objeto ou é o objeto selecionado
+            this.removeHoverHighlight();
+        }
+    }
+
+    // Mostrar highlight temporário para hover
+    showHoverHighlight(object) {
+        if (this.phaserGame && this.phaserGame.scene.scenes[0]) {
+            const scene = this.phaserGame.scene.scenes[0];
+            
+            // Remover highlight de hover anterior
+            if (this.hoverHighlight) {
+                this.hoverHighlight.destroy();
+            }
+            
+            // Criar novo highlight de hover (cor diferente e mais transparente)
+            this.hoverHighlight = scene.add.graphics();
+            this.hoverHighlight.lineStyle(2, 0x00ff00, 0.6); // Mais transparente que o de seleção
+            this.hoverHighlight.strokeRect(
+                object.position[0] - 20, 
+                object.position[1] - 20, 
+                40, 
+                40
+            );
+            this.hoverHighlight.setDepth(199); // Abaixo do highlight de seleção
+        }
+    }
+
+    // Remover highlight de hover
+    removeHoverHighlight() {
+        if (this.hoverHighlight) {
+            this.hoverHighlight.destroy();
+            this.hoverHighlight = null;
         }
     }
 
@@ -2862,9 +3041,15 @@ class EngineTools {
                     graphics.fillPath();
                     graphics.strokePath();
                     
-                    // Definir uma profundidade intermediária para os tiles
-                    // Acima da grade (0), mas abaixo dos sprites (100)
-                    graphics.setDepth(50);
+                    // Definir profundidade: usar override se disponível, senão usar profundidade isométrica
+                const isometricDepth = obj.tilePosition ? obj.tilePosition[1] * 10 + 50 : 50;
+                let finalDepth = isometricDepth;
+                if (obj.depthOverride === 0) {
+                    finalDepth = 10; // Trás - valor baixo
+                } else if (obj.depthOverride === 1) {
+                    finalDepth = 1000; // Frente - valor alto
+                }
+                graphics.setDepth(finalDepth);
                 }
             } else if (obj.type === 'sprite' && obj.key) {
                 // Carregar e exibir o SVG como sprite
@@ -2874,8 +3059,16 @@ class EngineTools {
                 if (svgPath) {
                     // Criar um container para o SVG
                     const container = scene.add.container(obj.position[0], obj.position[1]);
-                    // Definir uma profundidade alta para garantir que o sprite apareça acima das grades
-                    container.setDepth(100);
+                    // Definir profundidade: usar override se disponível, senão usar profundidade isométrica
+                    // Sprites com Y maior (mais abaixo) ficam na frente, com offset para ficar acima dos tiles
+                    const isometricDepth = obj.tilePosition ? obj.tilePosition[1] * 10 + 100 : 100;
+                    let finalDepth = isometricDepth;
+                    if (obj.depthOverride === 0) {
+                        finalDepth = 10; // Trás - valor baixo
+                    } else if (obj.depthOverride === 1) {
+                        finalDepth = 1000; // Frente - valor alto
+                    }
+                    container.setDepth(finalDepth);
                     
                     // Carregar o SVG como textura
                     this.loadSVGAsTexture(scene, obj.id, svgPath, (texture) => {
@@ -2893,8 +3086,16 @@ class EngineTools {
                         0x00ff00
                     );
                     rect.setStrokeStyle(2, 0x000000);
-                    // Definir uma profundidade alta para garantir que o retângulo apareça acima das grades
-                    rect.setDepth(100);
+                    // Definir profundidade: usar override se disponível, senão usar profundidade isométrica
+                    // Sprites com Y maior (mais abaixo) ficam na frente, com offset para ficar acima dos tiles
+                    const isometricDepth = obj.tilePosition ? obj.tilePosition[1] * 10 + 100 : 100;
+                    let finalDepth = isometricDepth;
+                    if (obj.depthOverride === 0) {
+                        finalDepth = 10; // Trás - valor baixo
+                    } else if (obj.depthOverride === 1) {
+                        finalDepth = 1000; // Frente - valor alto
+                    }
+                    rect.setDepth(finalDepth);
                 }
             }
         });
@@ -3053,7 +3254,7 @@ class EngineTools {
         // Atualizar indicadores de visibilidade
         document.querySelectorAll('.layer-visibility').forEach(btn => {
             const layer = btn.dataset.layer;
-            btn.classList.toggle('hidden', !this.layerVisibility[layer]);
+            btn.classList.toggle('layer-hidden', !this.layerVisibility[layer]);
         });
     }
 
@@ -3087,6 +3288,159 @@ class EngineTools {
         
         return defaultAssets[assetId] || { id: assetId, name: assetId, type: 'custom' };
     }
+
+    // Métodos do Modal Scale
+    showScaleModal() {
+        if (!this.selectedObject) {
+            this.logMessage('Nenhum objeto selecionado para redimensionar', 'warning');
+            return;
+        }
+
+        const objectData = this.getObjectData(this.selectedObject);
+        if (!objectData) {
+            this.logMessage('Dados do objeto não encontrados', 'error');
+            return;
+        }
+
+        const currentScale = this.getObjectScale(this.selectedObject);
+        
+        // Atualizar informações do modal
+        document.getElementById('scaleObjectName').textContent = objectData.asset || this.selectedObject;
+        document.getElementById('scaleCurrentValue').textContent = currentScale.toFixed(2);
+        
+        // Configurar valores iniciais
+        const scaleInput = document.getElementById('scaleInput');
+        const scaleSlider = document.getElementById('scaleSlider');
+        const scalePercentage = document.getElementById('scalePercentage');
+        
+        scaleInput.value = currentScale.toFixed(2);
+        scaleSlider.value = Math.round(currentScale * 100);
+        scalePercentage.textContent = Math.round(currentScale * 100) + '%';
+        
+        // Mostrar modal
+        document.getElementById('scaleModal').style.display = 'block';
+        
+        // Configurar event listeners se ainda não foram configurados
+        if (!this.scaleModalInitialized) {
+            this.initializeScaleModal();
+            this.scaleModalInitialized = true;
+        }
+    }
+
+    initializeScaleModal() {
+        const modal = document.getElementById('scaleModal');
+        const closeBtn = document.getElementById('scaleModalClose');
+        const cancelBtn = document.getElementById('scaleBtnCancel');
+        const applyBtn = document.getElementById('scaleBtnApply');
+        const scaleInput = document.getElementById('scaleInput');
+        const scaleSlider = document.getElementById('scaleSlider');
+        const scalePercentage = document.getElementById('scalePercentage');
+        const presetBtns = document.querySelectorAll('.scale-preset-btn');
+
+        // Fechar modal
+        const closeModal = () => {
+            modal.style.display = 'none';
+        };
+
+        closeBtn.addEventListener('click', closeModal);
+        cancelBtn.addEventListener('click', closeModal);
+        
+        // Fechar ao clicar fora do modal
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        // Sincronizar slider e input
+        const updateValues = (scale) => {
+            const percentage = Math.round(scale * 100);
+            scaleInput.value = scale.toFixed(2);
+            scaleSlider.value = percentage;
+            scalePercentage.textContent = percentage + '%';
+            
+            // Atualizar botões preset
+            presetBtns.forEach(btn => {
+                btn.classList.toggle('active', parseFloat(btn.dataset.scale) === scale);
+            });
+        };
+
+        scaleSlider.addEventListener('input', (e) => {
+            const scale = parseFloat(e.target.value) / 100;
+            updateValues(scale);
+        });
+
+        scaleInput.addEventListener('input', (e) => {
+            const scale = parseFloat(e.target.value) || 0.1;
+            const clampedScale = Math.max(0.1, Math.min(3, scale));
+            updateValues(clampedScale);
+        });
+
+        // Botões preset
+        presetBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const scale = parseFloat(btn.dataset.scale);
+                updateValues(scale);
+            });
+        });
+
+        // Aplicar escala
+        applyBtn.addEventListener('click', () => {
+            const newScale = parseFloat(scaleInput.value);
+            if (newScale > 0 && newScale <= 3) {
+                this.scaleObject(this.selectedObject, newScale);
+                closeModal();
+            } else {
+                this.logMessage('Escala deve estar entre 0.1 e 3.0', 'warning');
+            }
+        });
+
+        // Aplicar com Enter
+        scaleInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                applyBtn.click();
+            }
+        });
+
+        // Fechar com Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.style.display === 'block') {
+                closeModal();
+            }
+        });
+     }
+
+     // Atualizar modal Scale se estiver aberto
+     updateScaleModalIfOpen(objectId) {
+         const modal = document.getElementById('scaleModal');
+         if (!modal || modal.style.display !== 'block') {
+             return; // Modal não está aberto
+         }
+
+         // Verificar se é o mesmo objeto
+         if (this.selectedObject !== objectId) {
+             return; // Objeto diferente
+         }
+
+         const currentScale = this.getObjectScale(objectId);
+         const scaleInput = document.getElementById('scaleInput');
+         const scaleSlider = document.getElementById('scaleSlider');
+         const scalePercentage = document.getElementById('scalePercentage');
+         const scaleCurrentValue = document.getElementById('scaleCurrentValue');
+
+         if (scaleInput && scaleSlider && scalePercentage && scaleCurrentValue) {
+             scaleInput.value = currentScale.toFixed(2);
+             scaleSlider.value = Math.round(currentScale * 100);
+             scalePercentage.textContent = Math.round(currentScale * 100) + '%';
+             scaleCurrentValue.textContent = currentScale.toFixed(2);
+
+             // Atualizar botões preset
+             const presetBtns = document.querySelectorAll('.scale-preset-btn');
+             presetBtns.forEach(btn => {
+                 btn.classList.toggle('active', parseFloat(btn.dataset.scale) === currentScale);
+             });
+         }
+     }
 }
 
 // Inicializar quando o DOM estiver carregado
