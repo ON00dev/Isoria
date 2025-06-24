@@ -99,7 +99,16 @@ class EngineTools {
         this.animate();
         
         // Redimensionamento
-        window.addEventListener('resize', () => this.onWindowResize());
+        window.addEventListener('resize', () => {
+            // Debounce para redimensionamento da janela
+            if (this.windowResizeTimeout) {
+                clearTimeout(this.windowResizeTimeout);
+            }
+            this.windowResizeTimeout = setTimeout(() => {
+                this.onWindowResize();
+                this.windowResizeTimeout = null;
+            }, 100);
+        });
     }
     
     // Criar cena isométrica
@@ -145,12 +154,24 @@ class EngineTools {
         const canvasWidth = viewport.clientWidth || 800;
         const canvasHeight = viewport.clientHeight || 600;
         
+        // Verificar se as dimensões mudaram significativamente (mais de 5px)
+        if (this.gridDimensions && 
+            Math.abs(this.gridDimensions.width - canvasWidth) < 5 && 
+            Math.abs(this.gridDimensions.height - canvasHeight) < 5) {
+            return; // Não recriar o grid se as dimensões são praticamente as mesmas
+        }
+        
         // Armazenar as dimensões usadas para criar o grid
         this.gridDimensions = {
             width: canvasWidth,
             height: canvasHeight
         };
 
+        // Criar ou recriar o grupo do grid
+        if (this.gridGroup) {
+            this.gridGroup.clear(true, true);
+            this.gridGroup.destroy();
+        }
         this.gridGroup = this.scene.add.group();
         this.gridGroup.setDepth(0);
 
@@ -330,8 +351,10 @@ class EngineTools {
             // Recriar a grade isométrica com as novas dimensões
             if (this.gridGroup) {
                 this.gridGroup.clear(true, true); // Remove todos os elementos da grade
-                this.setupIsometricGrid(); // Recria a grade com as novas dimensões
+                this.gridGroup.destroy(); // Destruir o grupo completamente
+                this.gridGroup = null; // Limpar referência
             }
+            this.setupIsometricGrid(); // Recria a grade com as novas dimensões
             
             this.logMessage('Viewport redimensionado e grade isométrica atualizada', 'info');
         }
@@ -1454,6 +1477,16 @@ class EngineTools {
             isResizing = false;
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
+            
+            // Disparar redimensionamento do viewport após mudança nos painéis
+            // Usar debounce para evitar múltiplas recriações do grid
+            if (this.resizeTimeout) {
+                clearTimeout(this.resizeTimeout);
+            }
+            this.resizeTimeout = setTimeout(() => {
+                this.onWindowResize();
+                this.resizeTimeout = null;
+            }, 50);
         };
     }
 
