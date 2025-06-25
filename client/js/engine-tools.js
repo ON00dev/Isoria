@@ -360,6 +360,13 @@ class EngineTools {
                 this.gridGroup.destroy(); // Destruir o grupo completamente
                 this.gridGroup = null; // Limpar referência
             }
+            
+            // Garantir que a visibilidade do grid seja mantida após o redimensionamento
+            // Se o usuário ainda não interagiu com o botão de alternância, manter o grid visível
+            if (!this.gridVisibilityUserSet) {
+                this.gridVisible = true;
+            }
+            
             this.setupIsometricGrid(); // Recria a grade com as novas dimensões
             
             this.logMessage('Viewport redimensionado e grade isométrica atualizada', 'info');
@@ -423,7 +430,7 @@ class EngineTools {
             id: 'scene-root',
             name: this.sceneData.name,
             type: 'scene',
-            icon: '📁'
+            icon: '<i class="fi fi-bs-folder"></i>'
         });
         hierarchyTree.appendChild(sceneItem);
         
@@ -448,7 +455,7 @@ class EngineTools {
         item.dataset.type = data.type;
         
         item.innerHTML = `
-            <span class="tree-icon"><i class="fi fi-rs-house-tree"></i></span>
+            <span class="tree-icon">${data.icon}</span>
             <span class="tree-label">${data.name}</span>
             <span class="tree-delete" title="Remover item"><i class="fi fi-rs-trash"></i></span>
         `;
@@ -473,19 +480,19 @@ class EngineTools {
     // Obter ícone do objeto
     getObjectIcon(type) {
         const icons = {
-            'sprite': '🖼️',
-            'tile': '🧩',
-            'player': '👤',
-            'npc': '👥',
-            'item': '🎁',
-            'trigger': '⚡',
-            'audio': '🎵',
-            'script': '📜',
-            'group': '📁',
-            'tilelayer': '🗺️',
-            'objectlayer': '🏷️'
+            'sprite': '<i class="fi fi-ss-mode-landscape"></i>',
+            'tile': '<i class="fi fi-rc-floor-alt"></i>',
+            'player': '<i class="fi fi-sr-user-pen"></i>',
+            'npc': '<i class="fi fi-ss-users-alt"></i>',
+            'item': '<i class="fi fi-ss-users-alt"></i>',
+            'trigger': '<i class="fi fi-rr-bolt"></i>',
+            'audio': '<i class="fi fi-ss-music"></i>',
+            'script': '<i class="fi fi-rs-display-code"></i>',
+            'group': '<i class="fi fi-rs-folders"></i>',
+            'tilelayer': '<i class="fi fi-rs-map"></i>',
+            'objectlayer': '<i class="fi fi-rr-label"></i>'
         };
-        return icons[type] || '🧩';
+        return icons[type] || '<i class="fi fi-ss-mode-landscape"></i>';
     }
 
     // Selecionar objeto
@@ -1012,7 +1019,7 @@ class EngineTools {
             id: `color-${color.substring(1)}`,
             name: `Cor ${color}`,
             type: 'biome',
-            icon: '🎨',
+            icon: '<i class="fi fi-tr-folder-archive"></i>',
             color: color,
             svgContent: svgContent
         };
@@ -1486,12 +1493,23 @@ class EngineTools {
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
             
+            // Salvar o estado atual da visibilidade do grid antes do redimensionamento
+            const currentGridVisible = this.gridVisible;
+            
             // Disparar redimensionamento do viewport após mudança nos painéis
             // Usar debounce para evitar múltiplas recriações do grid
             if (this.resizeTimeout) {
                 clearTimeout(this.resizeTimeout);
             }
             this.resizeTimeout = setTimeout(() => {
+                // Se o usuário ainda não interagiu com o botão de alternância, manter o grid visível
+                if (!this.gridVisibilityUserSet) {
+                    this.gridVisible = true;
+                } else {
+                    // Caso contrário, restaurar o estado anterior
+                    this.gridVisible = currentGridVisible;
+                }
+                
                 this.onWindowResize();
                 this.resizeTimeout = null;
             }, 50);
@@ -3052,23 +3070,35 @@ class EngineTools {
     updateSceneRender() {
         if (this.phaserGame && this.phaserGame.scene.scenes[0]) {
             const scene = this.phaserGame.scene.scenes[0];
-            // Recriar objetos da cena
-            scene.children.removeAll();
+            // Remover apenas objetos da cena, preservando o grid
+            scene.children.list.forEach(child => {
+                // Preservar o gridGroup e seus elementos
+                if (this.gridGroup && (child === this.gridGroup || this.gridGroup.children.entries.includes(child))) {
+                    return; // Não remover elementos do grid
+                }
+                // Remover outros objetos
+                child.destroy();
+            });
             this.createSceneObjects(scene);
         }
     }
 
     createSceneObjects(scene) {
-        // Apenas definir a visibilidade inicial do grid se o usuário ainda não interagiu com o botão
-        // e se não houver objetos na cena
-        if (!this.gridVisibilityUserSet && this.sceneData.objects.length === 0) {
-            // Comportamento padrão: grid visível quando não há objetos
+        // Se o usuário ainda não interagiu com o botão de alternância do grid,
+        // mantenha o grid visível independentemente de haver objetos na cena
+        if (!this.gridVisibilityUserSet) {
+            // Comportamento padrão: grid sempre visível até que o usuário decida alternar
             this.gridVisible = true;
         }
         // Caso contrário, manter a visibilidade definida pelo usuário
         
-        // Recriar grade isométrica
-        this.setupIsometricGrid();
+        // Configurar grade isométrica (criar apenas se não existir)
+        if (!this.gridGroup || this.gridGroup.scene !== scene) {
+            this.setupIsometricGrid();
+        } else {
+            // Apenas atualizar visibilidade se o grid já existe
+            this.gridGroup.setVisible(this.gridVisible);
+        }
         
         // Criar objetos baseados nos dados da cena
         this.sceneData.objects.forEach(obj => {
@@ -3313,7 +3343,18 @@ class EngineTools {
         // Atualizar indicadores de visibilidade
         document.querySelectorAll('.layer-visibility').forEach(btn => {
             const layer = btn.dataset.layer;
-            btn.classList.toggle('layer-hidden', !this.layerVisibility[layer]);
+            const isHidden = !this.layerVisibility[layer];
+            btn.classList.toggle('layer-hidden', isHidden);
+            
+            // Trocar ícone dinamicamente
+            const iconElement = btn.querySelector('.visibility-icon i');
+            if (iconElement) {
+                if (isHidden) {
+                    iconElement.className = 'fi fi-rs-crossed-eye';
+                } else {
+                    iconElement.className = 'fi fi-rs-eye';
+                }
+            }
         });
     }
 

@@ -439,12 +439,8 @@ app.post('/api/scene/save', (req, res) => {
 app.get('/api/assets', (req, res) => {
     // Retornar lista de assets
     res.json([
-        { id: 'cube', name: 'Cube', type: 'geometry', icon: '📦' },
-        { id: 'sphere', name: 'Sphere', type: 'geometry', icon: '⚪' },
-        { id: 'plane', name: 'Plane', type: 'geometry', icon: '⬜' },
-        { id: 'cylinder', name: 'Cylinder', type: 'geometry', icon: '🥫' },
-        { id: 'default-material', name: 'Default Material', type: 'material', icon: '🎨' },
-        { id: 'default-texture', name: 'Default Texture', type: 'texture', icon: '🖼️' }
+        { id: 'default-material', name: 'Default Material', type: 'material', icon: '<i class="fi fi-tr-folder-archive"></i>' },
+        { id: 'default-texture', name: 'Default Texture', type: 'texture', icon: '<i class="fi fi-ss-mode-landscape"></i>' }
     ]);
 });
 

@@ -558,9 +558,7 @@
     opacity: 0.3;
   }
   
-  .layer-visibility.layer-hidden .visibility-icon::before {
-    content: '🙈';
-  }
+
   
   .layer-btn {
     background: none;
