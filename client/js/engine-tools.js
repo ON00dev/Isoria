@@ -19,6 +19,8 @@ class EngineTools {
             obstacles: true,
             decoration: true
         };
+        this.gridVisible = true; // Controle de visibilidade do grid
+        this.gridVisibilityUserSet = false; // Flag para indicar se o usuário definiu manualmente a visibilidade do grid
         this.currentColor = 'rgba(255, 0, 0, 1)';
         this.backgroundColor = 'rgba(43, 43, 43, 1)';
         this.gameObjects = new Map();
@@ -157,7 +159,10 @@ class EngineTools {
         // Verificar se as dimensões mudaram significativamente (mais de 5px)
         if (this.gridDimensions && 
             Math.abs(this.gridDimensions.width - canvasWidth) < 5 && 
-            Math.abs(this.gridDimensions.height - canvasHeight) < 5) {
+            Math.abs(this.gridDimensions.height - canvasHeight) < 5 && 
+            this.gridGroup) {
+            // Apenas atualizar a visibilidade do grid existente
+            this.gridGroup.setVisible(this.gridVisible);
             return; // Não recriar o grid se as dimensões são praticamente as mesmas
         }
         
@@ -174,6 +179,7 @@ class EngineTools {
         }
         this.gridGroup = this.scene.add.group();
         this.gridGroup.setDepth(0);
+        this.gridGroup.setVisible(this.gridVisible); // Aplicar visibilidade atual
 
         // Centralizar grade no meio do canvas
         const offsetX = canvasWidth / 2;
@@ -442,9 +448,9 @@ class EngineTools {
         item.dataset.type = data.type;
         
         item.innerHTML = `
-            <span class="tree-icon">${data.icon}</span>
+            <span class="tree-icon"><i class="fi fi-rs-house-tree"></i></span>
             <span class="tree-label">${data.name}</span>
-            <span class="tree-delete" title="Remover item">🗑️</span>
+            <span class="tree-delete" title="Remover item"><i class="fi fi-rs-trash"></i></span>
         `;
         
         item.addEventListener('click', (e) => {
@@ -1142,6 +1148,8 @@ class EngineTools {
                     this.undo();
                 } else if (btn.id === 'redo-tool') {
                     this.redo();
+                } else if (btn.id === 'toggle-grid') {
+                    this.toggleGridVisibility();
                 } else {
                     this.selectPreviewTool(btn.id);
                 }
@@ -1965,6 +1973,16 @@ class EngineTools {
         document.title = `Isoria Engine - ${this.currentProjectName || 'Projeto Sem Nome'}`;
     }
 
+    // Método para alternar a visibilidade do grid
+    toggleGridVisibility() {
+        this.gridVisible = !this.gridVisible;
+        this.gridVisibilityUserSet = true; // Marcar que o usuário definiu manualmente a visibilidade
+        if (this.gridGroup) {
+            this.gridGroup.setVisible(this.gridVisible);
+        }
+        this.logMessage(`Grade isométrica ${this.gridVisible ? 'visível' : 'oculta'}`, 'info');
+    }
+    
     addAssetToScene(assetData, x, y) {
         let objectType, objectKey, objectName;
         
@@ -3041,6 +3059,14 @@ class EngineTools {
     }
 
     createSceneObjects(scene) {
+        // Apenas definir a visibilidade inicial do grid se o usuário ainda não interagiu com o botão
+        // e se não houver objetos na cena
+        if (!this.gridVisibilityUserSet && this.sceneData.objects.length === 0) {
+            // Comportamento padrão: grid visível quando não há objetos
+            this.gridVisible = true;
+        }
+        // Caso contrário, manter a visibilidade definida pelo usuário
+        
         // Recriar grade isométrica
         this.setupIsometricGrid();
         
@@ -3479,4 +3505,12 @@ class EngineTools {
 // Inicializar quando o DOM estiver carregado
 document.addEventListener('DOMContentLoaded', () => {
     window.engineTools = new EngineTools();
-});
+});item.innerHTML = `
+    <span class="tree-icon">${data.icon}</span>
+    <span class="tree-label">${data.name}</span>
+    <span class="tree-delete" title="Remover item"><i class="fi fi-rs-trash"></i></span>
+`;item.innerHTML = `
+    <span class="tree-icon">${data.icon}</span>
+    <span class="tree-label">${data.name}</span>
+    <span class="tree-delete" title="Remover item"><i class="fi fi-rs-trash"></i></span>
+`;

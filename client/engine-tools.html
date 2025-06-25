@@ -11,6 +11,14 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Isoria Game Engine</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.2/css/fontawesome.min.css">
+    <!-- Flaticon Uicons para os ícones fi -->    
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/uicons-solid-rounded/css/uicons-solid-rounded.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/uicons-bold-straight/css/uicons-bold-straight.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/uicons-regular-straight/css/uicons-regular-straight.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/uicons-thin-rounded/css/uicons-thin-rounded.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/uicons-thin-straight/css/uicons-thin-straight.css'>
     <link rel="stylesheet" href="css/engine-tools.css">
     <!-- Fabric.js para ferramentas de desenho -->
     <script src="https://cdn.jsdelivr.net/npm/fabric@latest/dist/fabric.min.js"></script>
@@ -53,9 +61,9 @@
                 </ul>
             </nav>
             <div class="header-controls">
-                <button class="btn-play" id="btn-play">▶</button>
-                <button class="btn-pause" id="btn-pause">⏸</button>
-                <button class="btn-stop" id="btn-stop">⏹</button>
+                <button class="btn-play" id="btn-play"><i class="fi fi-rr-play"></i></button>
+                <button class="btn-pause" id="btn-pause"><i class="fi fi-rr-pause"></i></button>
+                <button class="btn-stop" id="btn-stop"><i class="fi fi-bs-stop-circle"></i></button>
             </div>
         </div>
     </header>
@@ -86,7 +94,7 @@
                 <div class="panel-content">
                     <div class="assets-toolbar">
                         <input type="search" placeholder="Buscar assets..." class="search-input" id="asset-search">
-                        <button class="btn-icon" id="upload-asset" title="Upload SVG">📁</button>
+                        <button class="btn-icon" id="upload-asset" title="Upload SVG"><i class="fi fi-rr-folder-open"></i></button>
                         <input type="file" id="file-upload" accept=".svg" style="display: none;">
                     </div>
                     <div class="assets-grid" id="svg-assets-grid">
@@ -105,8 +113,9 @@
                     <button class="tab" data-tab="animation">Animation</button>
                 </div>
                 <div class="preview-controls">
-                    <button class="btn-icon" id="undo-tool" title="Desfazer">↩️</button>
-                    <button class="btn-icon" id="redo-tool" title="Refazer">↪️</button>
+                    <button class="btn-icon" id="undo-tool" title="Desfazer"><i class="fi fi-rr-arrow-small-left"></i></button>
+                    <button class="btn-icon" id="redo-tool" title="Refazer"><i class="fi fi-rr-arrow-small-right"></i></button>
+                    <button class="btn-icon" id="toggle-grid" title="Alternar Visibilidade do Grid"><i class="fi fi-rr-layout-fluid"></i></button>
                 </div>
             </div>
             <div class="preview-viewport" id="preview-viewport">
@@ -154,39 +163,39 @@
                     <div class="tools-grid">
 
                         <button class="tool-btn active" data-tool="select">
-                            <span class="tool-icon">👆</span>
+                            <span class="tool-icon"><i class="fi fi-rr-cursor-finger"></i></span>
                             <span class="tool-label">Select</span>
                         </button>
                         <button class="tool-btn" data-tool="move">
-                            <span class="tool-icon">↔️</span>
+                            <span class="tool-icon"><i class="fi fi-rs-arrows"></i></span>
                             <span class="tool-label">Move</span>
                         </button>
                         <button class="tool-btn" data-tool="rotate">
-                            <span class="tool-icon">🔄</span>
+                            <span class="tool-icon"><i class="fi fi-bs-refresh"></i></span>
                             <span class="tool-label">Rotate</span>
                         </button>
                         <button class="tool-btn" data-tool="scale">
-                            <span class="tool-icon">📏</span>
+                            <span class="tool-icon"><i class="fi fi-rs-ruler-combined"></i></span>
                             <span class="tool-label">Scale</span>
                         </button>
                         <button class="tool-btn" data-tool="paint">
-                            <span class="tool-icon">🖌️</span>
+                            <span class="tool-icon"><i class="fi fi-rr-pencil-paintbrush"></i></span>
                             <span class="tool-label">Paint</span>
                         </button>
                         <button class="tool-btn" data-tool="fill">
-                            <span class="tool-icon">🎆</span>
+                            <span class="tool-icon"><i class="fi fi-rs-fill"></i></span>
                             <span class="tool-label">Fill</span>
                         </button>
                         <button class="tool-btn" data-tool="eraser">
-                            <span class="tool-icon">🧽</span>
+                            <span class="tool-icon"><i class="fi fi-rs-eraser"></i></span>
                             <span class="tool-label">Eraser</span>
                         </button>
                         <button class="tool-btn" data-tool="pan">
-                            <span class="tool-icon">✋</span>
+                            <span class="tool-icon"><i class="fi fi-rs-resize"></i></span>
                             <span class="tool-label">Pan</span>
                         </button>
                         <button class="tool-btn" data-tool="terrain">
-                            <span class="tool-icon">🌍</span>
+                            <span class="tool-icon"><i class="fi fi-tr-land-layers"></i></span>
                             <span class="tool-label">Terrain</span>
                         </button>
                     </div>
@@ -266,7 +275,7 @@
                     <div class="layers-list">
                         <div class="layer-item">
                             <button class="layer-visibility" data-layer="decoration" title="Toggle visibility">
-                                <span class="visibility-icon">👁️</span>
+                                <span class="visibility-icon"><i class="fi fi-rs-eye"></i></span>
                             </button>
                             <button class="layer-btn" data-layer="decoration" title="Objetos decorativos como plantas, móveis, detalhes visuais">
                                 <span class="layer-name">Decoration</span>
@@ -275,7 +284,7 @@
                         </div>
                         <div class="layer-item">
                             <button class="layer-visibility" data-layer="obstacles" title="Toggle visibility">
-                                <span class="visibility-icon">👁️</span>
+                                <span class="visibility-icon"><i class="fi fi-rs-eye"></i></span>
                             </button>
                             <button class="layer-btn" data-layer="obstacles" title="Objetos que bloqueiam movimento como paredes, rochas, barreiras">
                                 <span class="layer-name">Obstacles</span>
@@ -284,7 +293,7 @@
                         </div>
                         <div class="layer-item">
                             <button class="layer-visibility" data-layer="ground" title="Toggle visibility">
-                                <span class="visibility-icon">👁️</span>
+                                <span class="visibility-icon"><i class="fi fi-rs-eye"></i></span>
                             </button>
                             <button class="layer-btn active" data-layer="ground">
                                 <span class="layer-name">Ground</span>
@@ -311,9 +320,9 @@
             </div>
             <div class="script-editor" id="script-editor" style="display: none;">
                 <div class="editor-toolbar">
-                    <button class="btn-icon" id="save-script">💾</button>
-                    <button class="btn-icon" id="run-script">▶</button>
-                    <button class="btn-icon" id="format-script">🎨</button>
+                    <button class="btn-icon" id="save-script"><i class="fi fi-rr-disk"></i></button>
+                    <button class="btn-icon" id="run-script"><i class="fi fi-rr-play"></i></button>
+                    <button class="btn-icon" id="format-script"><i class="fi fi-sr-align-center"></i></button>
                     <span class="script-name" id="script-name">scene_script.js</span>
                 </div>
                 <textarea id="script-content" class="script-textarea" placeholder="// Write your game script here..."></textarea>
