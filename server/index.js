@@ -9,6 +9,8 @@ const socketIO = require('socket.io');
 const path = require('path');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const multer = require('multer');
+const fs = require('fs');
 
 // Importa os gerenciadores e utilitários
 const RoomManager = require('./managers/RoomManager');
@@ -60,6 +62,67 @@ app.use((req, res, next) => {
         console.log('Headers:', JSON.stringify(req.headers, null, 2));
     }
     next();
+});
+
+// Configuração do multer para upload de arquivos
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const uploadDir = path.join(__dirname, '../public/assets/uploads');
+        // Criar diretório se não existir
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+        // Gerar nome único para o arquivo
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path.extname(file.originalname);
+        cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+    }
+});
+
+const upload = multer({ 
+    storage: storage,
+    fileFilter: function (req, file, cb) {
+        // Aceitar apenas SVG, JPG, JPEG e PNG
+        const allowedTypes = ['image/svg+xml', 'image/jpeg', 'image/jpg', 'image/png'];
+        if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Apenas arquivos SVG, JPG e PNG são permitidos'));
+        }
+    },
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB
+    }
+});
+
+// Endpoint para upload de assets
+app.post('/api/upload-asset', upload.single('asset'), (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'Nenhum arquivo foi enviado' });
+        }
+        
+        const filePath = `/assets/uploads/${req.file.filename}`;
+        
+        res.json({
+            success: true,
+            message: 'Arquivo enviado com sucesso',
+            path: filePath,
+            filename: req.file.filename,
+            originalName: req.file.originalname,
+            size: req.file.size,
+            mimetype: req.file.mimetype
+        });
+        
+        console.log(`Arquivo enviado: ${req.file.originalname} -> ${req.file.filename}`);
+        
+    } catch (error) {
+        console.error('Erro no upload:', error);
+        res.status(500).json({ error: 'Erro interno do servidor' });
+    }
 });
 
 // Configura o diretório estático para servir os arquivos do cliente

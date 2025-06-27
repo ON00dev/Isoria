@@ -539,25 +539,52 @@ class EngineTools {
                 <div class="property-group">
                     <label>Position</label>
                     <div class="vector-input">
-                        <input type="number" value="${objectData.position[0]}" data-property="position.x" data-object="${objectId}">
-                        <input type="number" value="${objectData.position[1]}" data-property="position.y" data-object="${objectId}">
-                        <input type="number" value="${objectData.position[2]}" data-property="position.z" data-object="${objectId}">
+                        <div class="vector-field">
+                            <label class="vector-label">X</label>
+                            <input type="number" value="${objectData.position[0]}" data-property="position.x" data-object="${objectId}">
+                        </div>
+                        <div class="vector-field">
+                            <label class="vector-label">Y</label>
+                            <input type="number" value="${objectData.position[1]}" data-property="position.y" data-object="${objectId}">
+                        </div>
+                        <div class="vector-field">
+                            <label class="vector-label">Z</label>
+                            <input type="number" value="${objectData.position[2]}" data-property="position.z" data-object="${objectId}">
+                        </div>
                     </div>
                 </div>
                 <div class="property-group">
                     <label>Rotation</label>
                     <div class="vector-input">
-                        <input type="number" value="${objectData.rotation ? objectData.rotation[0] : 0}" data-property="rotation.x" data-object="${objectId}">
-                        <input type="number" value="${objectData.rotation ? objectData.rotation[1] : 0}" data-property="rotation.y" data-object="${objectId}">
-                        <input type="number" value="${objectData.rotation ? objectData.rotation[2] : 0}" data-property="rotation.z" data-object="${objectId}">
+                        <div class="vector-field">
+                            <label class="vector-label">X</label>
+                            <input type="number" value="${objectData.rotation ? objectData.rotation[0] : 0}" data-property="rotation.x" data-object="${objectId}">
+                        </div>
+                        <div class="vector-field">
+                            <label class="vector-label">Y</label>
+                            <input type="number" value="${objectData.rotation ? objectData.rotation[1] : 0}" data-property="rotation.y" data-object="${objectId}">
+                        </div>
+                        <div class="vector-field">
+                            <label class="vector-label">Z</label>
+                            <input type="number" value="${objectData.rotation ? objectData.rotation[2] : 0}" data-property="rotation.z" data-object="${objectId}">
+                        </div>
                     </div>
                 </div>
                 <div class="property-group">
                     <label>Scale</label>
                     <div class="vector-input">
-                        <input type="number" value="${objectData.scale ? objectData.scale[0] : 1}" data-property="scale.x" data-object="${objectId}">
-                        <input type="number" value="${objectData.scale ? objectData.scale[1] : 1}" data-property="scale.y" data-object="${objectId}">
-                        <input type="number" value="${objectData.scale ? objectData.scale[2] : 1}" data-property="scale.z" data-object="${objectId}">
+                        <div class="vector-field">
+                            <label class="vector-label">X</label>
+                            <input type="number" value="${objectData.scale ? objectData.scale[0] : 1}" data-property="scale.x" data-object="${objectId}">
+                        </div>
+                        <div class="vector-field">
+                            <label class="vector-label">Y</label>
+                            <input type="number" value="${objectData.scale ? objectData.scale[1] : 1}" data-property="scale.y" data-object="${objectId}">
+                        </div>
+                        <div class="vector-field">
+                            <label class="vector-label">Z</label>
+                            <input type="number" value="${objectData.scale ? objectData.scale[2] : 1}" data-property="scale.z" data-object="${objectId}">
+                        </div>
                     </div>
                 </div>
                 <div class="property-group">
@@ -827,8 +854,13 @@ class EngineTools {
         
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
-            if (file && file.type === 'image/svg+xml') {
-                this.handleSVGUpload(file);
+            if (file) {
+                const allowedTypes = ['image/svg+xml', 'image/jpeg', 'image/jpg', 'image/png'];
+                if (allowedTypes.includes(file.type)) {
+                    this.handleFileUpload(file);
+                } else {
+                    this.logMessage('Apenas arquivos SVG, JPG e PNG são aceitos', 'warning');
+                }
             }
         });
     }
@@ -857,9 +889,6 @@ class EngineTools {
                 this.addAssetToCategory(asset, 'nature-assets');
             });
         }
-        
-        // Configurar upload de arquivos SVG
-        this.setupFileUpload();
     }
 
     // Adicionar asset ao painel
@@ -930,43 +959,105 @@ class EngineTools {
         categoryGrid.appendChild(assetItem);
     }
 
-    // Configurar upload de arquivos SVG
+    // Configurar upload de arquivos de imagem
     setupFileUpload() {
-        const uploadBtn = document.getElementById('upload-asset');
-        const fileInput = document.getElementById('file-upload');
-        
-        if (uploadBtn && fileInput) {
-            uploadBtn.addEventListener('click', () => {
-                fileInput.click();
-            });
+        // Aguardar um pouco para garantir que o DOM esteja completamente carregado
+        setTimeout(() => {
+            const uploadBtn = document.getElementById('upload-asset');
+            const fileInput = document.getElementById('file-upload');
             
-            fileInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file && file.type === 'image/svg+xml') {
-                    this.handleSVGUpload(file);
-                } else {
-                    this.logMessage('Apenas arquivos SVG são aceitos', 'warning');
-                }
-            });
-        }
+            console.log('setupFileUpload chamado');
+            console.log('uploadBtn:', uploadBtn);
+            console.log('fileInput:', fileInput);
+            
+            if (uploadBtn && fileInput) {
+                console.log('Elementos encontrados, configurando event listeners');
+                
+                // Limpar event listeners existentes
+                const newUploadBtn = uploadBtn.cloneNode(true);
+                uploadBtn.parentNode.replaceChild(newUploadBtn, uploadBtn);
+                
+                const newFileInput = fileInput.cloneNode(true);
+                fileInput.parentNode.replaceChild(newFileInput, fileInput);
+                
+                // Configurar event listeners
+                newUploadBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    console.log('Botão de upload clicado');
+                    newFileInput.click();
+                });
+                
+                newFileInput.addEventListener('change', (e) => {
+                    console.log('Arquivo selecionado:', e.target.files[0]);
+                    const file = e.target.files[0];
+                    if (file) {
+                        console.log('Tipo do arquivo:', file.type);
+                        const allowedTypes = ['image/svg+xml', 'image/jpeg', 'image/jpg', 'image/png'];
+                        if (allowedTypes.includes(file.type)) {
+                            console.log('Arquivo aceito, iniciando upload');
+                            this.handleFileUpload(file);
+                        } else {
+                            console.log('Tipo de arquivo não aceito:', file.type);
+                            this.logMessage('Apenas arquivos SVG, JPG e PNG são aceitos', 'warning');
+                        }
+                    }
+                    // Limpar o input para permitir selecionar o mesmo arquivo novamente
+                    e.target.value = '';
+                });
+                
+                console.log('Event listeners configurados com sucesso');
+            } else {
+                console.error('Elementos não encontrados:', { uploadBtn, fileInput });
+                console.log('Tentando novamente em 1 segundo...');
+                setTimeout(() => this.setupFileUpload(), 1000);
+            }
+        }, 100);
     }
 
-    // Processar upload de arquivo SVG
-    handleSVGUpload(file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const svgContent = e.target.result;
+    // Processar upload de arquivo de imagem
+    async handleFileUpload(file) {
+        console.log('handleFileUpload iniciado com arquivo:', file.name);
+        try {
+            // Criar FormData para enviar o arquivo
+            const formData = new FormData();
+            formData.append('asset', file);
+            
+            console.log('Enviando arquivo para /api/upload-asset');
+            
+            // Enviar arquivo para o servidor
+            const response = await fetch('/api/upload-asset', {
+                method: 'POST',
+                body: formData
+            });
+            
+            console.log('Resposta do servidor:', response.status, response.statusText);
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Erro na resposta:', errorText);
+                throw new Error(`Erro no upload: ${response.statusText}`);
+            }
+            
+            const result = await response.json();
+            console.log('Resultado do upload:', result);
+            
+            // Criar asset customizado
             const customAsset = {
                 id: `custom-${Date.now()}`,
-                name: file.name.replace('.svg', ''),
+                name: file.name.replace(/\.[^/.]+$/, ''), // Remove extensão
                 type: 'custom',
-                svgContent: svgContent
+                path: result.path,
+                fileType: file.type
             };
             
+            console.log('Asset criado:', customAsset);
             this.addCustomAssetToGrid(customAsset);
-            this.logMessage(`Asset SVG carregado: ${customAsset.name}`, 'success');
-        };
-        reader.readAsText(file);
+            this.logMessage(`Asset carregado: ${customAsset.name}`, 'success');
+            
+        } catch (error) {
+            console.error('Erro no upload:', error);
+            this.logMessage(`Erro no upload: ${error.message}`, 'error');
+        }
     }
     
     addCustomAssetToGrid(asset) {
@@ -976,16 +1067,31 @@ class EngineTools {
         assetItem.dataset.assetId = asset.id;
         assetItem.dataset.assetType = asset.type;
         
-        // Criar um blob URL para o SVG se disponível
-        if (asset.svgContent) {
+        // Definir o caminho do asset
+        if (asset.path) {
+            assetItem.dataset.assetPath = asset.path;
+        } else if (asset.svgContent) {
+            // Compatibilidade com assets SVG antigos
             const blob = new Blob([asset.svgContent], { type: 'image/svg+xml' });
             const svgUrl = URL.createObjectURL(blob);
             assetItem.dataset.assetPath = svgUrl;
-            asset.path = svgUrl; // Adicionar o caminho ao objeto asset
+            asset.path = svgUrl;
+        }
+        
+        // Escolher ícone baseado no tipo de arquivo
+        let thumbnail = '📄';
+        if (asset.fileType) {
+            if (asset.fileType.includes('svg')) {
+                thumbnail = '🎨';
+            } else if (asset.fileType.includes('png')) {
+                thumbnail = '🖼️';
+            } else if (asset.fileType.includes('jpg') || asset.fileType.includes('jpeg')) {
+                thumbnail = '📸';
+            }
         }
         
         assetItem.innerHTML = `
-            <div class="asset-thumbnail">📄</div>
+            <div class="asset-thumbnail">${thumbnail}</div>
             <span class="asset-name">${asset.name}</span>
         `;
         
@@ -1083,6 +1189,7 @@ class EngineTools {
         this.setupKeyboardShortcuts();
         this.setupResizers();
         this.setupAssetSearch();
+        this.setupFileUpload();
         
         // Inicializar ferramentas de desenho com Fabric.js
         this.initializeFabricDrawingTools();
@@ -3163,15 +3270,23 @@ class EngineTools {
                     this.loadSVGAsTexture(scene, obj.id, svgPath, (texture) => {
                         // Criar sprite com a textura
                         const sprite = scene.add.image(0, 0, obj.id);
-                        sprite.setScale(0.5); // Ajustar escala conforme necessário
+                        
+                        // Aplicar escala do objeto (se definida) ou usar escala padrão
+                        const objectScale = obj.scale ? obj.scale[0] : 1;
+                        sprite.setScale(objectScale);
+                        
                         container.add(sprite);
                     });
                 } else {
                     // Fallback: criar um retângulo colorido como placeholder
+                    const baseSize = 32;
+                    const objectScale = obj.scale ? obj.scale[0] : 1;
+                    const scaledSize = baseSize * objectScale;
+                    
                     const rect = scene.add.rectangle(
                         obj.position[0], 
                         obj.position[1], 
-                        32, 32, 
+                        scaledSize, scaledSize, 
                         0x00ff00
                     );
                     rect.setStrokeStyle(2, 0x000000);
@@ -3545,13 +3660,6 @@ class EngineTools {
 
 // Inicializar quando o DOM estiver carregado
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM carregado, inicializando EngineTools');
     window.engineTools = new EngineTools();
-});item.innerHTML = `
-    <span class="tree-icon">${data.icon}</span>
-    <span class="tree-label">${data.name}</span>
-    <span class="tree-delete" title="Remover item"><i class="fi fi-rs-trash"></i></span>
-`;item.innerHTML = `
-    <span class="tree-icon">${data.icon}</span>
-    <span class="tree-label">${data.name}</span>
-    <span class="tree-delete" title="Remover item"><i class="fi fi-rs-trash"></i></span>
-`;
+});
