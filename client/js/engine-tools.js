@@ -590,7 +590,7 @@ class EngineTools {
                 <div class="property-group">
                     <label>Depth Override</label>
                     <select data-property="depthOverride" data-object="${objectId}">
-                        <option value="" ${!objectData.depthOverride && objectData.depthOverride !== 0 ? 'selected' : ''}>Auto (isométrico)</option>
+                        <option value="" ${objectData.depthOverride === null ? 'selected' : ''}>Auto (isométrico)</option>
                         <option value="0" ${objectData.depthOverride === 0 ? 'selected' : ''}>Trás</option>
                         <option value="1" ${objectData.depthOverride === 1 ? 'selected' : ''}>Frente</option>
                     </select>
@@ -600,9 +600,16 @@ class EngineTools {
         
         // Adicionar eventos aos inputs e selects
         inspectorContent.querySelectorAll('input, select').forEach(element => {
-            element.addEventListener('change', (e) => {
+            // Remover eventos antigos para evitar duplicação
+            element.removeEventListener('change', this._handlePropertyChange);
+            
+            // Definir função de manipulação de eventos
+            this._handlePropertyChange = (e) => {
                 this.updateObjectProperty(e.target.dataset.object, e.target.dataset.property, e.target.value);
-            });
+            };
+            
+            // Adicionar evento de mudança
+            element.addEventListener('change', this._handlePropertyChange);
         });
     }
 
@@ -619,12 +626,25 @@ class EngineTools {
         // Lidar com propriedades simples como depthOverride
         if (!property.includes('.')) {
             if (property === 'depthOverride') {
+                // Verificar se é um asset (sprite) antes de aplicar depth override
+                if (objectData.type !== 'sprite') {
+                    this.logMessage('Depth override só pode ser aplicado a assets, não a tiles do grid', 'warning');
+                    return;
+                }
+                
+                // Forçar a atualização mesmo se o valor for o mesmo
+                const oldValue = objectData.depthOverride;
+                
                 if (value === '') {
                     objectData.depthOverride = null;
                 } else {
                     const numValue = parseInt(value);
                     objectData.depthOverride = (numValue === 0 || numValue === 1) ? numValue : null;
                 }
+                
+                // Registrar a mudança para debug
+                console.log(`Depth override alterado: ${oldValue} -> ${objectData.depthOverride}`);
+                
                 // Atualizar renderização para aplicar nova profundidade
                 this.updateSceneRender();
                 return;
@@ -3179,15 +3199,25 @@ class EngineTools {
     updateSceneRender() {
         if (this.phaserGame && this.phaserGame.scene.scenes[0]) {
             const scene = this.phaserGame.scene.scenes[0];
+            
+            // Criar uma cópia da lista para evitar problemas durante a iteração
+            const childrenToDestroy = [...scene.children.list];
+            
             // Remover apenas objetos da cena, preservando o grid
-            scene.children.list.forEach(child => {
+            childrenToDestroy.forEach(child => {
                 // Preservar o gridGroup e seus elementos
                 if (this.gridGroup && (child === this.gridGroup || this.gridGroup.children.entries.includes(child))) {
                     return; // Não remover elementos do grid
                 }
+                // Preservar highlights de seleção e hover
+                if (child === this.selectionHighlight || child === this.hoverHighlight) {
+                    return; // Não remover highlights
+                }
                 // Remover outros objetos
                 child.destroy();
             });
+            
+            // Recriar objetos da cena
             this.createSceneObjects(scene);
         }
     }
@@ -3239,15 +3269,9 @@ class EngineTools {
                     graphics.fillPath();
                     graphics.strokePath();
                     
-                    // Definir profundidade: usar override se disponível, senão usar profundidade isométrica
+                    // Para tiles, usar apenas profundidade isométrica (ignorar depthOverride)
                 const isometricDepth = obj.tilePosition ? obj.tilePosition[1] * 10 + 50 : 50;
-                let finalDepth = isometricDepth;
-                if (obj.depthOverride === 0) {
-                    finalDepth = 10; // Trás - valor baixo
-                } else if (obj.depthOverride === 1) {
-                    finalDepth = 1000; // Frente - valor alto
-                }
-                graphics.setDepth(finalDepth);
+                graphics.setDepth(isometricDepth);
                 }
             } else if (obj.type === 'sprite' && obj.key) {
                 // Carregar e exibir o SVG como sprite
@@ -3292,16 +3316,10 @@ class EngineTools {
                         0x00ff00
                     );
                     rect.setStrokeStyle(2, 0x000000);
-                    // Definir profundidade: usar override se disponível, senão usar profundidade isométrica
+                    // Para o quadrado verde (placeholder), usar apenas profundidade isométrica
                     // Sprites com Y maior (mais abaixo) ficam na frente, com offset para ficar acima dos tiles
                     const isometricDepth = obj.tilePosition ? obj.tilePosition[1] * 10 + 100 : 100;
-                    let finalDepth = isometricDepth;
-                    if (obj.depthOverride === 0) {
-                        finalDepth = 10; // Trás - valor baixo
-                    } else if (obj.depthOverride === 1) {
-                        finalDepth = 1000; // Frente - valor alto
-                    }
-                    rect.setDepth(finalDepth);
+                    rect.setDepth(isometricDepth);
                 }
             }
         });
