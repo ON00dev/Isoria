@@ -3070,9 +3070,10 @@ class EngineTools {
     selectObjectAtPosition(screenX, screenY) {
         const coords = this.screenToTileCoords(screenX, screenY);
         
-        // Encontrar objeto na posição clicada
+        // Encontrar objeto na posição clicada (apenas assets, não tiles do grid)
         const objectAtPosition = this.sceneData.objects.find(obj => 
-            obj.tilePosition && obj.tilePosition[0] === coords.tileX && obj.tilePosition[1] === coords.tileY
+            obj.tilePosition && obj.tilePosition[0] === coords.tileX && obj.tilePosition[1] === coords.tileY &&
+            obj.type === 'sprite' // Apenas assets (sprites), não tiles do grid
         );
         
         if (objectAtPosition) {
@@ -3128,9 +3129,10 @@ class EngineTools {
     handleObjectHover(screenX, screenY) {
         const coords = this.screenToTileCoords(screenX, screenY);
         
-        // Encontrar objeto na posição do mouse
+        // Encontrar objeto na posição do mouse (apenas assets, não tiles do grid)
         const objectAtPosition = this.sceneData.objects.find(obj => 
-            obj.tilePosition && obj.tilePosition[0] === coords.tileX && obj.tilePosition[1] === coords.tileY
+            obj.tilePosition && obj.tilePosition[0] === coords.tileX && obj.tilePosition[1] === coords.tileY &&
+            obj.type === 'sprite' // Apenas assets (sprites), não tiles do grid
         );
         
         if (objectAtPosition && objectAtPosition.id !== this.selectedObject) {
