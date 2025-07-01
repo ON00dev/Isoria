@@ -757,6 +757,34 @@
     user-select: text;
     max-height: 100%;
 }
+
+#sidebar-console {
+    min-height: 150px;
+    max-height: 200px;
+    border-top: 1px solid #404040;
+    background-color: #1e1e1e;
+    display: block !important; /* Garantir que o console seja sempre visível */
+    overflow-y: auto;
+    color: #ffffff; /* Garantir que o texto seja visível */
+    padding: 8px;
+    font-family: "Consolas", "Monaco", monospace;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+#sidebar-console .console-line {
+    margin-bottom: 4px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 4px;
+}
+
+#sidebar-console .console-line:last-child {
+    border-bottom: none;
+}
+
+#sidebar-console .console-line.log .message {
+    color: #ffffff;
+}
   
   .console-line {
     display: flex;
@@ -786,6 +814,14 @@
   
   .console-line.error .message {
     color: #ff4444;
+  }
+  
+  .console-line.log .message {
+    color: #88cc88;
+  }
+  
+  .console-line.success .message {
+    color: #44ff44;
   }
   
   /* Script Editor */

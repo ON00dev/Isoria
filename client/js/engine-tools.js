@@ -2299,23 +2299,45 @@ class EngineTools {
 
     // Sistema de log
     logMessage(message, type = 'info') {
-        const console = document.getElementById('console-output');
         const timestamp = new Date().toLocaleTimeString();
         
-        const logLine = document.createElement('div');
-        logLine.className = `console-line ${type}`;
-        logLine.innerHTML = `
-            <span class="timestamp">[${timestamp}]</span>
-            <span class="message">${message}</span>
-        `;
+        // Criar elemento de log
+        const createLogElement = () => {
+            const logLine = document.createElement('div');
+            logLine.className = `console-line ${type}`;
+            logLine.innerHTML = `
+                <span class="timestamp">[${timestamp}]</span>
+                <span class="message">${message}</span>
+            `;
+            return logLine;
+        };
         
-        console.appendChild(logLine);
-        console.scrollTop = console.scrollHeight;
+        // Adicionar ao console principal
+        const console = document.getElementById('console-output');
+        if (console) {
+            const logLine = createLogElement();
+            console.appendChild(logLine);
+            console.scrollTop = console.scrollHeight;
+            
+            // Limitar número de mensagens
+            const lines = console.querySelectorAll('.console-line');
+            if (lines.length > 100) {
+                lines[0].remove();
+            }
+        }
         
-        // Limitar número de mensagens
-        const lines = console.querySelectorAll('.console-line');
-        if (lines.length > 100) {
-            lines[0].remove();
+        // Adicionar ao console do sidebar-right
+        const sidebarConsole = document.getElementById('sidebar-console');
+        if (sidebarConsole) {
+            const logLine = createLogElement();
+            sidebarConsole.appendChild(logLine);
+            sidebarConsole.scrollTop = sidebarConsole.scrollHeight;
+            
+            // Limitar número de mensagens
+            const lines = sidebarConsole.querySelectorAll('.console-line');
+            if (lines.length > 100) {
+                lines[0].remove();
+            }
         }
     }
     
@@ -2324,8 +2346,14 @@ class EngineTools {
         const console = document.getElementById('console-output');
         if (!console) return;
         
-        // Remover todas as mensagens do console
+        // Remover todas as mensagens do console principal
         console.innerHTML = '';
+        
+        // Remover todas as mensagens do console do sidebar-right
+        const sidebarConsole = document.getElementById('sidebar-console');
+        if (sidebarConsole) {
+            sidebarConsole.innerHTML = '';
+        }
         
         // Adicionar mensagem informando que o console foi limpo
         this.logMessage('Console limpo', 'info');

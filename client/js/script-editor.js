@@ -111,6 +111,21 @@ class ScriptEditor {
         // Limpar o console
         this.clearConsole();
         
+        // Garantir que o console no sidebar-right esteja visível
+        const sidebarConsole = document.getElementById('sidebar-console');
+        if (sidebarConsole) {
+            sidebarConsole.style.display = 'block';
+            
+            // Garantir que o painel do console esteja visível
+            const panel = document.getElementById('sidebar-console-panel');
+            if (panel) {
+                const content = panel.querySelector('.panel-content');
+                if (content) {
+                    content.style.display = 'block';
+                }
+            }
+        }
+        
         // Executar o script usando a API da engine
         try {
             // Obter o código do CodeMirror
@@ -266,18 +281,47 @@ class ScriptEditor {
         
         const timestamp = new Date().toLocaleTimeString();
         
-        const logLine = document.createElement('div');
-        logLine.className = `console-line ${type}`;
-        logLine.innerHTML = `
-            <span class="timestamp">[${timestamp}]</span>
-            <span class="message">${message}</span>
-        `;
+        // Função para criar um elemento de log
+        const createLogElement = () => {
+            const logLine = document.createElement('div');
+            logLine.className = `console-line ${type}`;
+            logLine.innerHTML = `
+                <span class="timestamp">[${timestamp}]</span>
+                <span class="message">${message}</span>
+            `;
+            return logLine;
+        };
         
+        // Adicionar ao console principal
+        const logLine = createLogElement();
         this.consoleOutput.appendChild(logLine);
         this.consoleOutput.scrollTop = this.consoleOutput.scrollHeight;
         
-        // Limitar número de mensagens
+        // Limitar número de mensagens no console principal
         const lines = this.consoleOutput.querySelectorAll('.console-line');
+        
+        // Adicionar ao console do sidebar-right
+        const sidebarConsole = document.getElementById('sidebar-console');
+        if (sidebarConsole) {
+            const sidebarLogLine = createLogElement();
+            sidebarConsole.appendChild(sidebarLogLine);
+            sidebarConsole.scrollTop = sidebarConsole.scrollHeight;
+            
+            // Garantir que o painel do console esteja visível
+            const panel = document.getElementById('sidebar-console-panel');
+            if (panel) {
+                const content = panel.querySelector('.panel-content');
+                if (content) {
+                    content.style.display = 'block';
+                }
+            }
+            
+            // Limitar número de mensagens no console do sidebar
+            const sidebarLines = sidebarConsole.querySelectorAll('.console-line');
+            if (sidebarLines.length > 100) {
+                sidebarLines[0].remove();
+            }
+        }
         if (lines.length > 100) {
             lines[0].remove();
         }
@@ -286,8 +330,14 @@ class ScriptEditor {
     clearConsole() {
         if (!this.consoleOutput) return;
         
-        // Remover todas as mensagens do console
+        // Remover todas as mensagens do console principal
         this.consoleOutput.innerHTML = '';
+        
+        // Remover todas as mensagens do console do sidebar-right
+        const sidebarConsole = document.getElementById('sidebar-console');
+        if (sidebarConsole) {
+            sidebarConsole.innerHTML = '';
+        }
         
         // Adicionar mensagem informando que o console foi limpo
         this.logMessage('Console limpo', 'info');
@@ -333,4 +383,54 @@ class ScriptEditor {
 // Inicializar o editor quando o DOM estiver carregado
 document.addEventListener('DOMContentLoaded', function() {
     window.scriptEditor = new ScriptEditor();
+    
+    // Configurar eventos dos painéis para o console no sidebar-right
+    document.querySelectorAll('.panel-toggle').forEach(toggle => {
+        toggle.addEventListener('click', (e) => {
+            const panel = e.target.closest('.panel');
+            const content = panel.querySelector('.panel-content');
+            const isCollapsed = content.style.display === 'none';
+            
+            content.style.display = isCollapsed ? 'block' : 'none';
+            e.target.textContent = isCollapsed ? '−' : '+';
+        });
+    });
+    
+    // Garantir que o console no sidebar-right esteja visível
+    const sidebarConsolePanel = document.getElementById('sidebar-console-panel');
+    if (sidebarConsolePanel) {
+        const content = sidebarConsolePanel.querySelector('.panel-content');
+        if (content) {
+            content.style.display = 'block';
+        }
+    }
+    
+    // Adicionar mensagem inicial ao console do sidebar-right
+    const sidebarConsole = document.getElementById('sidebar-console');
+    if (sidebarConsole) {
+        // Limpar o console do sidebar-right
+        sidebarConsole.innerHTML = '';
+        
+        // Adicionar mensagem de inicialização
+        const timestamp = new Date().toLocaleTimeString();
+        const logLine = document.createElement('div');
+        logLine.className = 'console-line info';
+        logLine.innerHTML = `
+            <span class="timestamp">[${timestamp}]</span>
+            <span class="message">Console inicializado no sidebar-right</span>
+        `;
+        sidebarConsole.appendChild(logLine);
+        
+        // Adicionar mensagem de instrução
+        const logLine2 = document.createElement('div');
+        logLine2.className = 'console-line success';
+        logLine2.innerHTML = `
+            <span class="timestamp">[${timestamp}]</span>
+            <span class="message">Execute um script para ver as mensagens aqui</span>
+        `;
+        sidebarConsole.appendChild(logLine2);
+        
+        // Garantir que o console seja visível
+        sidebarConsole.style.display = 'block';
+    }
 });

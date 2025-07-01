@@ -276,16 +276,60 @@ class IsoriaEngine {
         const timestamp = new Date().toLocaleTimeString();
         const logMessage = `[${timestamp}] ${message}`;
         
-        console.log(logMessage);
+        // Usar o console original para evitar recursão infinita
+        if (this._originalConsoleLog) {
+            this._originalConsoleLog(logMessage);
+        } else {
+            console.log(logMessage);
+        }
         
-        // Enviar para o console da interface
-        const consoleElement = document.getElementById('script-console');
+        // Criar elemento de log
+        const createLogElement = () => {
+            const logLine = document.createElement('div');
+            logLine.className = `console-line ${type}`;
+            logLine.innerHTML = `
+                <span class="timestamp">[${timestamp}]</span>
+                <span class="message">${message}</span>
+            `;
+            return logLine;
+        };
+        
+        // Enviar para o console principal da interface
+        const consoleElement = document.getElementById('console-output');
         if (consoleElement) {
-            const logElement = document.createElement('div');
-            logElement.className = `log-${type}`;
-            logElement.textContent = logMessage;
-            consoleElement.appendChild(logElement);
+            const logLine = createLogElement();
+            consoleElement.appendChild(logLine);
             consoleElement.scrollTop = consoleElement.scrollHeight;
+            
+            // Garantir que o painel do console esteja visível
+            const bottomPanel = document.getElementById('bottom-panel');
+            if (bottomPanel && bottomPanel.style.display === 'none') {
+                bottomPanel.style.display = 'flex';
+            }
+        }
+        
+        // Enviar para o console do sidebar-right
+        const sidebarConsole = document.getElementById('sidebar-console');
+        if (sidebarConsole) {
+            const logLine = createLogElement();
+            sidebarConsole.appendChild(logLine);
+            sidebarConsole.scrollTop = sidebarConsole.scrollHeight;
+            
+            // Limitar o número de mensagens no sidebar-console
+            const maxMessages = 50;
+            const lines = sidebarConsole.querySelectorAll('.console-line');
+            if (lines.length > maxMessages) {
+                lines[0].remove();
+            }
+            
+            // Garantir que o painel do console esteja visível
+            const panel = document.getElementById('sidebar-console-panel');
+            if (panel) {
+                const content = panel.querySelector('.panel-content');
+                if (content) {
+                    content.style.display = 'block';
+                }
+            }
         }
     }
 
@@ -294,20 +338,97 @@ class IsoriaEngine {
         try {
             this.log('Executando script...');
             
+            // Garantir que o console no sidebar-right esteja visível
+            const sidebarConsole = document.getElementById('sidebar-console');
+            if (sidebarConsole) {
+                const panel = document.getElementById('sidebar-console-panel');
+                if (panel) {
+                    const content = panel.querySelector('.panel-content');
+                    if (content) {
+                        content.style.display = 'block';
+                    }
+                }
+            }
+            
             // Limpar objetos anteriores se necessário
             if (this.isRunning) {
                 this.stop();
             }
+            
+            // Salvar as funções originais do console
+            this._originalConsoleLog = console.log;
+            this._originalConsoleWarn = console.warn;
+            this._originalConsoleError = console.error;
+            
+            // Função auxiliar para formatar argumentos
+            const formatArgs = (args) => {
+                return args.map(arg => {
+                    if (arg === null) return 'null';
+                    if (arg === undefined) return 'undefined';
+                    if (typeof arg === 'object') {
+                        try {
+                            return JSON.stringify(arg, null, 2);
+                        } catch (e) {
+                            return String(arg);
+                        }
+                    }
+                    return String(arg);
+                }).join(' ');
+            };
+            
+            // Interceptar console.log
+            console.log = (...args) => {
+                // Chamar o console.log original
+                this._originalConsoleLog.apply(console, args);
+                
+                // Redirecionar para o console da interface
+                const message = formatArgs(args);
+                this.log(message, 'log');
+            };
+            
+            // Interceptar console.warn
+            console.warn = (...args) => {
+                // Chamar o console.warn original
+                this._originalConsoleWarn.apply(console, args);
+                
+                // Redirecionar para o console da interface
+                const message = formatArgs(args);
+                this.log(message, 'warning');
+            };
+            
+            // Interceptar console.error
+            console.error = (...args) => {
+                // Chamar o console.error original
+                this._originalConsoleError.apply(console, args);
+                
+                // Redirecionar para o console da interface
+                const message = formatArgs(args);
+                this.log(message, 'error');
+            };
             
             // Executar o código do script
             const scriptFunction = new Function(scriptCode);
             scriptFunction();
             
             this.isRunning = true;
-            this.log('Script executado com sucesso');
+            this.log('Script executado com sucesso', 'success');
             
         } catch (error) {
             this.log(`Erro na execução do script: ${error.message}`, 'error');
+        } finally {
+            // Restaurar as funções originais do console
+            if (this._originalConsoleLog) {
+                console.log = this._originalConsoleLog;
+                this._originalConsoleLog = null;
+            }
+            if (this._originalConsoleWarn) {
+                console.warn = this._originalConsoleWarn;
+                this._originalConsoleWarn = null;
+            }
+            if (this._originalConsoleError) {
+                console.error = this._originalConsoleError;
+                this._originalConsoleError = null;
+            }
         }
     }
 

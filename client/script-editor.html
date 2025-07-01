@@ -26,6 +26,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+    <!-- Phaser para o motor de jogos -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
     <!-- Fabric.js para ferramentas de desenho -->
     <script src="https://cdn.jsdelivr.net/npm/fabric@latest/dist/fabric.min.js"></script>
 </head>
@@ -99,6 +101,19 @@
                 <div class="panel-content">
                     <div id="preview-viewport" class="preview-viewport">
                         <canvas id="game-canvas"></canvas>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Console no Sidebar Right -->
+            <section class="panel" id="sidebar-console-panel">
+                <div class="panel-header">
+                    <h3>Console</h3>
+                    <button class="panel-toggle">−</button>
+                </div>
+                <div class="panel-content" style="display: block !important;">
+                    <div class="console-output" id="sidebar-console" style="display: block !important;">
+                        <!-- Mensagens do console carregadas dinamicamente -->
                     </div>
                 </div>
             </section>
