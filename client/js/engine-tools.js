@@ -2318,6 +2318,18 @@ class EngineTools {
             lines[0].remove();
         }
     }
+    
+    // Limpar o console
+    clearConsole() {
+        const console = document.getElementById('console-output');
+        if (!console) return;
+        
+        // Remover todas as mensagens do console
+        console.innerHTML = '';
+        
+        // Adicionar mensagem informando que o console foi limpo
+        this.logMessage('Console limpo', 'info');
+    }
 
     // Remover objeto
     removeObject(objectId) {
