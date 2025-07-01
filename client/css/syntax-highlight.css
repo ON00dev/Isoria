@@ -1,57 +1,301 @@
 /* Estilos para o CodeMirror e o Editor de Script */
 
+/* Regra com maior especificidade e prioridade para garantir que o CodeMirror seja visível */
+body .sidebar-left .panel-content .script-editor-container .CodeMirror,
+body .CodeMirror, .CodeMirror, #sidebar-left .CodeMirror, .script-editor-container .CodeMirror, .panel-content .CodeMirror, .CodeMirror-wrap, .CodeMirror-focused, .cm-s-dracula, .CodeMirror.cm-s-dracula.CodeMirror-wrap {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+    z-index: 999 !important;
+    height: calc(100% - 40px) !important;
+    width: 100% !important;
+    flex: 1 !important;
+    overflow: visible !important;
+    transform: translateZ(0) !important;
+    pointer-events: auto !important;
+    min-height: 400px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transition: none !important;
+    animation: none !important;
+}
+
+/* Garantir que o CodeMirror seja visível mesmo quando não estiver em foco */
+.CodeMirror:not(.CodeMirror-focused) {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Garantir que o textarea original também esteja visível quando necessário */
+#script-content {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: calc(100% - 40px) !important;
+    width: 100% !important;
+    flex: 1 !important;
+    min-height: 400px !important;
+    position: relative !important;
+    z-index: 5 !important;
+}
+
+/* Garantir que o CodeMirror seja renderizado corretamente sobre o textarea */
+.CodeMirror.cm-s-dracula, #script-content + .CodeMirror, #script-content + .CodeMirror.cm-s-dracula {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 10 !important;
+    background-color: #282a36 !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: calc(100% - 40px) !important;
+    width: 100% !important;
+    min-height: 400px !important;
+}
+
+/* Tema Dracula para o CodeMirror - Cores específicas para tokens */
+.cm-s-dracula .cm-keyword {color: #ff79c6 !important;}
+.cm-s-dracula .cm-operator {color: #ff79c6 !important;}
+.cm-s-dracula .cm-variable-2 {color: #fff !important;}
+.cm-s-dracula .cm-variable {color: #50fa7b !important;}
+.cm-s-dracula .cm-builtin {color: #50fa7b !important;}
+.cm-s-dracula .cm-atom {color: #bd93f9 !important;}
+.cm-s-dracula .cm-number {color: #bd93f9 !important;}
+.cm-s-dracula .cm-def {color: #50fa7b !important;}
+.cm-s-dracula .cm-string {color: #f1fa8c !important;}
+.cm-s-dracula .cm-string-2 {color: #f1fa8c !important;}
+.cm-s-dracula .cm-comment {color: #6272a4 !important;}
+.cm-s-dracula .cm-tag {color: #ff79c6 !important;}
+.cm-s-dracula .cm-meta {color: #f8f8f2 !important;}
+.cm-s-dracula .cm-attribute {color: #50fa7b !important;}
+.cm-s-dracula .cm-property {color: #66d9ef !important;}
+.cm-s-dracula .cm-qualifier {color: #50fa7b !important;}
+.cm-s-dracula .cm-variable-3,
+.cm-s-dracula .cm-type {color: #ffb86c !important;}
+.cm-s-dracula .cm-error {color: #ff5555 !important;}
+.cm-s-dracula .CodeMirror-activeline-background {background: rgba(255,255,255,0.1) !important;}
+.cm-s-dracula .CodeMirror-matchingbracket {text-decoration: underline; color: white !important;}
+
 /* Estilo para o editor de código */
 .script-editor-page .script-textarea {
-    display: none; /* Esconder o textarea original, pois o CodeMirror o substitui */
+    /* Não esconder o textarea original até que o CodeMirror seja inicializado */
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: calc(100vh - 250px); /* Garantir altura mínima adequada */
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    background-color: #282a36;
+    color: #f8f8f2;
+    border: 1px solid #44475a;
+    padding: 10px;
+    box-sizing: border-box;
+    flex: 1;
+    position: relative;
+    z-index: 1;
 }
 
 /* Estilos para o CodeMirror */
 .CodeMirror {
-    height: auto !important;
+    height: 100% !important;
     min-height: 400px;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 14px;
     line-height: 1.5;
-    flex: 1;
-    width: 100%;
-}
-    z-index: 1;
+    flex: 1 !important;
+    width: 100% !important;
+    z-index: 10 !important;
+    position: relative !important;
+    display: block !important;
+    /* Garantir que o CodeMirror seja exibido corretamente */
+    visibility: visible !important;
+    opacity: 1 !important;
+    /* Forçar exibição com !important para sobrescrever outros estilos */
+    min-height: calc(100vh - 250px) !important;
+    /* Permitir seleção de texto no editor */
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    cursor: text !important;
+    pointer-events: auto !important;
+    /* Garantir que o editor seja visível e interativo desde o início */
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+    backface-visibility: visible !important;
+    perspective: none !important;
+    transform-style: flat !important;
+    will-change: auto !important;
+    /* Forçar renderização imediata */
+    -webkit-transform: translateZ(0) !important;
+    -moz-transform: translateZ(0) !important;
+    -ms-transform: translateZ(0) !important;
+    -o-transform: translateZ(0) !important;
+    transform: translateZ(0) !important;
+    /* Forçar visibilidade mesmo sem interação */
+    visibility: visible !important;
+    display: block !important;
+    opacity: 1 !important;
+    /* Garantir que o CodeMirror seja renderizado corretamente no sidebar-left */
+    position: static !important;
+    overflow: visible !important;
 }
 
-/* Estilo para o container do editor */
-.script-editor-page .script-editor-container {
+/* Garantir que o cursor seja visível */
+.CodeMirror-cursor {
+    border-left: 2px solid #f8f8f2 !important;
+    border-right: none !important;
+    width: 0 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+    animation: blink 1.06s step-end infinite !important;
+}
+
+/* Animação para o cursor piscar e ser mais visível */
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+/* Garantir que o wrapper do CodeMirror seja visível e interativo */
+.CodeMirror-wrap {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 10 !important;
+}
+
+/* Forçar visibilidade do conteúdo do CodeMirror */
+.CodeMirror-sizer,
+.CodeMirror-gutter,
+.CodeMirror-gutters,
+.CodeMirror-linenumber,
+.CodeMirror-scroll,
+.CodeMirror-lines,
+.CodeMirror-line,
+.CodeMirror-line > span,
+.CodeMirror-line > span > span {
+    visibility: visible !important;
+    display: block !important;
+    opacity: 1 !important;
+}
+
+/* Garantir que o CodeMirror não esteja em modo somente leitura */
+.CodeMirror.CodeMirror-readOnly {
+    background-color: transparent !important;
+    opacity: 1 !important;
+    cursor: text !important;
+}
+
+/* Garantir que o container do editor ocupe todo o espaço disponível */
+.script-editor-container {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    width: 100% !important;
+    flex: 1 !important;
+    overflow: visible !important;
+    position: relative !important;
+}
+
+/* Garantir que o CodeMirror seja exibido dentro do contêiner do editor de script */
+.script-editor-container .CodeMirror, .script-editor-container .CodeMirror.cm-s-dracula {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 10 !important;
+    background-color: #282a36 !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: calc(100% - 40px) !important;
+    width: 100% !important;
+    min-height: 400px !important;
+}
+
+/* Outros estilos para o container do editor */
+.script-editor-container {
     display: flex;
     flex-direction: column;
     height: 100%;
     flex: 1;
     overflow: hidden;
     position: relative;
+    width: 100%;
+}
+
+/* Garantir que o textarea seja exibido corretamente antes da inicialização do CodeMirror */
+.script-textarea {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: calc(100vh - 250px); /* Altura mínima para ocupar o espaço disponível */
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    background-color: #282a36;
+    color: #f8f8f2;
+    border: 1px solid #44475a;
+    padding: 10px;
+    box-sizing: border-box;
+    flex: 1;
+    position: relative;
+    z-index: 1;
 }
 
 /* Ajustar o layout da sidebar-left */
-.script-editor-page .sidebar-left {
+.sidebar-left {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    width: 50% !important;
+    flex: 1 !important;
+    height: 100% !important;
 }
 
-.script-editor-page .sidebar-left .panel-content {
+.sidebar-left .panel-content {
     display: flex;
     flex-direction: column;
     overflow: hidden;
     height: 100%;
+    padding: 0 !important;
+    flex: 1 1 auto;
 }
 
 /* Garantir que o CodeMirror ocupe todo o espaço disponível dentro da sidebar-left */
 .script-editor-page .script-editor-container .CodeMirror {
     position: relative;
-    height: calc(100% - 190px) !important; /* Altura total menos a barra de ferramentas (40px) e área de API help (150px) */
+    height: calc(100% - 40px) !important; /* Altura total menos a barra de ferramentas (40px) */
     width: 100%;
     flex: 1;
     overflow: auto;
     margin-top: 0;
     margin-bottom: 0;
     box-sizing: border-box;
+    display: block !important;
+    max-height: calc(100vh - 250px) !important; /* Limitar altura máxima para evitar overflow */
+}
+
+/* Evitar duplicação do CodeMirror */
+.script-editor-page .script-editor-container .CodeMirror + .CodeMirror,
+.script-editor-page .script-editor-container .CodeMirror:nth-child(n+3) {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    z-index: -1 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
 }
 
 /* Ajustar a barra de ferramentas do editor */
@@ -61,45 +305,7 @@
     box-sizing: border-box;
 }
 
-/* Estilo para exemplos de API */
-.script-api-help {
-    background-color: #252525;
-    border-top: 1px solid #404040;
-    padding: 10px;
-    height: 150px;
-    max-height: 150px;
-    min-height: 150px;
-    overflow-y: auto;
-    position: relative;
-    bottom: 0;
-    width: 100%;
-}
 
-.script-api-help h4 {
-    color: #4A9EFF;
-    margin-bottom: 8px;
-    font-size: 14px;
-}
-
-.api-examples {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.api-example {
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    font-size: 12px;
-    padding: 5px;
-    background-color: #2D2D2D;
-    border-radius: 3px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.api-example:hover {
-    background-color: #3D3D3D;
-}
 
 /* Estilo para o console */
 .script-editor-page .bottom-panel {
@@ -132,3 +338,1928 @@
     width: 100%;
     height: 100%;
 }
+
+/* Garantir que o CodeMirror seja exibido corretamente */
+.CodeMirror {
+    height: 100% !important;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    flex: 1;
+    width: 100%;
+    z-index: 1;
+    position: relative;
+    display: block !important;
+    /* Garantir que o CodeMirror seja exibido corretamente */
+    visibility: visible !important;
+    opacity: 1 !important;
+    /* Permitir seleção de texto no editor */
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+}
+
+/* Estilo para a linha ativa */
+.CodeMirror-activeline-background {
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Garantir que o CodeMirror não esteja em modo somente leitura */
+.CodeMirror.CodeMirror-readOnly {
+    background-color: transparent !important;
+}
+
+/* Garantir que o cursor seja visível */
+.CodeMirror-cursor {
+    border-left: 1px solid #f8f8f2 !important;
+    border-right: none !important;
+    width: 0 !important;
+}
+
+/* Estilo para os números de linha */
+.CodeMirror-linenumber {
+    color: #6d8a88 !important;
+    font-size: 12px;
+}
+
+/* Estilo para a calha de dobra de código */
+.CodeMirror-foldgutter {
+    width: 1.2em;
+    background: #282a36;
+}
+
+/* Estilo para os ícones de dobra */
+.CodeMirror-foldgutter-open:after {
+    content: "▾";
+    color: #bd93f9;
+}
+
+.CodeMirror-foldgutter-folded:after {
+    content: "▸";
+    color: #ff79c6;
+}
+
+/* Estilo para o texto selecionado */
+.CodeMirror-selected {
+    background: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Garantir que o container do editor ocupe todo o espaço disponível */
+.script-editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+}
+
+/* Garantir que o textarea seja exibido corretamente antes da inicialização do CodeMirror */
+.script-textarea {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    background-color: #282a36;
+    color: #f8f8f2;
+    border: 1px solid #44475a;
+    padding: 10px;
+    box-sizing: border-box;
+    flex: 1;
+}
+
+/* Ajustar o layout da sidebar-left */
+.sidebar-left {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    width: 50% !important;
+    flex: 1 !important;
+}
+
+.sidebar-left .panel-content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+    padding: 0 !important;
+}
+
+/* Garantir que o CodeMirror ocupe todo o espaço disponível dentro da sidebar-left */
+.script-editor-page .script-editor-container .CodeMirror {
+    position: relative;
+    height: calc(100% - 40px) !important; /* Altura total menos a barra de ferramentas (40px) */
+    width: 100%;
+    flex: 1;
+    overflow: auto;
+    margin-top: 0;
+    margin-bottom: 0;
+    box-sizing: border-box;
+    display: block !important;
+    max-height: calc(100vh - 250px) !important; /* Limitar altura máxima para evitar overflow */
+}
+
+/* Evitar duplicação do CodeMirror */
+.script-editor-page .script-editor-container .CodeMirror + .CodeMirror,
+.script-editor-page .script-editor-container .CodeMirror:nth-child(n+3) {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    z-index: -1 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Ajustar a barra de ferramentas do editor */
+.script-editor-page .editor-toolbar {
+    height: 40px;
+    min-height: 40px;
+    box-sizing: border-box;
+}
+
+
+
+/* Estilo para o console */
+.script-editor-page .bottom-panel {
+    height: 200px;
+    min-height: 150px;
+    max-height: 300px;
+    border-top: 1px solid #404040;
+}
+
+.script-editor-page .console-output {
+    background-color: #1E1E1E;
+    color: #D4D4D4;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 10px;
+    overflow-y: auto;
+    height: calc(100% - 30px);
+}
+
+/* Estilo para a área de preview */
+.script-editor-page .preview-viewport {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: #2D2D2D;
+}
+
+#game-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/* Garantir que o CodeMirror seja exibido corretamente */
+.CodeMirror {
+    height: 100% !important;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    flex: 1;
+    width: 100%;
+    z-index: 1;
+    position: relative;
+    display: block !important;
+    /* Garantir que o CodeMirror seja exibido corretamente */
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Garantir que o container do editor ocupe todo o espaço disponível */
+.script-editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+}
+
+/* Garantir que o textarea seja exibido corretamente antes da inicialização do CodeMirror */
+.script-textarea {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    background-color: #282a36;
+    color: #f8f8f2;
+    border: 1px solid #44475a;
+    padding: 10px;
+    box-sizing: border-box;
+    flex: 1;
+}
+
+/* Ajustar o layout da sidebar-left */
+.sidebar-left {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    width: 50% !important;
+    flex: 1 !important;
+}
+
+.sidebar-left .panel-content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+    padding: 0 !important;
+}
+
+/* Garantir que o CodeMirror ocupe todo o espaço disponível dentro da sidebar-left */
+.script-editor-page .script-editor-container .CodeMirror {
+    position: relative;
+    height: calc(100% - 40px) !important; /* Altura total menos a barra de ferramentas (40px) */
+    width: 100%;
+    flex: 1;
+    overflow: auto;
+    margin-top: 0;
+    margin-bottom: 0;
+    box-sizing: border-box;
+    display: block !important;
+    max-height: calc(100vh - 250px) !important; /* Limitar altura máxima para evitar overflow */
+}
+
+/* Evitar duplicação do CodeMirror */
+.script-editor-page .script-editor-container .CodeMirror + .CodeMirror,
+.script-editor-page .script-editor-container .CodeMirror:nth-child(n+3) {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    z-index: -1 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Ajustar a barra de ferramentas do editor */
+.script-editor-page .editor-toolbar {
+    height: 40px;
+    min-height: 40px;
+    box-sizing: border-box;
+}
+
+
+
+/* Estilo para o console */
+.script-editor-page .bottom-panel {
+    height: 200px;
+    min-height: 150px;
+    max-height: 300px;
+    border-top: 1px solid #404040;
+}
+
+.script-editor-page .console-output {
+    background-color: #1E1E1E;
+    color: #D4D4D4;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 10px;
+    overflow-y: auto;
+    height: calc(100% - 30px);
+}
+
+/* Estilo para a área de preview */
+.script-editor-page .preview-viewport {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: #2D2D2D;
+}
+
+#game-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/* Garantir que o CodeMirror seja exibido corretamente */
+.CodeMirror {
+    height: 100% !important;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    flex: 1;
+    width: 100%;
+    z-index: 1;
+    position: relative;
+    display: block !important;
+    /* Garantir que o CodeMirror seja exibido corretamente */
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Garantir que o container do editor ocupe todo o espaço disponível */
+.script-editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+}
+
+/* Garantir que o textarea seja exibido corretamente antes da inicialização do CodeMirror */
+.script-textarea {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    background-color: #282a36;
+    color: #f8f8f2;
+    border: 1px solid #44475a;
+    padding: 10px;
+    box-sizing: border-box;
+    flex: 1;
+}
+
+/* Ajustar o layout da sidebar-left */
+.sidebar-left {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    width: 50% !important;
+    flex: 1 !important;
+}
+
+.sidebar-left .panel-content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+    padding: 0 !important;
+}
+
+/* Garantir que o CodeMirror ocupe todo o espaço disponível dentro da sidebar-left */
+.script-editor-page .script-editor-container .CodeMirror {
+    position: relative;
+    height: calc(100% - 40px) !important; /* Altura total menos a barra de ferramentas (40px) */
+    width: 100%;
+    flex: 1;
+    overflow: auto;
+    margin-top: 0;
+    margin-bottom: 0;
+    box-sizing: border-box;
+    display: block !important;
+    max-height: calc(100vh - 250px) !important; /* Limitar altura máxima para evitar overflow */
+}
+
+/* Evitar duplicação do CodeMirror */
+.script-editor-page .script-editor-container .CodeMirror + .CodeMirror,
+.script-editor-page .script-editor-container .CodeMirror:nth-child(n+3) {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    z-index: -1 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Ajustar a barra de ferramentas do editor */
+.script-editor-page .editor-toolbar {
+    height: 40px;
+    min-height: 40px;
+    box-sizing: border-box;
+}
+
+
+
+/* Estilo para o console */
+.script-editor-page .bottom-panel {
+    height: 200px;
+    min-height: 150px;
+    max-height: 300px;
+    border-top: 1px solid #404040;
+}
+
+.script-editor-page .console-output {
+    background-color: #1E1E1E;
+    color: #D4D4D4;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 10px;
+    overflow-y: auto;
+    height: calc(100% - 30px);
+}
+
+/* Estilo para a área de preview */
+.script-editor-page .preview-viewport {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: #2D2D2D;
+}
+
+#game-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/* Garantir que o CodeMirror seja exibido corretamente */
+.CodeMirror {
+    height: 100% !important;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    flex: 1;
+    width: 100%;
+    z-index: 1;
+    position: relative;
+    display: block !important;
+    /* Garantir que o CodeMirror seja exibido corretamente */
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Garantir que o container do editor ocupe todo o espaço disponível */
+.script-editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+}
+
+/* Garantir que o textarea seja exibido corretamente antes da inicialização do CodeMirror */
+.script-textarea {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    background-color: #282a36;
+    color: #f8f8f2;
+    border: 1px solid #44475a;
+    padding: 10px;
+    box-sizing: border-box;
+    flex: 1;
+}
+
+/* Ajustar o layout da sidebar-left */
+.sidebar-left {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    width: 50% !important;
+    flex: 1 !important;
+}
+
+.sidebar-left .panel-content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+    padding: 0 !important;
+}
+
+/* Garantir que o CodeMirror ocupe todo o espaço disponível dentro da sidebar-left */
+.script-editor-page .script-editor-container .CodeMirror {
+    position: relative;
+    height: calc(100% - 40px) !important; /* Altura total menos a barra de ferramentas (40px) */
+    width: 100%;
+    flex: 1;
+    overflow: auto;
+    margin-top: 0;
+    margin-bottom: 0;
+    box-sizing: border-box;
+    display: block !important;
+    max-height: calc(100vh - 250px) !important; /* Limitar altura máxima para evitar overflow */
+}
+
+/* Evitar duplicação do CodeMirror */
+.script-editor-page .script-editor-container .CodeMirror + .CodeMirror,
+.script-editor-page .script-editor-container .CodeMirror:nth-child(n+3) {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    z-index: -1 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Ajustar a barra de ferramentas do editor */
+.script-editor-page .editor-toolbar {
+    height: 40px;
+    min-height: 40px;
+    box-sizing: border-box;
+}
+
+
+
+/* Estilo para o console */
+.script-editor-page .bottom-panel {
+    height: 200px;
+    min-height: 150px;
+    max-height: 300px;
+    border-top: 1px solid #404040;
+}
+
+.script-editor-page .console-output {
+    background-color: #1E1E1E;
+    color: #D4D4D4;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 10px;
+    overflow-y: auto;
+    height: calc(100% - 30px);
+}
+
+/* Estilo para a área de preview */
+.script-editor-page .preview-viewport {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: #2D2D2D;
+}
+
+#game-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/* Garantir que o CodeMirror seja exibido corretamente */
+.CodeMirror {
+    height: 100% !important;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    flex: 1;
+    width: 100%;
+    z-index: 1;
+    position: relative;
+    display: block !important;
+    /* Garantir que o CodeMirror seja exibido corretamente */
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Garantir que o container do editor ocupe todo o espaço disponível */
+.script-editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+}
+
+/* Garantir que o textarea seja exibido corretamente antes da inicialização do CodeMirror */
+.script-textarea {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    background-color: #282a36;
+    color: #f8f8f2;
+    border: 1px solid #44475a;
+    padding: 10px;
+    box-sizing: border-box;
+    flex: 1;
+}
+
+/* Ajustar o layout da sidebar-left */
+.sidebar-left {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    width: 50% !important;
+    flex: 1 !important;
+}
+
+.sidebar-left .panel-content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+    padding: 0 !important;
+}
+
+/* Garantir que o CodeMirror ocupe todo o espaço disponível dentro da sidebar-left */
+.script-editor-page .script-editor-container .CodeMirror {
+    position: relative;
+    height: calc(100% - 40px) !important; /* Altura total menos a barra de ferramentas (40px) */
+    width: 100%;
+    flex: 1;
+    overflow: auto;
+    margin-top: 0;
+    margin-bottom: 0;
+    box-sizing: border-box;
+    display: block !important;
+    max-height: calc(100vh - 250px) !important; /* Limitar altura máxima para evitar overflow */
+}
+
+/* Evitar duplicação do CodeMirror */
+.script-editor-page .script-editor-container .CodeMirror + .CodeMirror,
+.script-editor-page .script-editor-container .CodeMirror:nth-child(n+3) {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    z-index: -1 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Ajustar a barra de ferramentas do editor */
+.script-editor-page .editor-toolbar {
+    height: 40px;
+    min-height: 40px;
+    box-sizing: border-box;
+}
+
+
+
+/* Estilo para o console */
+.script-editor-page .bottom-panel {
+    height: 200px;
+    min-height: 150px;
+    max-height: 300px;
+    border-top: 1px solid #404040;
+}
+
+.script-editor-page .console-output {
+    background-color: #1E1E1E;
+    color: #D4D4D4;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 10px;
+    overflow-y: auto;
+    height: calc(100% - 30px);
+}
+
+/* Estilo para a área de preview */
+.script-editor-page .preview-viewport {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: #2D2D2D;
+}
+
+#game-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/* Garantir que o CodeMirror seja exibido corretamente */
+.CodeMirror {
+    height: 100% !important;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    flex: 1;
+    width: 100%;
+    z-index: 1;
+    position: relative;
+    display: block !important;
+    /* Garantir que o CodeMirror seja exibido corretamente */
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Garantir que o container do editor ocupe todo o espaço disponível */
+.script-editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+}
+
+/* Garantir que o textarea seja exibido corretamente antes da inicialização do CodeMirror */
+.script-textarea {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    background-color: #282a36;
+    color: #f8f8f2;
+    border: 1px solid #44475a;
+    padding: 10px;
+    box-sizing: border-box;
+    flex: 1;
+}
+
+/* Ajustar o layout da sidebar-left */
+.sidebar-left {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    width: 50% !important;
+    flex: 1 !important;
+}
+
+.sidebar-left .panel-content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+    padding: 0 !important;
+}
+
+/* Garantir que o CodeMirror ocupe todo o espaço disponível dentro da sidebar-left */
+.script-editor-page .script-editor-container .CodeMirror {
+    position: relative;
+    height: calc(100% - 40px) !important; /* Altura total menos a barra de ferramentas (40px) */
+    width: 100%;
+    flex: 1;
+    overflow: auto;
+    margin-top: 0;
+    margin-bottom: 0;
+    box-sizing: border-box;
+    display: block !important;
+    max-height: calc(100vh - 250px) !important; /* Limitar altura máxima para evitar overflow */
+}
+
+/* Evitar duplicação do CodeMirror */
+.script-editor-page .script-editor-container .CodeMirror + .CodeMirror,
+.script-editor-page .script-editor-container .CodeMirror:nth-child(n+3) {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    z-index: -1 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Ajustar a barra de ferramentas do editor */
+.script-editor-page .editor-toolbar {
+    height: 40px;
+    min-height: 40px;
+    box-sizing: border-box;
+}
+
+
+
+/* Estilo para o console */
+.script-editor-page .bottom-panel {
+    height: 200px;
+    min-height: 150px;
+    max-height: 300px;
+    border-top: 1px solid #404040;
+}
+
+.script-editor-page .console-output {
+    background-color: #1E1E1E;
+    color: #D4D4D4;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 10px;
+    overflow-y: auto;
+    height: calc(100% - 30px);
+}
+
+/* Estilo para a área de preview */
+.script-editor-page .preview-viewport {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: #2D2D2D;
+}
+
+#game-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/* Garantir que o CodeMirror seja exibido corretamente */
+.CodeMirror {
+    height: 100% !important;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    flex: 1;
+    width: 100%;
+    z-index: 1;
+    position: relative;
+    display: block !important;
+    /* Garantir que o CodeMirror seja exibido corretamente */
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Garantir que o container do editor ocupe todo o espaço disponível */
+.script-editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+}
+
+/* Garantir que o textarea seja exibido corretamente antes da inicialização do CodeMirror */
+.script-textarea {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    background-color: #282a36;
+    color: #f8f8f2;
+    border: 1px solid #44475a;
+    padding: 10px;
+    box-sizing: border-box;
+    flex: 1;
+}
+
+/* Ajustar o layout da sidebar-left */
+.sidebar-left {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    width: 50% !important;
+    flex: 1 !important;
+}
+
+.sidebar-left .panel-content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+    padding: 0 !important;
+}
+
+/* Garantir que o CodeMirror ocupe todo o espaço disponível dentro da sidebar-left */
+.script-editor-page .script-editor-container .CodeMirror {
+    position: relative;
+    height: calc(100% - 40px) !important; /* Altura total menos a barra de ferramentas (40px) */
+    width: 100%;
+    flex: 1;
+    overflow: auto;
+    margin-top: 0;
+    margin-bottom: 0;
+    box-sizing: border-box;
+    display: block !important;
+    max-height: calc(100vh - 250px) !important; /* Limitar altura máxima para evitar overflow */
+}
+
+/* Evitar duplicação do CodeMirror */
+.script-editor-page .script-editor-container .CodeMirror + .CodeMirror,
+.script-editor-page .script-editor-container .CodeMirror:nth-child(n+3) {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    z-index: -1 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Ajustar a barra de ferramentas do editor */
+.script-editor-page .editor-toolbar {
+    height: 40px;
+    min-height: 40px;
+    box-sizing: border-box;
+}
+
+
+
+/* Estilo para o console */
+.script-editor-page .bottom-panel {
+    height: 200px;
+    min-height: 150px;
+    max-height: 300px;
+    border-top: 1px solid #404040;
+}
+
+.script-editor-page .console-output {
+    background-color: #1E1E1E;
+    color: #D4D4D4;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 10px;
+    overflow-y: auto;
+    height: calc(100% - 30px);
+}
+
+/* Estilo para a área de preview */
+.script-editor-page .preview-viewport {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: #2D2D2D;
+}
+
+#game-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/* Garantir que o CodeMirror seja exibido corretamente */
+.CodeMirror {
+    height: 100% !important;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    flex: 1;
+    width: 100%;
+    z-index: 1;
+    position: relative;
+    display: block !important;
+    /* Garantir que o CodeMirror seja exibido corretamente */
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Garantir que o container do editor ocupe todo o espaço disponível */
+.script-editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+}
+
+/* Garantir que o textarea seja exibido corretamente antes da inicialização do CodeMirror */
+.script-textarea {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    background-color: #282a36;
+    color: #f8f8f2;
+    border: 1px solid #44475a;
+    padding: 10px;
+    box-sizing: border-box;
+    flex: 1;
+}
+
+/* Ajustar o layout da sidebar-left */
+.sidebar-left {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    width: 50% !important;
+    flex: 1 !important;
+}
+
+.sidebar-left .panel-content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+    padding: 0 !important;
+}
+
+/* Garantir que o CodeMirror ocupe todo o espaço disponível dentro da sidebar-left */
+.script-editor-page .script-editor-container .CodeMirror {
+    position: relative;
+    height: calc(100% - 40px) !important; /* Altura total menos a barra de ferramentas (40px) */
+    width: 100%;
+    flex: 1;
+    overflow: auto;
+    margin-top: 0;
+    margin-bottom: 0;
+    box-sizing: border-box;
+    display: block !important;
+    max-height: calc(100vh - 250px) !important; /* Limitar altura máxima para evitar overflow */
+}
+
+/* Evitar duplicação do CodeMirror */
+.script-editor-page .script-editor-container .CodeMirror + .CodeMirror,
+.script-editor-page .script-editor-container .CodeMirror:nth-child(n+3) {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    z-index: -1 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Ajustar a barra de ferramentas do editor */
+.script-editor-page .editor-toolbar {
+    height: 40px;
+    min-height: 40px;
+    box-sizing: border-box;
+}
+
+
+
+/* Estilo para o console */
+.script-editor-page .bottom-panel {
+    height: 200px;
+    min-height: 150px;
+    max-height: 300px;
+    border-top: 1px solid #404040;
+}
+
+.script-editor-page .console-output {
+    background-color: #1E1E1E;
+    color: #D4D4D4;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 10px;
+    overflow-y: auto;
+    height: calc(100% - 30px);
+}
+
+/* Estilo para a área de preview */
+.script-editor-page .preview-viewport {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: #2D2D2D;
+}
+
+#game-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/* Garantir que o CodeMirror seja exibido corretamente */
+.CodeMirror {
+    height: 100% !important;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    flex: 1;
+    width: 100%;
+    z-index: 1;
+    position: relative;
+    display: block !important;
+    /* Garantir que o CodeMirror seja exibido corretamente */
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Garantir que o container do editor ocupe todo o espaço disponível */
+.script-editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+}
+
+/* Garantir que o textarea seja exibido corretamente antes da inicialização do CodeMirror */
+.script-textarea {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    background-color: #282a36;
+    color: #f8f8f2;
+    border: 1px solid #44475a;
+    padding: 10px;
+    box-sizing: border-box;
+    flex: 1;
+}
+
+/* Ajustar o layout da sidebar-left */
+.sidebar-left {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    width: 50% !important;
+    flex: 1 !important;
+}
+
+.sidebar-left .panel-content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+    padding: 0 !important;
+}
+
+/* Garantir que o CodeMirror ocupe todo o espaço disponível dentro da sidebar-left */
+.script-editor-page .script-editor-container .CodeMirror {
+    position: relative;
+    height: calc(100% - 40px) !important; /* Altura total menos a barra de ferramentas (40px) */
+    width: 100%;
+    flex: 1;
+    overflow: auto;
+    margin-top: 0;
+    margin-bottom: 0;
+    box-sizing: border-box;
+    display: block !important;
+    max-height: calc(100vh - 250px) !important; /* Limitar altura máxima para evitar overflow */
+}
+
+/* Evitar duplicação do CodeMirror */
+.script-editor-page .script-editor-container .CodeMirror + .CodeMirror,
+.script-editor-page .script-editor-container .CodeMirror:nth-child(n+3) {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    z-index: -1 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Ajustar a barra de ferramentas do editor */
+.script-editor-page .editor-toolbar {
+    height: 40px;
+    min-height: 40px;
+    box-sizing: border-box;
+}
+
+
+
+/* Estilo para o console */
+.script-editor-page .bottom-panel {
+    height: 200px;
+    min-height: 150px;
+    max-height: 300px;
+    border-top: 1px solid #404040;
+}
+
+.script-editor-page .console-output {
+    background-color: #1E1E1E;
+    color: #D4D4D4;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 10px;
+    overflow-y: auto;
+    height: calc(100% - 30px);
+}
+
+/* Estilo para a área de preview */
+.script-editor-page .preview-viewport {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: #2D2D2D;
+}
+
+#game-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/* Garantir que o CodeMirror seja exibido corretamente */
+.CodeMirror {
+    height: 100% !important;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    flex: 1;
+    width: 100%;
+    z-index: 1;
+    position: relative;
+    display: block !important;
+    /* Garantir que o CodeMirror seja exibido corretamente */
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Garantir que o container do editor ocupe todo o espaço disponível */
+.script-editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+}
+
+/* Garantir que o textarea seja exibido corretamente antes da inicialização do CodeMirror */
+.script-textarea {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    background-color: #282a36;
+    color: #f8f8f2;
+    border: 1px solid #44475a;
+    padding: 10px;
+    box-sizing: border-box;
+    flex: 1;
+}
+
+/* Ajustar o layout da sidebar-left */
+.sidebar-left {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    width: 50% !important;
+    flex: 1 !important;
+}
+
+.sidebar-left .panel-content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+    padding: 0 !important;
+}
+
+/* Garantir que o CodeMirror ocupe todo o espaço disponível dentro da sidebar-left */
+.script-editor-page .script-editor-container .CodeMirror {
+    position: relative;
+    height: calc(100% - 40px) !important; /* Altura total menos a barra de ferramentas (40px) */
+    width: 100%;
+    flex: 1;
+    overflow: auto;
+    margin-top: 0;
+    margin-bottom: 0;
+    box-sizing: border-box;
+    display: block !important;
+    max-height: calc(100vh - 250px) !important; /* Limitar altura máxima para evitar overflow */
+}
+
+/* Evitar duplicação do CodeMirror */
+.script-editor-page .script-editor-container .CodeMirror + .CodeMirror,
+.script-editor-page .script-editor-container .CodeMirror:nth-child(n+3) {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    z-index: -1 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Ajustar a barra de ferramentas do editor */
+.script-editor-page .editor-toolbar {
+    height: 40px;
+    min-height: 40px;
+    box-sizing: border-box;
+}
+
+
+
+/* Estilo para o console */
+.script-editor-page .bottom-panel {
+    height: 200px;
+    min-height: 150px;
+    max-height: 300px;
+    border-top: 1px solid #404040;
+}
+
+.script-editor-page .console-output {
+    background-color: #1E1E1E;
+    color: #D4D4D4;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 10px;
+    overflow-y: auto;
+    height: calc(100% - 30px);
+}
+
+/* Estilo para a área de preview */
+.script-editor-page .preview-viewport {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: #2D2D2D;
+}
+
+#game-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/* Garantir que o CodeMirror seja exibido corretamente */
+.CodeMirror {
+    height: 100% !important;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    flex: 1;
+    width: 100%;
+    z-index: 1;
+    position: relative;
+    display: block !important;
+    /* Garantir que o CodeMirror seja exibido corretamente */
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Garantir que o container do editor ocupe todo o espaço disponível */
+.script-editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+}
+
+/* Garantir que o textarea seja exibido corretamente antes da inicialização do CodeMirror */
+.script-textarea {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    background-color: #282a36;
+    color: #f8f8f2;
+    border: 1px solid #44475a;
+    padding: 10px;
+    box-sizing: border-box;
+    flex: 1;
+}
+
+/* Ajustar o layout da sidebar-left */
+.sidebar-left {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    width: 50% !important;
+    flex: 1 !important;
+}
+
+.sidebar-left .panel-content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+    padding: 0 !important;
+}
+
+/* Garantir que o CodeMirror ocupe todo o espaço disponível dentro da sidebar-left */
+.script-editor-page .script-editor-container .CodeMirror {
+    position: relative;
+    height: calc(100% - 40px) !important; /* Altura total menos a barra de ferramentas (40px) */
+    width: 100%;
+    flex: 1;
+    overflow: auto;
+    margin-top: 0;
+    margin-bottom: 0;
+    box-sizing: border-box;
+    display: block !important;
+    max-height: calc(100vh - 250px) !important; /* Limitar altura máxima para evitar overflow */
+}
+
+/* Evitar duplicação do CodeMirror */
+.script-editor-page .script-editor-container .CodeMirror + .CodeMirror,
+.script-editor-page .script-editor-container .CodeMirror:nth-child(n+3) {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    z-index: -1 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Ajustar a barra de ferramentas do editor */
+.script-editor-page .editor-toolbar {
+    height: 40px;
+    min-height: 40px;
+    box-sizing: border-box;
+}
+
+
+
+/* Estilo para o console */
+.script-editor-page .bottom-panel {
+    height: 200px;
+    min-height: 150px;
+    max-height: 300px;
+    border-top: 1px solid #404040;
+}
+
+.script-editor-page .console-output {
+    background-color: #1E1E1E;
+    color: #D4D4D4;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 10px;
+    overflow-y: auto;
+    height: calc(100% - 30px);
+}
+
+/* Estilo para a área de preview */
+.script-editor-page .preview-viewport {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: #2D2D2D;
+}
+
+#game-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/* Garantir que o CodeMirror seja exibido corretamente */
+.CodeMirror {
+    height: 100% !important;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    flex: 1;
+    width: 100%;
+    z-index: 1;
+    position: relative;
+    display: block !important;
+    /* Garantir que o CodeMirror seja exibido corretamente */
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Garantir que o container do editor ocupe todo o espaço disponível */
+.script-editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+}
+
+/* Garantir que o textarea seja exibido corretamente antes da inicialização do CodeMirror */
+.script-textarea {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    background-color: #282a36;
+    color: #f8f8f2;
+    border: 1px solid #44475a;
+    padding: 10px;
+    box-sizing: border-box;
+    flex: 1;
+}
+
+/* Ajustar o layout da sidebar-left */
+.sidebar-left {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    width: 50% !important;
+    flex: 1 !important;
+}
+
+.sidebar-left .panel-content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+    padding: 0 !important;
+}
+
+/* Garantir que o CodeMirror ocupe todo o espaço disponível dentro da sidebar-left */
+.script-editor-page .script-editor-container .CodeMirror {
+    position: relative;
+    height: calc(100% - 40px) !important; /* Altura total menos a barra de ferramentas (40px) */
+    width: 100%;
+    flex: 1;
+    overflow: auto;
+    margin-top: 0;
+    margin-bottom: 0;
+    box-sizing: border-box;
+    display: block !important;
+    max-height: calc(100vh - 250px) !important; /* Limitar altura máxima para evitar overflow */
+}
+
+/* Evitar duplicação do CodeMirror */
+.script-editor-page .script-editor-container .CodeMirror + .CodeMirror,
+.script-editor-page .script-editor-container .CodeMirror:nth-child(n+3) {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    z-index: -1 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Ajustar a barra de ferramentas do editor */
+.script-editor-page .editor-toolbar {
+    height: 40px;
+    min-height: 40px;
+    box-sizing: border-box;
+}
+
+
+
+/* Estilo para o console */
+.script-editor-page .bottom-panel {
+    height: 200px;
+    min-height: 150px;
+    max-height: 300px;
+    border-top: 1px solid #404040;
+}
+
+.script-editor-page .console-output {
+    background-color: #1E1E1E;
+    color: #D4D4D4;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 10px;
+    overflow-y: auto;
+    height: calc(100% - 30px);
+}
+
+/* Estilo para a área de preview */
+.script-editor-page .preview-viewport {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: #2D2D2D;
+}
+
+#game-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/* Garantir que o CodeMirror seja exibido corretamente */
+.CodeMirror {
+    height: 100% !important;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    flex: 1;
+    width: 100%;
+    z-index: 1;
+    position: relative;
+    display: block !important;
+    /* Garantir que o CodeMirror seja exibido corretamente */
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Garantir que o container do editor ocupe todo o espaço disponível */
+.script-editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+}
+
+/* Garantir que o textarea seja exibido corretamente antes da inicialização do CodeMirror */
+.script-textarea {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    background-color: #282a36;
+    color: #f8f8f2;
+    border: 1px solid #44475a;
+    padding: 10px;
+    box-sizing: border-box;
+    flex: 1;
+}
+
+/* Ajustar o layout da sidebar-left */
+.sidebar-left {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    width: 50% !important;
+    flex: 1 !important;
+}
+
+.sidebar-left .panel-content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+    padding: 0 !important;
+}
+
+/* Garantir que o CodeMirror ocupe todo o espaço disponível dentro da sidebar-left */
+.script-editor-page .script-editor-container .CodeMirror {
+    position: relative;
+    height: calc(100% - 40px) !important; /* Altura total menos a barra de ferramentas (40px) */
+    width: 100%;
+    flex: 1;
+    overflow: auto;
+    margin-top: 0;
+    margin-bottom: 0;
+    box-sizing: border-box;
+    display: block !important;
+    max-height: calc(100vh - 250px) !important; /* Limitar altura máxima para evitar overflow */
+}
+
+/* Evitar duplicação do CodeMirror */
+.script-editor-page .script-editor-container .CodeMirror + .CodeMirror,
+.script-editor-page .script-editor-container .CodeMirror:nth-child(n+3) {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    z-index: -1 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Ajustar a barra de ferramentas do editor */
+.script-editor-page .editor-toolbar {
+    height: 40px;
+    min-height: 40px;
+    box-sizing: border-box;
+}
+
+
+
+/* Estilo para o console */
+.script-editor-page .bottom-panel {
+    height: 200px;
+    min-height: 150px;
+    max-height: 300px;
+    border-top: 1px solid #404040;
+}
+
+.script-editor-page .console-output {
+    background-color: #1E1E1E;
+    color: #D4D4D4;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 10px;
+    overflow-y: auto;
+    height: calc(100% - 30px);
+}
+
+/* Estilo para a área de preview */
+.script-editor-page .preview-viewport {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: #2D2D2D;
+}
+
+#game-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/* Garantir que o CodeMirror seja exibido corretamente */
+.CodeMirror {
+    height: 100% !important;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    flex: 1;
+    width: 100%;
+    z-index: 1;
+    position: relative;
+    display: block !important;
+    /* Garantir que o CodeMirror seja exibido corretamente */
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Garantir que o container do editor ocupe todo o espaço disponível */
+.script-editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+}
+
+/* Garantir que o textarea seja exibido corretamente antes da inicialização do CodeMirror */
+.script-textarea {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    background-color: #282a36;
+    color: #f8f8f2;
+    border: 1px solid #44475a;
+    padding: 10px;
+    box-sizing: border-box;
+    flex: 1;
+}
+
+/* Ajustar o layout da sidebar-left */
+.sidebar-left {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    width: 50% !important;
+    flex: 1 !important;
+}
+
+.sidebar-left .panel-content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+    padding: 0 !important;
+}
+
+/* Garantir que o CodeMirror ocupe todo o espaço disponível dentro da sidebar-left */
+.script-editor-page .script-editor-container .CodeMirror {
+    position: relative;
+    height: calc(100% - 40px) !important; /* Altura total menos a barra de ferramentas (40px) */
+    width: 100%;
+    flex: 1;
+    overflow: auto;
+    margin-top: 0;
+    margin-bottom: 0;
+    box-sizing: border-box;
+    display: block !important;
+    max-height: calc(100vh - 250px) !important; /* Limitar altura máxima para evitar overflow */
+}
+
+/* Evitar duplicação do CodeMirror */
+.script-editor-page .script-editor-container .CodeMirror + .CodeMirror,
+.script-editor-page .script-editor-container .CodeMirror:nth-child(n+3) {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    z-index: -1 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Ajustar a barra de ferramentas do editor */
+.script-editor-page .editor-toolbar {
+    height: 40px;
+    min-height: 40px;
+    box-sizing: border-box;
+}
+
+
+
+/* Estilo para o console */
+.script-editor-page .bottom-panel {
+    height: 200px;
+    min-height: 150px;
+    max-height: 300px;
+    border-top: 1px solid #404040;
+}
+
+.script-editor-page .console-output {
+    background-color: #1E1E1E;
+    color: #D4D4D4;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 10px;
+    overflow-y: auto;
+    height: calc(100% - 30px);
+}
+
+/* Estilo para a área de preview */
+.script-editor-page .preview-viewport {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: #2D2D2D;
+}
+
+#game-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/* Garantir que o CodeMirror seja exibido corretamente */
+.CodeMirror {
+    height: 100% !important;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    flex: 1;
+    width: 100%;
+    z-index: 1;
+    position: relative;
+    display: block !important;
+    /* Garantir que o CodeMirror seja exibido corretamente */
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Garantir que o container do editor ocupe todo o espaço disponível */
+.script-editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+}
+
+/* Garantir que o textarea seja exibido corretamente antes da inicialização do CodeMirror */
+.script-textarea {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    background-color: #282a36;
+    color: #f8f8f2;
+    border: 1px solid #44475a;
+    padding: 10px;
+    box-sizing: border-box;
+    flex: 1;
+}
+
+/* Ajustar o layout da sidebar-left */
+.sidebar-left {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    width: 50% !important;
+    flex: 1 !important;
+}
+
+.sidebar-left .panel-content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+    padding: 0 !important;
+}
+
+/* Garantir que o CodeMirror ocupe todo o espaço disponível dentro da sidebar-left */
+.script-editor-page .script-editor-container .CodeMirror {
+    position: relative;
+    height: calc(100% - 40px) !important; /* Altura total menos a barra de ferramentas (40px) */
+    width: 100%;
+    flex: 1;
+    overflow: auto;
+    margin-top: 0;
+    margin-bottom: 0;
+    box-sizing: border-box;
+    display: block !important;
+    max-height: calc(100vh - 250px) !important; /* Limitar altura máxima para evitar overflow */
+}
+
+/* Evitar duplicação do CodeMirror */
+.script-editor-page .script-editor-container .CodeMirror + .CodeMirror,
+.script-editor-page .script-editor-container .CodeMirror:nth-child(n+3) {
+    display: none !important;
+    visibility: hidden !important;
+    position:

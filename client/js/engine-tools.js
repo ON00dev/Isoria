@@ -153,6 +153,9 @@ class EngineTools {
         const halfMapSize = Math.floor(mapSize / 2); // 7
 
         const viewport = document.getElementById('preview-viewport');
+        // Verificar se o viewport existe
+        if (!viewport) return;
+        
         const canvasWidth = viewport.clientWidth || 800;
         const canvasHeight = viewport.clientHeight || 600;
         
@@ -285,7 +288,10 @@ class EngineTools {
     updateStats() {
         // Atualizar FPS real do Phaser
         const fps = this.renderer?.game?.loop?.actualFps || 0;
-        document.getElementById('fps-counter').textContent = `FPS: ${Math.round(fps)}`;
+        const fpsCounter = document.getElementById('fps-counter');
+        if (fpsCounter) {
+            fpsCounter.textContent = `FPS: ${Math.round(fps)}`;
+        }
         
         // Contar tiles da grade isométrica (todos os tiles da grade 15x15)
         let tileCount = 0;
@@ -301,7 +307,10 @@ class EngineTools {
             }
         }
         
-        document.getElementById('triangle-counter').textContent = `Tiles: ${tileCount}`;
+        const triangleCounter = document.getElementById('triangle-counter');
+        if (triangleCounter) {
+            triangleCounter.textContent = `Tiles: ${tileCount}`;
+        }
         
         // Contar apenas objetos/assets adicionados (não tiles da grade)
         let objectCount = 0;
@@ -324,7 +333,10 @@ class EngineTools {
             objectCount = Math.max(objectCount, renderedAssets);
         }
         
-        document.getElementById('draw-calls').textContent = `Objetos: ${objectCount}`;
+        const drawCalls = document.getElementById('draw-calls');
+        if (drawCalls) {
+            drawCalls.textContent = `Objetos: ${objectCount}`;
+        }
     }
 
     // Atualizar informações da câmera
@@ -333,19 +345,45 @@ class EngineTools {
             const zoom = this.scene.cameras.main.zoom.toFixed(2);
             const scrollX = Math.round(this.scene.cameras.main.scrollX);
             const scrollY = Math.round(this.scene.cameras.main.scrollY);
-            document.getElementById('camera-info').textContent = `Camera: Isométrica (Zoom: ${zoom})`;
-            document.getElementById('position-info').textContent = `Posição: (${scrollX}, ${scrollY})`;
-            document.getElementById('zoom-info').textContent = `Zoom: ${(zoom * 100).toFixed(0)}%`;
+            
+            const cameraInfo = document.getElementById('camera-info');
+            if (cameraInfo) {
+                cameraInfo.textContent = `Camera: Isométrica (Zoom: ${zoom})`;
+            }
+            
+            const positionInfo = document.getElementById('position-info');
+            if (positionInfo) {
+                positionInfo.textContent = `Posição: (${scrollX}, ${scrollY})`;
+            }
+            
+            const zoomInfo = document.getElementById('zoom-info');
+            if (zoomInfo) {
+                zoomInfo.textContent = `Zoom: ${(zoom * 100).toFixed(0)}%`;
+            }
         } else {
-            document.getElementById('camera-info').textContent = 'Camera: Isométrica';
-            document.getElementById('position-info').textContent = 'Posição: (0, 0)';
-            document.getElementById('zoom-info').textContent = 'Zoom: 100%';
+            const cameraInfo = document.getElementById('camera-info');
+            if (cameraInfo) {
+                cameraInfo.textContent = 'Camera: Isométrica';
+            }
+            
+            const positionInfo = document.getElementById('position-info');
+            if (positionInfo) {
+                positionInfo.textContent = 'Posição: (0, 0)';
+            }
+            
+            const zoomInfo = document.getElementById('zoom-info');
+            if (zoomInfo) {
+                zoomInfo.textContent = 'Zoom: 100%';
+            }
         }
     }
 
     // Redimensionamento da janela
     onWindowResize() {
         const viewport = document.getElementById('preview-viewport');
+        // Verificar se o viewport existe
+        if (!viewport) return;
+        
         if (this.renderer && this.renderer.scale) {
             this.renderer.scale.resize(viewport.clientWidth, viewport.clientHeight);
             
@@ -423,6 +461,8 @@ class EngineTools {
     // Construir hierarquia da cena
     buildSceneHierarchy() {
         const hierarchyTree = document.getElementById('hierarchy-tree');
+        if (!hierarchyTree) return; // Se o elemento não existir, sair da função
+        
         hierarchyTree.innerHTML = '';
         
         // Adicionar item raiz da cena
@@ -524,6 +564,7 @@ class EngineTools {
     // Atualizar inspector
     updateInspector(objectId) {
         const inspectorContent = document.getElementById('inspector-content');
+        if (!inspectorContent) return; // Se o elemento não existir, sair da função
         
         if (!objectId) {
             inspectorContent.innerHTML = '<div class="no-selection">Selecione um objeto para editar suas propriedades</div>';
@@ -981,6 +1022,12 @@ class EngineTools {
 
     // Configurar upload de arquivos de imagem
     setupFileUpload() {
+        // Verificar se estamos na página script-editor.html
+        if (window.location.pathname.includes('script-editor.html')) {
+            console.log('Página script-editor.html detectada, ignorando setupFileUpload');
+            return; // Não configurar upload de arquivos na página do editor de scripts
+        }
+        
         // Aguardar um pouco para garantir que o DOM esteja completamente carregado
         setTimeout(() => {
             const uploadBtn = document.getElementById('upload-asset');
@@ -990,47 +1037,48 @@ class EngineTools {
             console.log('uploadBtn:', uploadBtn);
             console.log('fileInput:', fileInput);
             
-            if (uploadBtn && fileInput) {
-                console.log('Elementos encontrados, configurando event listeners');
-                
-                // Limpar event listeners existentes
-                const newUploadBtn = uploadBtn.cloneNode(true);
-                uploadBtn.parentNode.replaceChild(newUploadBtn, uploadBtn);
-                
-                const newFileInput = fileInput.cloneNode(true);
-                fileInput.parentNode.replaceChild(newFileInput, fileInput);
-                
-                // Configurar event listeners
-                newUploadBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    console.log('Botão de upload clicado');
-                    newFileInput.click();
-                });
-                
-                newFileInput.addEventListener('change', (e) => {
-                    console.log('Arquivo selecionado:', e.target.files[0]);
-                    const file = e.target.files[0];
-                    if (file) {
-                        console.log('Tipo do arquivo:', file.type);
-                        const allowedTypes = ['image/svg+xml', 'image/jpeg', 'image/jpg', 'image/png'];
-                        if (allowedTypes.includes(file.type)) {
-                            console.log('Arquivo aceito, iniciando upload');
-                            this.handleFileUpload(file);
-                        } else {
-                            console.log('Tipo de arquivo não aceito:', file.type);
-                            this.logMessage('Apenas arquivos SVG, JPG e PNG são aceitos', 'warning');
-                        }
-                    }
-                    // Limpar o input para permitir selecionar o mesmo arquivo novamente
-                    e.target.value = '';
-                });
-                
-                console.log('Event listeners configurados com sucesso');
-            } else {
+            // Verificar se os elementos existem antes de configurar os event listeners
+            if (!uploadBtn || !fileInput) {
                 console.error('Elementos não encontrados:', { uploadBtn, fileInput });
-                console.log('Tentando novamente em 1 segundo...');
-                setTimeout(() => this.setupFileUpload(), 1000);
+                // Não tentar novamente, apenas registrar o erro
+                return;
             }
+            
+            console.log('Elementos encontrados, configurando event listeners');
+            
+            // Limpar event listeners existentes
+            const newUploadBtn = uploadBtn.cloneNode(true);
+            uploadBtn.parentNode.replaceChild(newUploadBtn, uploadBtn);
+            
+            const newFileInput = fileInput.cloneNode(true);
+            fileInput.parentNode.replaceChild(newFileInput, fileInput);
+            
+            // Configurar event listeners
+            newUploadBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('Botão de upload clicado');
+                newFileInput.click();
+            });
+            
+            newFileInput.addEventListener('change', (e) => {
+                console.log('Arquivo selecionado:', e.target.files[0]);
+                const file = e.target.files[0];
+                if (file) {
+                    console.log('Tipo do arquivo:', file.type);
+                    const allowedTypes = ['image/svg+xml', 'image/jpeg', 'image/jpg', 'image/png'];
+                    if (allowedTypes.includes(file.type)) {
+                        console.log('Arquivo aceito, iniciando upload');
+                        this.handleFileUpload(file);
+                    } else {
+                        console.log('Tipo de arquivo não aceito:', file.type);
+                        this.logMessage('Apenas arquivos SVG, JPG e PNG são aceitos', 'warning');
+                    }
+                }
+                // Limpar o input para permitir selecionar o mesmo arquivo novamente
+                e.target.value = '';
+            });
+            
+            console.log('Event listeners configurados com sucesso');
         }, 100);
     }
 
@@ -1412,6 +1460,9 @@ class EngineTools {
     setupViewportEvents() {
         const viewport = document.getElementById('preview-viewport');
         
+        // Verificar se o viewport existe
+        if (!viewport) return;
+        
         // Drop de assets
         viewport.addEventListener('dragover', (e) => {
             e.preventDefault();
@@ -1525,7 +1576,10 @@ class EngineTools {
     // Configurar eventos do menu
     setupMenuEvents() {
         // Menu principal
-        document.querySelectorAll('.menu-item[data-menu]').forEach(item => {
+        const menuItems = document.querySelectorAll('.menu-item[data-menu]');
+        if (menuItems.length === 0) return;
+        
+        menuItems.forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
                 this.handleMenuAction(item.dataset.menu);
@@ -1533,21 +1587,30 @@ class EngineTools {
         });
         
         // Itens do dropdown de arquivo
-        document.querySelectorAll('.dropdown-menu .menu-item[data-action]').forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.handleFileAction(item.dataset.action);
-                // Fechar o menu após a ação
-                document.getElementById('file-menu').style.display = 'none';
+        const dropdownItems = document.querySelectorAll('.dropdown-menu .menu-item[data-action]');
+        if (dropdownItems.length > 0) {
+            dropdownItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.handleFileAction(item.dataset.action);
+                    // Fechar o menu após a ação
+                    const fileMenu = document.getElementById('file-menu');
+                    if (fileMenu) {
+                        fileMenu.style.display = 'none';
+                    }
+                });
             });
-        });
+        }
         
         // Fechar menus ao clicar fora
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.dropdown-menu') && !e.target.closest('.menu-item[data-menu]')) {
-                document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                    menu.style.display = 'none';
-                });
+                const dropdownMenus = document.querySelectorAll('.dropdown-menu');
+                if (dropdownMenus.length > 0) {
+                    dropdownMenus.forEach(menu => {
+                        menu.style.display = 'none';
+                    });
+                }
             }
         });
     }
@@ -1563,6 +1626,7 @@ class EngineTools {
                 e.preventDefault();
                 this.openProject();
             }
+            // Verificar se selectedObject existe antes de tentar excluí-lo
             if (e.key === 'Delete' && this.selectedObject) {
                 this.deleteSelectedObject();
             }
@@ -1578,10 +1642,13 @@ class EngineTools {
 
     // Configurar redimensionadores
     setupResizers() {
+        // Obter referências aos elementos de redimensionamento
         const leftResizer = document.getElementById('resizer-left');
         const rightResizer = document.getElementById('resizer-right');
         const bottomResizer = document.getElementById('resizer-bottom');
         
+        // Criar redimensionadores apenas se os elementos existirem
+        // A função createResizer já verifica se o elemento existe
         this.createResizer(leftResizer, 'left');
         this.createResizer(rightResizer, 'right');
         this.createResizer(bottomResizer, 'bottom');
@@ -1589,6 +1656,9 @@ class EngineTools {
 
     // Criar redimensionador
     createResizer(element, direction) {
+        // Verificar se o elemento existe antes de adicionar event listeners
+        if (!element) return;
+        
         let isResizing = false;
         
         element.addEventListener('mousedown', (e) => {
@@ -1602,16 +1672,22 @@ class EngineTools {
             
             if (direction === 'left') {
                 const sidebar = document.getElementById('sidebar-left');
-                const newWidth = Math.max(200, Math.min(500, e.clientX));
-                sidebar.style.width = newWidth + 'px';
+                if (sidebar) {
+                    const newWidth = Math.max(200, Math.min(500, e.clientX));
+                    sidebar.style.width = newWidth + 'px';
+                }
             } else if (direction === 'right') {
                 const sidebar = document.getElementById('sidebar-right');
-                const newWidth = Math.max(200, Math.min(500, window.innerWidth - e.clientX));
-                sidebar.style.width = newWidth + 'px';
+                if (sidebar) {
+                    const newWidth = Math.max(200, Math.min(500, window.innerWidth - e.clientX));
+                    sidebar.style.width = newWidth + 'px';
+                }
             } else if (direction === 'bottom') {
                 const panel = document.getElementById('bottom-panel');
-                const newHeight = Math.max(100, Math.min(400, window.innerHeight - e.clientY));
-                panel.style.height = newHeight + 'px';
+                if (panel) {
+                    const newHeight = Math.max(100, Math.min(400, window.innerHeight - e.clientY));
+                    panel.style.height = newHeight + 'px';
+                }
             }
         };
         
@@ -1647,22 +1723,37 @@ class EngineTools {
     playGame() {
         this.isRunning = true;
         this.logMessage('Jogo iniciado', 'info');
-        document.getElementById('btn-play').classList.add('active');
-        document.getElementById('btn-pause').classList.remove('active');
+        
+        // Verificar se os elementos existem antes de manipular suas classes
+        const playBtn = document.getElementById('btn-play');
+        const pauseBtn = document.getElementById('btn-pause');
+        
+        if (playBtn) playBtn.classList.add('active');
+        if (pauseBtn) pauseBtn.classList.remove('active');
     }
 
     pauseGame() {
         this.isRunning = false;
         this.logMessage('Jogo pausado', 'warning');
-        document.getElementById('btn-play').classList.remove('active');
-        document.getElementById('btn-pause').classList.add('active');
+        
+        // Verificar se os elementos existem antes de manipular suas classes
+        const playBtn = document.getElementById('btn-play');
+        const pauseBtn = document.getElementById('btn-pause');
+        
+        if (playBtn) playBtn.classList.remove('active');
+        if (pauseBtn) pauseBtn.classList.add('active');
     }
 
     stopGame() {
         this.isRunning = false;
         this.logMessage('Jogo parado', 'error');
-        document.getElementById('btn-play').classList.remove('active');
-        document.getElementById('btn-pause').classList.remove('active');
+        
+        // Verificar se os elementos existem antes de manipular suas classes
+        const playBtn = document.getElementById('btn-play');
+        const pauseBtn = document.getElementById('btn-pause');
+        
+        if (playBtn) playBtn.classList.remove('active');
+        if (pauseBtn) pauseBtn.classList.remove('active');
     }
 
     selectTool(toolName, element) {
@@ -2204,6 +2295,8 @@ class EngineTools {
     }
 
     deselectAll() {
+        // Remover classe 'selected' de todos os itens selecionados
+        // querySelectorAll retorna uma NodeList vazia se não encontrar elementos, então é seguro
         document.querySelectorAll('.tree-item.selected, .asset-item.selected').forEach(item => {
             item.classList.remove('selected');
         });

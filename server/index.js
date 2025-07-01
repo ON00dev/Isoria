@@ -190,6 +190,11 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../client/engine-tools.html'));
 });
 
+// Rota para o editor de scripts
+app.get('/script-editor', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/script-editor.html'));
+});
+
 // Rota para servir o engine-tools.html em qualquer rota (SPA support)
 app.get('*', (req, res, next) => {
     // Verifica se é uma requisição para um arquivo estático

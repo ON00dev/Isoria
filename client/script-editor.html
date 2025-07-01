@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -21,11 +21,14 @@
     <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/uicons-thin-straight/css/uicons-thin-straight.css'>
     <link rel="stylesheet" href="css/engine-tools.css">
     <link rel="stylesheet" href="css/syntax-highlight.css">
-    <!-- CodeMirror para destaque de sintaxe -->
+    <!-- CodeMirror para destaque de sintaxe (via CDN) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/closebrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/selection/active-line.min.js"></script>
     <!-- Phaser para o motor de jogos -->
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
     <!-- Fabric.js para ferramentas de desenho -->
@@ -48,9 +51,18 @@
                 </ul>
             </nav>
             <div class="header-controls">
-                <button class="btn-play" id="btn-play"><i class="fi fi-rr-play"></i></button>
-                <button class="btn-pause" id="btn-pause"><i class="fi fi-rr-pause"></i></button>
-                <button class="btn-stop" id="btn-stop"><i class="fi fi-bs-stop-circle"></i></button>
+                <button id="btn-run" class="btn-play" title="Executar Script (F5)">
+                    <i class="fi fi-rr-play"></i> Executar
+                </button>
+                <button id="btn-format" class="btn-icon" title="Formatar Código">
+                    <i class="fi fi-rr-indent"></i>
+                </button>
+                <button id="btn-clear-console" class="btn-icon" title="Limpar Console">
+                    <i class="fi fi-rr-broom"></i>
+                </button>
+                <button id="btn-test-recovery" class="btn-icon" title="Testar Recuperação">
+                    <i class="fi fi-rr-refresh"></i>
+                </button>
             </div>
         </div>
     </header>
@@ -74,18 +86,12 @@
                             <select id="script-selector" class="script-selector">
                                 <!-- Scripts serão carregados dinamicamente -->
                             </select>
-                        </div>
-                        <textarea id="script-content" class="script-textarea" placeholder="// Escreva seu código JavaScript aqui..."></textarea>
-                        <div class="script-api-help">
-                            <h4>API Isoria</h4>
-                            <div class="api-examples">
-                                <div class="api-example">Isoria.scene.create('MainScene');</div>
-                                <div class="api-example">Isoria.gameObject.create('sprite', 100, 100, { texture: 'player' });</div>
-                                <div class="api-example">Isoria.player.create(200, 200, { speed: 5 });</div>
-                                <div class="api-example">Isoria.camera.setZoom(1.5);</div>
-                                <div class="api-example">Isoria.log('Mensagem para o console');</div>
+                            <div class="editor-buttons">
+                                <!-- Botões de backup serão adicionados aqui -->
                             </div>
                         </div>
+                        <textarea id="script-content" class="script-textarea" placeholder="// Escreva seu código JavaScript aqui..."></textarea>
+
                     </div>
                 </div>
             </section>
@@ -105,18 +111,7 @@
                 </div>
             </section>
             
-            <!-- Console no Sidebar Right -->
-            <section class="panel" id="sidebar-console-panel">
-                <div class="panel-header">
-                    <h3>Console</h3>
-                    <button class="panel-toggle">−</button>
-                </div>
-                <div class="panel-content" style="display: block !important;">
-                    <div class="console-output" id="sidebar-console" style="display: block !important;">
-                        <!-- Mensagens do console carregadas dinamicamente -->
-                    </div>
-                </div>
-            </section>
+            <!-- Console no Sidebar Right removido conforme solicitado -->
         </aside>
     </main>
 
@@ -150,15 +145,380 @@
     <script src="/socket.io/socket.io.js"></script>
     
     <!-- Scripts da Engine -->
+    <script src="js/force-ltr.js"></script>
     <script src="js/isoria-engine.js"></script>
     <script src="js/engine-tools.js"></script>
     <script src="js/script-editor.js"></script>
     
     <script>
+        // Adicionar parâmetro nocache à URL para evitar cache do navegador
+        if (!window.location.href.includes('nocache=')) {
+            const separator = window.location.href.includes('?') ? '&' : '?';
+            const newUrl = window.location.href + separator + 'nocache=' + Date.now();
+            window.location.href = newUrl;
+        }
+        
+        // Detectar quando a página está prestes a ser fechada ou recarregada
+        window.addEventListener('beforeunload', function(e) {
+            // Salvar o estado atual no localStorage
+            if (window.scriptEditor && window.scriptEditor.codeMirror) {
+                const currentScript = window.scriptEditor.currentScript;
+                const content = window.scriptEditor.codeMirror.getValue();
+                
+                if (currentScript && content) {
+                    localStorage.setItem('isoria_script_' + currentScript, content);
+                    localStorage.setItem('isoria_last_script', currentScript);
+                    localStorage.setItem('isoria_scripts_timestamp', Date.now().toString());
+                    localStorage.setItem('isoria_unplanned_exit', 'true');
+                    console.log('Estado salvo antes de sair da página');
+                }
+            }
+            
+            // Mensagem para o usuário (alguns navegadores mostrarão isso)
+            const message = 'Você tem alterações não salvas. Tem certeza que deseja sair?';
+            e.returnValue = message;
+            return message;
+        })
+        
+        // Função para verificar e restaurar o estado do editor após um fechamento não planejado
+        function checkForUnplannedExit() {
+            const unplannedExit = localStorage.getItem('isoria_unplanned_exit') === 'true';
+            if (unplannedExit) {
+                console.log('Detectado fechamento não planejado da página. Preparando para restaurar o estado...');
+                
+                // Adicionar uma classe ao body para indicar que estamos restaurando
+                document.body.classList.add('restoring-state');
+                
+                // Garantir que o ScriptEditor seja inicializado o mais rápido possível
+                const checkInterval = setInterval(function() {
+                    if (window.scriptEditor && window.scriptEditor.codeMirror) {
+                        clearInterval(checkInterval);
+                        console.log('ScriptEditor inicializado, restaurando estado...');
+                        
+                        // Forçar a recuperação de scripts do localStorage
+                        window.scriptEditor.recoverScriptsFromLocalStorage();
+                        
+                        // Carregar o último script usado
+                        const lastScript = localStorage.getItem('isoria_last_script');
+                        if (lastScript && window.scriptEditor.scripts[lastScript]) {
+                            window.scriptEditor.loadScript(lastScript);
+                            console.log('Restaurado último script usado: ' + lastScript);
+                        }
+                        
+                        // Remover a classe de restauração
+                        document.body.classList.remove('restoring-state');
+                    }
+                }, 100);
+                
+                // Definir um timeout para evitar loop infinito
+                setTimeout(function() {
+                    clearInterval(checkInterval);
+                }, 10000);
+            }
+        }
+        
+        // Verificar se houve um fechamento não planejado quando a página carregar
+        document.addEventListener('DOMContentLoaded', checkForUnplannedExit);
+        
+        // Solução para o erro do AudioContext
+        // Criar um contexto de áudio silencioso após interação do usuário
+        document.addEventListener('click', function initAudioContext() {
+            // Criar um AudioContext silencioso para evitar erros
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                const silentContext = new AudioContext();
+                // Desconectar o listener após a primeira interação
+                document.removeEventListener('click', initAudioContext);
+                console.log('AudioContext inicializado com sucesso após interação do usuário');
+            } catch (e) {
+                console.warn('Não foi possível inicializar o AudioContext:', e);
+            }
+        }, { once: false });
+        
         // Inicializar a engine quando o DOM estiver carregado
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM carregado, inicializando ferramentas...');
             window.engineTools = new EngineTools();
-            window.scriptEditor = new ScriptEditor();
+            
+            // Função para garantir que o CodeMirror esteja inicializado e editável
+            function ensureCodeMirrorIsEditable() {
+                console.log('Verificando inicialização do CodeMirror...');
+                const cmElements = document.querySelectorAll('.CodeMirror');
+                
+                if (cmElements.length === 0) {
+                    console.log('CodeMirror não inicializado, tentando inicializar manualmente...');
+                    if (!window.scriptEditor) {
+                        window.scriptEditor = new ScriptEditor();
+                    } else {
+                        // Limpar instâncias anteriores e reinicializar
+                        document.querySelectorAll('.CodeMirror').forEach(cm => cm.remove());
+                        window.scriptEditor.initializeCodeMirror();
+                    }
+                } else {
+                    console.log('CodeMirror já inicializado, verificando se está editável...');
+                    // Garantir que o CodeMirror não esteja em modo somente leitura
+                    if (window.scriptEditor && window.scriptEditor.codeMirror) {
+                        window.scriptEditor.codeMirror.setOption('readOnly', false);
+                        window.scriptEditor.codeMirror.focus();
+                        
+                        // Aplicar estilos diretamente ao wrapper do CodeMirror
+                        const wrapper = window.scriptEditor.codeMirror.getWrapperElement();
+                        if (wrapper) {
+                            wrapper.style.pointerEvents = 'auto';
+                            wrapper.style.userSelect = 'text';
+                            wrapper.style.webkitUserSelect = 'text';
+                            wrapper.style.mozUserSelect = 'text';
+                            wrapper.style.msUserSelect = 'text';
+                            wrapper.style.cursor = 'text';
+                            wrapper.style.display = 'block';
+                            wrapper.style.visibility = 'visible';
+                            wrapper.style.opacity = '1';
+                            wrapper.style.position = 'relative';
+                            wrapper.style.zIndex = '10';
+                            wrapper.style.height = 'calc(100% - 40px)';
+                            wrapper.style.width = '100%';
+                            wrapper.style.flex = '1';
+                            wrapper.style.overflow = 'visible';
+                            
+                            // Forçar o CodeMirror a recalcular seu layout
+                            window.scriptEditor.codeMirror.refresh();
+                        }
+                    }
+                }
+                
+                // Garantir que o sidebar-left esteja visível
+                const sidebarLeft = document.getElementById('sidebar-left');
+                if (sidebarLeft) {
+                    sidebarLeft.style.display = 'flex';
+                    sidebarLeft.style.visibility = 'visible';
+                    sidebarLeft.style.opacity = '1';
+                    sidebarLeft.style.width = '50%';
+                    sidebarLeft.style.flex = '1';
+                    sidebarLeft.style.overflow = 'visible';
+                }
+            }
+            
+            // Garantir que o CodeMirror seja inicializado corretamente
+            setTimeout(ensureCodeMirrorIsEditable, 500);
+            // Tentar novamente após um tempo maior para garantir
+            setTimeout(ensureCodeMirrorIsEditable, 1000);
+            setTimeout(ensureCodeMirrorIsEditable, 2000);
+            
+            // Adicionar evento de clique global para garantir que o editor seja editável
+            document.addEventListener('click', function(e) {
+                // Verificar se o clique foi dentro ou próximo ao editor
+                const editorContainer = document.querySelector('.script-editor-container');
+                if (editorContainer && (editorContainer.contains(e.target) || e.target.closest('.sidebar-left'))) {
+                    if (window.scriptEditor && window.scriptEditor.codeMirror) {
+                        window.scriptEditor.codeMirror.setOption('readOnly', false);
+                        window.scriptEditor.codeMirror.focus();
+                    }
+                }
+            });
+            
+            // Verificar periodicamente se o editor está em modo somente leitura
+            setInterval(function() {
+                if (window.scriptEditor && window.scriptEditor.codeMirror) {
+                    if (window.scriptEditor.codeMirror.getOption('readOnly')) {
+                        console.log('Editor detectado em modo somente leitura, corrigindo...');
+                        window.scriptEditor.codeMirror.setOption('readOnly', false);
+                        window.scriptEditor.codeMirror.focus();
+                    }
+                }
+            }, 2000);
+        });
+    </script>
+    
+    <!-- Script adicional para garantir que o CodeMirror seja visível no sidebar-left -->
+    <script>
+        // Função para forçar a renderização do CodeMirror
+        function forceCodeMirrorRender() {
+            console.log('Forçando renderização do CodeMirror...');
+            
+            // Verificar se o CodeMirror está inicializado
+            if (window.scriptEditor && window.scriptEditor.codeMirror) {
+                // Forçar refresh do CodeMirror
+                window.scriptEditor.codeMirror.refresh();
+                
+                // Garantir que o wrapper do CodeMirror esteja visível
+                const wrapper = window.scriptEditor.codeMirror.getWrapperElement();
+                if (wrapper) {
+                    wrapper.style.display = 'block';
+                    wrapper.style.visibility = 'visible';
+                    wrapper.style.opacity = '1';
+                    wrapper.style.position = 'relative';
+                    wrapper.style.zIndex = '999';
+                    wrapper.style.height = 'calc(100% - 40px)';
+                    wrapper.style.width = '100%';
+                    wrapper.style.flex = '1';
+                    wrapper.style.overflow = 'visible';
+                    wrapper.style.transform = 'translateZ(0)';
+                    wrapper.style.pointerEvents = 'auto';
+                    wrapper.style.minHeight = '400px';
+                    wrapper.style.margin = '0';
+                    wrapper.style.padding = '0';
+                    
+                    // Forçar o CodeMirror a recalcular seu layout
+                    window.scriptEditor.codeMirror.refresh();
+                    
+                    // Simular uma interação para garantir que o CodeMirror seja renderizado
+                    window.scriptEditor.codeMirror.focus();
+                    window.scriptEditor.codeMirror.setCursor(0, 0);
+                    
+                    // Garantir que o CodeMirror não esteja em modo somente leitura
+                    if (window.scriptEditor.codeMirror.getOption('readOnly')) {
+                        window.scriptEditor.codeMirror.setOption('readOnly', false);
+                    }
+                    
+                    // Forçar a renderização de todos os elementos internos do CodeMirror
+                    const innerElements = wrapper.querySelectorAll('.CodeMirror-sizer, .CodeMirror-gutter, .CodeMirror-gutters, .CodeMirror-linenumber, .CodeMirror-scroll, .CodeMirror-lines, .CodeMirror-line');
+                    innerElements.forEach(el => {
+                        el.style.visibility = 'visible';
+                        el.style.display = 'block';
+                        el.style.opacity = '1';
+                    });
+                }
+            }
+            
+            // Garantir que o sidebar-left esteja visível
+            const sidebarLeft = document.getElementById('sidebar-left');
+            if (sidebarLeft) {
+                sidebarLeft.style.display = 'flex';
+                sidebarLeft.style.visibility = 'visible';
+                sidebarLeft.style.opacity = '1';
+                sidebarLeft.style.width = '50%';
+                sidebarLeft.style.flex = '1';
+                sidebarLeft.style.overflow = 'visible';
+                sidebarLeft.style.zIndex = '10';
+                sidebarLeft.style.position = 'relative';
+            }
+            
+            // Verificar se o textarea original está visível
+            const textarea = document.getElementById('script-content');
+            if (textarea) {
+                textarea.style.display = 'block';
+                textarea.style.visibility = 'visible';
+                textarea.style.opacity = '1';
+                textarea.style.height = 'calc(100% - 40px)';
+                textarea.style.width = '100%';
+                textarea.style.flex = '1';
+            }
+        }
+        
+        // Função para garantir que o CodeMirror seja editável
+        function ensureCodeMirrorIsEditable() {
+            if (window.scriptEditor && window.scriptEditor.codeMirror) {
+                // Forçar o modo editável
+                window.scriptEditor.codeMirror.setOption('readOnly', false);
+                
+                // Forçar o refresh
+                window.scriptEditor.codeMirror.refresh();
+                
+                // Simular interação
+                window.scriptEditor.codeMirror.focus();
+                window.scriptEditor.codeMirror.setCursor(0, 0);
+                
+                console.log('CodeMirror definido como editável');
+            }
+        }
+        
+        // Função para verificar se o CodeMirror está visível e, se não estiver, recriar
+        function checkCodeMirrorVisibility() {
+            console.log('Verificando visibilidade do CodeMirror...');
+            
+            if (window.scriptEditor && window.scriptEditor.codeMirror) {
+                const wrapper = window.scriptEditor.codeMirror.getWrapperElement();
+                
+                // Verificar se o wrapper está visível
+                if (wrapper) {
+                    const style = window.getComputedStyle(wrapper);
+                    const isVisible = style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+                    
+                    if (!isVisible) {
+                        console.log('CodeMirror não está visível, recriando...');
+                        
+                        // Salvar o conteúdo atual
+                        const content = window.scriptEditor.codeMirror.getValue();
+                        
+                        // Destruir a instância atual
+                        window.scriptEditor.codeMirror.toTextArea();
+                        
+                        // Limpar todas as instâncias do CodeMirror
+                        document.querySelectorAll('.CodeMirror').forEach(cm => cm.remove());
+                        
+                        // Obter o textarea
+                        const textarea = document.getElementById('script-content');
+                        if (textarea) {
+                            // Restaurar o conteúdo
+                            textarea.value = content;
+                            
+                            // Garantir que o textarea esteja visível
+                            textarea.style.display = 'block';
+                            textarea.style.visibility = 'visible';
+                            textarea.style.opacity = '1';
+                            
+                            // Recriar o CodeMirror
+                            window.scriptEditor.codeMirror = CodeMirror.fromTextArea(textarea, {
+                                mode: 'javascript',
+                                theme: 'dracula',
+                                lineNumbers: true,
+                                indentUnit: 4,
+                                tabSize: 4,
+                                indentWithTabs: false,
+                                autoCloseBrackets: true,
+                                matchBrackets: true,
+                                styleActiveLine: true,
+                                readOnly: false,
+                                inputStyle: 'textarea',
+                                dragDrop: true,
+                                selectionPointer: true,
+                                spellcheck: false,
+                                viewportMargin: Infinity,
+                                lineWrapping: true
+                            });
+                            
+                            // Definir o conteúdo
+                            window.scriptEditor.codeMirror.setValue(content);
+                            
+                            // Forçar a renderização
+                            setTimeout(forceCodeMirrorRender, 100);
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Executar a função após o carregamento da página
+        window.addEventListener('load', function() {
+            // Tentar várias vezes com intervalos diferentes
+            setTimeout(forceCodeMirrorRender, 500);
+            setTimeout(forceCodeMirrorRender, 1000);
+            setTimeout(forceCodeMirrorRender, 2000);
+            setTimeout(forceCodeMirrorRender, 3000);
+            
+            // Garantir que o CodeMirror seja editável
+            setTimeout(ensureCodeMirrorIsEditable, 1500);
+            setTimeout(ensureCodeMirrorIsEditable, 2500);
+            setTimeout(ensureCodeMirrorIsEditable, 3500);
+            
+            // Verificar a visibilidade do CodeMirror e recriar se necessário
+            setTimeout(checkCodeMirrorVisibility, 2000);
+            setTimeout(checkCodeMirrorVisibility, 4000);
+            
+            // Adicionar evento de clique no documento para garantir que o CodeMirror seja editável
+            document.addEventListener('click', function() {
+                if (window.scriptEditor && window.scriptEditor.codeMirror) {
+                    window.scriptEditor.codeMirror.focus();
+                }
+            });
+            
+            // Adicionar evento de tecla para garantir que o CodeMirror seja editável
+            document.addEventListener('keydown', function() {
+                if (window.scriptEditor && window.scriptEditor.codeMirror) {
+                    window.scriptEditor.codeMirror.focus();
+                    forceCodeMirrorRender();
+                }
+            });
         });
     </script>
 </body>

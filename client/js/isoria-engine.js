@@ -307,48 +307,12 @@ class IsoriaEngine {
                 bottomPanel.style.display = 'flex';
             }
         }
-        
-        // Enviar para o console do sidebar-right
-        const sidebarConsole = document.getElementById('sidebar-console');
-        if (sidebarConsole) {
-            const logLine = createLogElement();
-            sidebarConsole.appendChild(logLine);
-            sidebarConsole.scrollTop = sidebarConsole.scrollHeight;
-            
-            // Limitar o número de mensagens no sidebar-console
-            const maxMessages = 50;
-            const lines = sidebarConsole.querySelectorAll('.console-line');
-            if (lines.length > maxMessages) {
-                lines[0].remove();
-            }
-            
-            // Garantir que o painel do console esteja visível
-            const panel = document.getElementById('sidebar-console-panel');
-            if (panel) {
-                const content = panel.querySelector('.panel-content');
-                if (content) {
-                    content.style.display = 'block';
-                }
-            }
-        }
     }
 
     // Script Execution
     executeScript(scriptCode) {
         try {
             this.log('Executando script...');
-            
-            // Garantir que o console no sidebar-right esteja visível
-            const sidebarConsole = document.getElementById('sidebar-console');
-            if (sidebarConsole) {
-                const panel = document.getElementById('sidebar-console-panel');
-                if (panel) {
-                    const content = panel.querySelector('.panel-content');
-                    if (content) {
-                        content.style.display = 'block';
-                    }
-                }
-            }
             
             // Limpar objetos anteriores se necessário
             if (this.isRunning) {
