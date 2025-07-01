@@ -3141,7 +3141,7 @@ class EngineTools {
                 40, 
                 40
             );
-            this.selectionHighlight.setDepth(200); // Acima de tudo
+            this.selectionHighlight.setDepth(3000); // Valor extremamente alto para garantir que fique acima de tudo
         }
     }
 
@@ -3183,7 +3183,7 @@ class EngineTools {
                 40, 
                 40
             );
-            this.hoverHighlight.setDepth(199); // Abaixo do highlight de seleção
+            this.hoverHighlight.setDepth(2900); // Abaixo do highlight de seleção, mas acima de qualquer asset
         }
     }
 
@@ -3200,6 +3200,9 @@ class EngineTools {
         if (this.phaserGame && this.phaserGame.scene.scenes[0]) {
             const scene = this.phaserGame.scene.scenes[0];
             
+            // Limpar a lista de placeholders antes de recriar a cena
+            this.placeholders = [];
+            
             // Criar uma cópia da lista para evitar problemas durante a iteração
             const childrenToDestroy = [...scene.children.list];
             
@@ -3213,12 +3216,29 @@ class EngineTools {
                 if (child === this.selectionHighlight || child === this.hoverHighlight) {
                     return; // Não remover highlights
                 }
-                // Remover outros objetos
+                // Remover todos os objetos
                 child.destroy();
             });
             
-            // Recriar objetos da cena
+            // Recriar objetos da cena (isso vai preencher this.placeholders com os placeholders necessários)
             this.createSceneObjects(scene);
+            
+            // Recriar os quadrados verdes por último para garantir que fiquem por cima
+            if (this.placeholders && this.placeholders.length > 0) {
+                this.placeholders.forEach(p => {
+                    const rect = scene.add.rectangle(
+                        p.x, 
+                        p.y, 
+                        p.width, p.height, 
+                        0x00ff00
+                    );
+                    rect.setStrokeStyle(2, 0x000000);
+                    rect.setDepth(2000); // Valor maior que qualquer outro na cena
+                });
+            }
+            
+            // Limpar a lista de placeholders após criar os quadrados verdes
+            this.placeholders = [];
         }
     }
 
@@ -3290,6 +3310,9 @@ class EngineTools {
                     } else if (obj.depthOverride === 1) {
                         finalDepth = 1000; // Frente - valor alto
                     }
+                    // Limitar a profundidade máxima do container para 1500
+                    // para garantir que o quadrado verde (placeholder) com profundidade 2000 sempre fique por cima
+                    finalDepth = Math.min(finalDepth, 1500);
                     container.setDepth(finalDepth);
                     
                     // Carregar o SVG como textura
@@ -3304,22 +3327,22 @@ class EngineTools {
                         container.add(sprite);
                     });
                 } else {
-                    // Fallback: criar um retângulo colorido como placeholder
+                    // Armazenar informações do placeholder para criar depois
+                    // Não criar o placeholder aqui, pois será criado por último na função updateSceneRender
+                    // para garantir que fique por cima de todos os outros objetos
                     const baseSize = 32;
                     const objectScale = obj.scale ? obj.scale[0] : 1;
                     const scaledSize = baseSize * objectScale;
                     
-                    const rect = scene.add.rectangle(
-                        obj.position[0], 
-                        obj.position[1], 
-                        scaledSize, scaledSize, 
-                        0x00ff00
-                    );
-                    rect.setStrokeStyle(2, 0x000000);
-                    // Para o quadrado verde (placeholder), usar apenas profundidade isométrica
-                    // Sprites com Y maior (mais abaixo) ficam na frente, com offset para ficar acima dos tiles
-                    const isometricDepth = obj.tilePosition ? obj.tilePosition[1] * 10 + 100 : 100;
-                    rect.setDepth(isometricDepth);
+                    // Adicionar à lista de placeholders para criar por último
+                    if (!this.placeholders) this.placeholders = [];
+                    this.placeholders.push({
+                        x: obj.position[0],
+                        y: obj.position[1],
+                        width: scaledSize,
+                        height: scaledSize,
+                        scale: objectScale
+                    });
                 }
             }
         });
