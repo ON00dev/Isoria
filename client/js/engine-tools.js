@@ -2996,6 +2996,20 @@ class EngineTools {
             return; // Não pintar fora dos limites do mapa
         }
         
+        // Verificar se há um asset na posição (não permitir pintar sobre assets)
+        const hasAsset = this.sceneData.objects.some(obj => 
+            obj.tilePosition && 
+            obj.tilePosition[0] === tileX && 
+            obj.tilePosition[1] === tileY && 
+            (obj.type === 'sprite' || obj.type === 'asset') &&
+            obj.layer === this.currentLayer
+        );
+        
+        if (hasAsset) {
+            this.logMessage('Não é possível pintar sobre assets. Use apenas em tiles vazios.', 'warning');
+            return;
+        }
+        
         const tileId = `tile_${tileX}_${tileY}_${this.currentLayer}`;
         // A transformação isométrica é usada apenas para renderização
         const worldCoords = this.tileToWorldCoords(tileX, tileY);
@@ -3072,6 +3086,20 @@ class EngineTools {
         // Verificar se as coordenadas estão dentro dos limites do mapa
         if (!this.isValidTile(tileX, tileY)) {
             return; // Não apagar fora dos limites do mapa
+        }
+        
+        // Verificar se há um asset na posição (não permitir apagar assets)
+        const hasAsset = this.sceneData.objects.some(obj => 
+            obj.tilePosition && 
+            obj.tilePosition[0] === tileX && 
+            obj.tilePosition[1] === tileY && 
+            (obj.type === 'sprite' || obj.type === 'asset') &&
+            obj.layer === this.currentLayer
+        );
+        
+        if (hasAsset) {
+            this.logMessage('Não é possível apagar assets com a borracha. Use apenas em tiles pintados.', 'warning');
+            return;
         }
         
         // Salvar o estado atual antes de modificar
