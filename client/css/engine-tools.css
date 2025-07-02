@@ -932,19 +932,19 @@ body, p, div, span, textarea {
   }
   
   .console-line.warning .message {
-    color: #ffaa00;
+    color: #ffd000;
   }
   
   .console-line.error .message {
-    color: #ff4444;
+    color: #ff6944;
   }
   
   .console-line.log .message {
-    color: #88cc88;
+    color: #88b1cc;
   }
   
   .console-line.success .message {
-    color: #44ff44;
+    color: #44b4ff;
   }
   
   /* Script Editor */
