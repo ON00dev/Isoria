@@ -3505,6 +3505,146 @@ body, p, div, span, textarea {
     margin-bottom: 8px;
   }
 
+  /* Script Editor Modal Styles */
+  .script-editor-modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(3px);
+  }
+
+  .script-editor-modal-content {
+    background-color: #2b2b2b;
+    margin: 10% auto;
+    padding: 0;
+    border: 1px solid #404040;
+    border-radius: 8px;
+    width: 500px;
+    max-width: 90%;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    animation: scriptEditorModalFadeIn 0.3s ease-out;
+  }
+
+  @keyframes scriptEditorModalFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-50px) scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .script-editor-modal-header {
+    background-color: #1e1e1e;
+    padding: 16px 20px;
+    border-bottom: 1px solid #404040;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .script-editor-modal-header h3 {
+    margin: 0;
+    color: #4a9eff;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .script-editor-modal-close {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+
+  .script-editor-modal-close:hover {
+    background-color: #404040;
+    color: #fff;
+  }
+
+  .script-editor-modal-body {
+    padding: 20px;
+  }
+
+  .script-editor-warning {
+    text-align: center;
+    padding: 20px;
+  }
+
+  .script-editor-warning p {
+    margin: 10px 0;
+    font-size: 14px;
+    color: #ccc;
+    line-height: 1.5;
+  }
+
+  .script-editor-modal-footer {
+    padding: 16px 20px;
+    border-top: 1px solid #404040;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    background-color: #1e1e1e;
+    border-radius: 0 0 8px 8px;
+  }
+
+  .script-editor-btn-cancel,
+  .script-editor-btn-save,
+  .script-editor-btn-continue {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .script-editor-btn-cancel {
+    background-color: #404040;
+    color: #ccc;
+  }
+
+  .script-editor-btn-cancel:hover {
+    background-color: #555;
+    color: #fff;
+  }
+
+  .script-editor-btn-save {
+    background-color: #4CAF50;
+    color: #fff;
+  }
+
+  .script-editor-btn-save:hover {
+    background-color: #45a049;
+  }
+
+  .script-editor-btn-continue {
+    background-color: #ff9800;
+    color: #fff;
+  }
+
+  .script-editor-btn-continue:hover {
+    background-color: #e68900;
+  }
+
   /* Scale Modal Styles */
   .scale-modal {
     display: none;

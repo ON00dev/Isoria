@@ -56,7 +56,7 @@
                     <li><a href="#" class="menu-item" data-menu="edit">Edit</a></li>
                     <li><a href="#" class="menu-item" data-menu="view">View</a></li>
                     <li><a href="#" class="menu-item" data-menu="build">Build</a></li>
-                    <li><a href="script-editor.html?nocache=" class="menu-item" onclick="this.href='script-editor.html?nocache=' + Date.now()">Script Editor</a></li>
+                    <li><a href="#" class="menu-item" id="script-editor-link">Script Editor</a></li>
                     <li><a href="#" class="menu-item" data-menu="help">Help</a></li>
                 </ul>
             </nav>
@@ -399,6 +399,28 @@
             padding: 5px;
         }
     </style>
+
+    <!-- Script Editor Confirmation Modal -->
+    <div id="scriptEditorModal" class="script-editor-modal" style="display: none;">
+        <div class="script-editor-modal-content">
+            <div class="script-editor-modal-header">
+                <h3>Navegar para Script Editor</h3>
+                <button class="script-editor-modal-close" id="scriptEditorModalClose">&times;</button>
+            </div>
+            <div class="script-editor-modal-body">
+                <div class="script-editor-warning">
+                    <i class="fi fi-rr-triangle-warning" style="color: #ff9800; font-size: 24px; margin-bottom: 10px;"></i>
+                    <p>Você está prestes a navegar para uma nova página de desenvolvimento com programação.</p>
+                    <p>Deseja salvar o progresso atual em sua máquina antes de continuar?</p>
+                </div>
+            </div>
+            <div class="script-editor-modal-footer">
+                <button class="script-editor-btn-cancel" id="scriptEditorBtnCancel">Cancelar</button>
+                <button class="script-editor-btn-save" id="scriptEditorBtnSave">Salvar e Continuar</button>
+                <button class="script-editor-btn-continue" id="scriptEditorBtnContinue">Continuar sem Salvar</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Scale Modal -->
     <div id="scaleModal" class="scale-modal">

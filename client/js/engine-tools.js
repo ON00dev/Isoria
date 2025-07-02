@@ -1262,6 +1262,9 @@ class EngineTools {
         // Inicializar ferramentas de desenho com Fabric.js
         this.initializeFabricDrawingTools();
         
+        // Inicializar modal do Script Editor
+        this.initializeScriptEditorModal();
+        
         // Inicializar estado dos botões de desfazer/refazer
         this.updateUndoRedoButtons();
     }
@@ -3939,6 +3942,99 @@ class EngineTools {
              });
          }
      }
+
+    // Métodos do Modal Script Editor
+    initializeScriptEditorModal() {
+        const scriptEditorLink = document.getElementById('script-editor-link');
+        const modal = document.getElementById('scriptEditorModal');
+        const closeBtn = document.getElementById('scriptEditorModalClose');
+        const cancelBtn = document.getElementById('scriptEditorBtnCancel');
+        const saveBtn = document.getElementById('scriptEditorBtnSave');
+        const continueBtn = document.getElementById('scriptEditorBtnContinue');
+
+        if (!scriptEditorLink || !modal) {
+            console.warn('Elementos do modal Script Editor não encontrados');
+            return;
+        }
+
+        // Interceptar clique no link Script Editor
+        scriptEditorLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.showScriptEditorModal();
+        });
+
+        // Fechar modal
+        const closeModal = () => {
+            modal.style.display = 'none';
+        };
+
+        closeBtn.addEventListener('click', closeModal);
+        cancelBtn.addEventListener('click', closeModal);
+
+        // Fechar ao clicar fora do modal
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        // Salvar e continuar
+        saveBtn.addEventListener('click', () => {
+            this.saveProjectProgress();
+            this.navigateToScriptEditor();
+            closeModal();
+        });
+
+        // Continuar sem salvar
+        continueBtn.addEventListener('click', () => {
+            this.navigateToScriptEditor();
+            closeModal();
+        });
+
+        // Fechar com Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.style.display === 'block') {
+                closeModal();
+            }
+        });
+    }
+
+    showScriptEditorModal() {
+        const modal = document.getElementById('scriptEditorModal');
+        if (modal) {
+            modal.style.display = 'block';
+        }
+    }
+
+    saveProjectProgress() {
+        try {
+            // Salvar dados do projeto no localStorage
+            const projectState = {
+                sceneData: this.sceneData,
+                selectedAsset: this.selectedAsset,
+                currentTool: this.currentTool,
+                currentLayer: this.currentLayer,
+                layerVisibility: this.layerVisibility,
+                gridVisible: this.gridVisible,
+                currentColor: this.currentColor,
+                actionHistory: this.actionHistory,
+                currentHistoryIndex: this.currentHistoryIndex,
+                timestamp: new Date().toISOString()
+            };
+
+            localStorage.setItem('isoria_project_state', JSON.stringify(projectState));
+            this.logMessage('Progresso salvo com sucesso!', 'success');
+        } catch (error) {
+            console.error('Erro ao salvar progresso:', error);
+            this.logMessage('Erro ao salvar progresso: ' + error.message, 'error');
+        }
+    }
+
+    navigateToScriptEditor() {
+        // Navegar para o Script Editor com timestamp para evitar cache
+        const url = 'script-editor.html?nocache=' + Date.now();
+        window.location.href = url;
+    }
 }
 
 // Inicializar quando o DOM estiver carregado
