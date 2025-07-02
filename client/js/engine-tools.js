@@ -2488,6 +2488,7 @@ class EngineTools {
             'brush': 'crosshair',
             'fill': 'crosshair',
             'eraser': 'crosshair',
+            'terrain': 'crosshair',
             'pan': 'grab'
         };
         return cursors[toolName] || 'default';
@@ -2763,6 +2764,9 @@ class EngineTools {
             case 'fill':
                 this.floodFill(coords.tileX, coords.tileY);
                 break;
+            case 'terrain':
+                this.terrainTile(coords.tileX, coords.tileY);
+                break;
         }
     }
 
@@ -2806,6 +2810,9 @@ class EngineTools {
             case 'eraser':
                 this.eraseTile(coords.tileX, coords.tileY);
                 break;
+            case 'terrain':
+                this.terrainTile(coords.tileX, coords.tileY);
+                break;
         }
     }
 
@@ -2822,10 +2829,11 @@ class EngineTools {
         
         const coords = this.screenToTileCoords(e.clientX, e.clientY);
         
-        // Para ferramentas como paint e eraser, já registramos as ações individuais
+        // Para ferramentas como paint, eraser e terrain, já registramos as ações individuais
         // Limpar o último tile registrado para permitir novas ações
         this.lastPaintedTile = null;
         this.lastErasedTile = null;
+        this.lastTerrainTile = null;
         
         this.isDrawing = false;
         this.drawStartPos = null;
@@ -3243,6 +3251,70 @@ class EngineTools {
         this.logMessage(`Flood fill concluído (${iterations} tiles processados)`, 'info');
     }
 
+    terrainTile(tileX, tileY) {
+        // Verificar se as coordenadas estão dentro dos limites do mapa
+        if (!this.isValidTile(tileX, tileY)) {
+            return; // Não colocar terreno fora dos limites do mapa
+        }
+        
+        // Verificar se um asset foi selecionado
+        if (!this.selectedAsset) {
+            this.logMessage('Selecione um asset de terreno primeiro', 'warning');
+            return;
+        }
+        
+        const tileId = `terrain_${tileX}_${tileY}_${this.currentLayer}`;
+        const worldCoords = this.tileToWorldCoords(tileX, tileY);
+        
+        // Salvar o estado atual antes de modificar
+        const prevState = JSON.parse(JSON.stringify(this.sceneData.objects));
+        
+        // Remover qualquer terreno existente na mesma posição e camada
+        this.sceneData.objects = this.sceneData.objects.filter(obj => 
+            !(obj.tilePosition && obj.tilePosition[0] === tileX && obj.tilePosition[1] === tileY && 
+              obj.layer === this.currentLayer && obj.type === 'terrain')
+        );
+        
+        // Criar dados do terreno
+        const terrainData = {
+            id: tileId,
+            name: `${this.selectedAsset.name}_terrain_${tileX}_${tileY}`,
+            type: 'terrain',
+            key: this.selectedAsset.id,
+            position: [worldCoords.worldX, worldCoords.worldY],
+            tilePosition: [tileX, tileY],
+            layer: this.currentLayer,
+            visible: true,
+            properties: {
+                isTerrainTile: true
+            }
+        };
+        
+        this.sceneData.objects.push(terrainData);
+        
+        // Salvar o estado após a modificação
+        const nextState = JSON.parse(JSON.stringify(this.sceneData.objects));
+        
+        // Adicionar a ação ao histórico se não estiver desenhando continuamente
+        if (!this.isDrawing || !this.lastTerrainTile || 
+            this.lastTerrainTile.x !== tileX || this.lastTerrainTile.y !== tileY) {
+            this.addToHistory({
+                type: 'terrain',
+                position: { x: tileX, y: tileY },
+                layer: this.currentLayer,
+                asset: this.selectedAsset.id,
+                prevState: prevState,
+                nextState: nextState
+            });
+        }
+        
+        // Registrar o último tile de terreno colocado
+        this.lastTerrainTile = { x: tileX, y: tileY };
+        
+        this.updateSceneRender();
+        this.logMessage(`Terreno ${this.selectedAsset.name} colocado em [${tileX}, ${tileY}]`, 'info');
+    }
+
     // A função drawLine foi removida
 
     // A função drawRectangle foi removida
@@ -3454,22 +3526,29 @@ class EngineTools {
                 const isometricDepth = obj.tilePosition ? obj.tilePosition[1] * 10 + 50 : 50;
                 graphics.setDepth(isometricDepth);
                 }
-            } else if (obj.type === 'sprite' && obj.key) {
-                // Carregar e exibir o SVG como sprite
+            } else if ((obj.type === 'sprite' || obj.type === 'terrain') && obj.key) {
+                // Carregar e exibir o SVG como sprite ou terreno
                 // Primeiro, verificar se temos o caminho do SVG no objeto
                 const svgPath = this.getSVGPathForKey(obj.key);
                 
                 if (svgPath) {
                     // Criar um container para o SVG
                     const container = scene.add.container(obj.position[0], obj.position[1]);
-                    // Definir profundidade: usar override se disponível, senão usar profundidade isométrica
-                    // Sprites com Y maior (mais abaixo) ficam na frente, com offset para ficar acima dos tiles
-                    const isometricDepth = obj.tilePosition ? obj.tilePosition[1] * 10 + 100 : 100;
-                    let finalDepth = isometricDepth;
-                    if (obj.depthOverride === 0) {
-                        finalDepth = 10; // Trás - valor baixo
-                    } else if (obj.depthOverride === 1) {
-                        finalDepth = 1000; // Frente - valor alto
+                    // Definir profundidade baseada no tipo de objeto
+                    let finalDepth;
+                    if (obj.type === 'terrain') {
+                        // Terrenos ficam abaixo dos sprites mas acima dos tiles
+                        const isometricDepth = obj.tilePosition ? obj.tilePosition[1] * 10 + 75 : 75;
+                        finalDepth = isometricDepth;
+                    } else {
+                        // Sprites com Y maior (mais abaixo) ficam na frente, com offset para ficar acima dos terrenos
+                        const isometricDepth = obj.tilePosition ? obj.tilePosition[1] * 10 + 100 : 100;
+                        finalDepth = isometricDepth;
+                        if (obj.depthOverride === 0) {
+                            finalDepth = 10; // Trás - valor baixo
+                        } else if (obj.depthOverride === 1) {
+                            finalDepth = 1000; // Frente - valor alto
+                        }
                     }
                     // Limitar a profundidade máxima do container para 1500
                     // para garantir que o quadrado verde (placeholder) com profundidade 2000 sempre fique por cima
