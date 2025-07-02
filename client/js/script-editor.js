@@ -411,20 +411,7 @@ class ScriptEditor {
         // Limpar o console
         this.clearConsole();
         
-        // Garantir que o console no sidebar-right esteja visível
-        const sidebarConsole = document.getElementById('sidebar-console');
-        if (sidebarConsole) {
-            sidebarConsole.style.display = 'block';
-            
-            // Garantir que o painel do console esteja visível
-            const panel = document.getElementById('sidebar-console-panel');
-            if (panel) {
-                const content = panel.querySelector('.panel-content');
-                if (content) {
-                    content.style.display = 'block';
-                }
-            }
-        }
+
         
         // Executar o script usando a API da engine
         try {
@@ -699,16 +686,7 @@ class ScriptEditor {
             return false;
         }
         
-        // Garantir que o sidebar-left esteja visível
-        const sidebarLeft = document.getElementById('sidebar-left');
-        if (sidebarLeft) {
-            sidebarLeft.style.display = 'flex';
-            sidebarLeft.style.visibility = 'visible';
-            sidebarLeft.style.opacity = '1';
-            sidebarLeft.style.width = '50%';
-            sidebarLeft.style.flex = '1';
-            sidebarLeft.style.overflow = 'visible';
-        }
+        
         
         // Limpar instâncias anteriores
         this.cleanupCodeMirrorInstances();
@@ -1012,18 +990,7 @@ class ScriptEditor {
                     this.codeMirror.setCursor(0, 0);
                 }
                 
-                // Garantir que o sidebar-left esteja visível
-                const sidebarLeft = document.getElementById('sidebar-left');
-                if (sidebarLeft) {
-                    sidebarLeft.style.display = 'flex';
-                    sidebarLeft.style.visibility = 'visible';
-                    sidebarLeft.style.opacity = '1';
-                    sidebarLeft.style.width = '50%';
-                    sidebarLeft.style.flex = '1';
-                    sidebarLeft.style.overflow = 'visible';
-                    sidebarLeft.style.zIndex = '10';
-                    sidebarLeft.style.position = 'relative';
-                }
+
                 
                 // Garantir que o textarea original esteja visível e posicionado corretamente
                 const textarea = document.getElementById('script-content');
@@ -1141,15 +1108,7 @@ class ScriptEditor {
                     editorContainer.style.flex = '1';
                 }
                 
-                // Garantir que o painel de conteúdo ocupe todo o espaço disponível
-                const panelContent = document.querySelector('.sidebar-left .panel-content');
-                if (panelContent) {
-                    panelContent.style.display = 'flex';
-                    panelContent.style.flexDirection = 'column';
-                    panelContent.style.height = '100%';
-                    panelContent.style.flex = '1 1 auto';
-                    panelContent.style.overflow = 'hidden';
-                }
+
                 
                 console.log('CodeMirror inicializado com sucesso!');
                 return true;
@@ -1330,16 +1289,7 @@ document.addEventListener('DOMContentLoaded', function() {
             textarea.style.flex = '1';
         }
         
-        // Garantir que o painel de conteúdo da barra lateral esquerda esteja visível
-        const panelContent = document.querySelector('.sidebar-left .panel-content');
-        if (panelContent) {
-            panelContent.style.display = 'flex !important';
-            panelContent.style.flexDirection = 'column';
-            panelContent.style.height = '100%';
-            panelContent.style.flex = '1 1 auto';
-            panelContent.style.overflow = 'hidden';
-            panelContent.setAttribute('style', 'display: flex !important; flex-direction: column; height: 100%; flex: 1 1 auto; overflow: hidden;');
-        }
+
         
         // Verificar se já existe uma instância do ScriptEditor
         if (!window.scriptEditorInstance) {
@@ -1368,15 +1318,5 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 500);
     }
     
-    // Configurar eventos dos painéis
-    document.querySelectorAll('.panel-toggle').forEach(toggle => {
-        toggle.addEventListener('click', (e) => {
-            const panel = e.target.closest('.panel');
-            const content = panel.querySelector('.panel-content');
-            const isCollapsed = content.style.display === 'none';
-            
-            content.style.display = isCollapsed ? 'block' : 'none';
-            e.target.textContent = isCollapsed ? '−' : '+';
-        });
-    });
+
 });
