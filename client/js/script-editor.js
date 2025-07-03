@@ -647,12 +647,8 @@ class ScriptEditor {
             return;
         }
 
-        // Garantir altura/estilo base do textarea
-        textarea.style.height = 'calc(100% - 40px)';
-        textarea.style.minHeight = '300px';
-        textarea.style.visibility = 'hidden';  // oculta sem quebrar layout
-        textarea.style.position = 'absolute';  // fora do fluxo
-        textarea.style.left = '-9999px';       // invisível mas ainda funcional
+        // Manter o textarea visível até a substituição
+        textarea.style.display = 'block';
 
         // Verifica se CodeMirror está disponível
         if (typeof CodeMirror === 'undefined') {
@@ -676,7 +672,7 @@ class ScriptEditor {
             lineWrapping: true
         });
 
-        // Ajustar altura e layout
+        // Deixar o CodeMirror usar o tamanho padrão do container
         this.codeMirror.setSize('100%', '100%');
         
         // Opcional: foco automático no editor
@@ -814,14 +810,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Garantir que o textarea esteja visível antes da inicialização
         const textarea = document.getElementById('script-content');
         if (textarea) {
-            textarea.style.position = 'absolute';
-            textarea.style.left = '-9999px';
-            textarea.style.top = '-9999px';
-            textarea.style.width = '0px';
-            textarea.style.height = '0px';
-            textarea.style.opacity = '0';
-            textarea.style.pointerEvents = 'none';
-            textarea.style.visibility = 'hidden';
+            textarea.style.display = 'block';
+            textarea.style.width = '100%';
+            textarea.style.height = 'calc(100% - 40px)';
+            textarea.style.flex = '1';
+            textarea.style.position = 'relative';
+            textarea.style.visibility = 'visible';
         }
 
         
