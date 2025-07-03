@@ -669,18 +669,70 @@ class ScriptEditor {
             styleActiveLine: true,
             matchBrackets: true,
             autoCloseBrackets: true,
-            lineWrapping: true
+            lineWrapping: false,
+            readOnly: false,
+            autofocus: true,
+            cursorBlinkRate: 530,
+            cursorScrollMargin: 5,
+            cursorHeight: 0.85,
+            smartIndent: true,
+            electricChars: true,
+            indentUnit: 4,
+            tabSize: 4,
+            indentWithTabs: false
         });
 
         // Deixar o CodeMirror usar o tamanho padrão do container
         this.codeMirror.setSize('100%', '100%');
         
+        // Garantir que o CodeMirror seja editável
+        this.codeMirror.setOption('readOnly', false);
+        
         // Opcional: foco automático no editor
         this.codeMirror.focus();
+        
+        // Forçar refresh para garantir que o editor seja renderizado corretamente
+        setTimeout(() => {
+            this.codeMirror.refresh();
+            this.codeMirror.focus();
+        }, 100);
 
         // Sincroniza com o textarea se necessário
         this.codeMirror.on('change', () => {
             textarea.value = this.codeMirror.getValue();
+        });
+        
+        // Adicionar auto-indentação personalizada para chaves
+        this.codeMirror.setOption('extraKeys', {
+            'Enter': function(cm) {
+                const cursor = cm.getCursor();
+                const line = cm.getLine(cursor.line);
+                const beforeCursor = line.slice(0, cursor.ch);
+                const afterCursor = line.slice(cursor.ch);
+                
+                // Se há uma chave aberta antes do cursor
+                if (beforeCursor.trim().endsWith('{')) {
+                    // Se há uma chave fechada após o cursor na mesma linha
+                    if (afterCursor.trim().startsWith('}')) {
+                        // Inserir nova linha com indentação e posicionar cursor
+                        cm.replaceSelection('\n    \n');
+                        cm.setCursor(cursor.line + 1, 4);
+                    } else {
+                        // Apenas adicionar indentação
+                        cm.replaceSelection('\n    ');
+                    }
+                } else {
+                    // Comportamento padrão do Enter
+                    return CodeMirror.Pass;
+                }
+            },
+            'Tab': function(cm) {
+                if (cm.somethingSelected()) {
+                    cm.indentSelection('add');
+                } else {
+                    cm.replaceSelection('    ');
+                }
+            }
         });
 
         console.log('CodeMirror inicializado com sucesso');
@@ -699,7 +751,8 @@ function loadCodeMirrorFromCDN(callback) {
         'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js',
         'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/closebrackets.min.js',
         'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/matchbrackets.min.js',
-        'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/selection/active-line.min.js'
+        'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/selection/active-line.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/comment/continuecomment.min.js'
     ];
 
     cssLinks.forEach(link => {
@@ -752,7 +805,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js',
                 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/closebrackets.min.js',
                 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/matchbrackets.min.js',
-                'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/selection/active-line.min.js'
+                'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/selection/active-line.min.js',
+                'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/comment/continuecomment.min.js'
             ];
             
             let loadedCount = 0;

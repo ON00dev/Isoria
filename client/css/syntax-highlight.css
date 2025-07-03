@@ -150,20 +150,73 @@ body .CodeMirror, .CodeMirror, #sidebar-left .CodeMirror, .script-editor-contain
 
 /* Garantir que o cursor seja visível */
 .CodeMirror-cursor {
-    border-left: 2px solid #f8f8f2 !important;
+    border-left: 3px solid #acafad !important;
     border-right: none !important;
     width: 0 !important;
     opacity: 1 !important;
     visibility: visible !important;
     display: block !important;
     animation: blink 1.06s step-end infinite !important;
+    z-index: 999 !important;
+}
+
+/* Cursor alternativo mais visível */
+.CodeMirror-cursors .CodeMirror-cursor {
+    border-left: 3px solid #acafad !important;
+    background: transparent !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+    z-index: 999 !important;
 }
 
 /* Animação para o cursor piscar e ser mais visível */
 @keyframes blink {
     0% { opacity: 1; }
-    50% { opacity: 0; }
+    50% { opacity: 0.3; }
     100% { opacity: 1; }
+}
+
+/* Desabilitar quebra de linha automática no CodeMirror */
+.CodeMirror pre.CodeMirror-line,
+.CodeMirror pre.CodeMirror-line-like {
+    word-wrap: normal !important;
+    white-space: pre !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+}
+
+/* Garantir que o CodeMirror não quebre linhas em modo wrap */
+.CodeMirror-wrap pre.CodeMirror-line,
+.CodeMirror-wrap pre.CodeMirror-line-like {
+    word-wrap: normal !important;
+    white-space: pre !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+}
+
+/* Garantir que todos os tokens sejam inline e não quebrem */
+.CodeMirror-line span.cm-variable,
+.CodeMirror-line span.cm-property,
+.CodeMirror-line span.cm-keyword,
+.CodeMirror-line span.cm-operator,
+.CodeMirror-line span.cm-string,
+.CodeMirror-line span.cm-number,
+.CodeMirror-line span.cm-atom,
+.CodeMirror-line span.cm-comment,
+.CodeMirror-line span.cm-def,
+.CodeMirror-line span.cm-builtin,
+.CodeMirror-line span.cm-bracket,
+.CodeMirror-line span.cm-tag,
+.CodeMirror-line span.cm-attribute,
+.CodeMirror-line span.cm-meta,
+.CodeMirror-line span[class^="cm-"],
+.CodeMirror-line span[class*=" cm-"] {
+    display: inline !important;
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+    word-wrap: normal !important;
+    overflow-wrap: normal !important;
 }
 
 /* Garantir que o wrapper do CodeMirror seja visível e interativo */
@@ -180,13 +233,33 @@ body .CodeMirror, .CodeMirror, #sidebar-left .CodeMirror, .script-editor-contain
 .CodeMirror-gutters,
 .CodeMirror-linenumber,
 .CodeMirror-scroll,
-.CodeMirror-lines,
-.CodeMirror-line,
-.CodeMirror-line > span,
-.CodeMirror-line > span > span {
+.CodeMirror-lines {
     visibility: visible !important;
     display: block !important;
     opacity: 1 !important;
+}
+
+/* Garantir que as linhas sejam blocos mas os spans sejam inline */
+.CodeMirror-line {
+    visibility: visible !important;
+    display: block !important;
+    opacity: 1 !important;
+}
+
+/* Garantir que os spans dentro das linhas sejam inline para não quebrar */
+.CodeMirror-line > span,
+.CodeMirror-line > span > span,
+.CodeMirror-line span[class*="cm-"] {
+    visibility: visible !important;
+    display: inline !important;
+    opacity: 1 !important;
+    white-space: nowrap !important;
+}
+
+/* Garantir que o CodeMirror seja editável */
+.CodeMirror {
+    cursor: text !important;
+    pointer-events: auto !important;
 }
 
 /* Garantir que o CodeMirror não esteja em modo somente leitura */
@@ -361,11 +434,17 @@ body .CodeMirror, .CodeMirror, #sidebar-left .CodeMirror, .script-editor-contain
     background-color: transparent !important;
 }
 
-/* Garantir que o cursor seja visível */
+/* Garantir que o cursor seja visível e piscante */
 .CodeMirror-cursor {
-    border-left: 1px solid #f8f8f2 !important;
+    border-left: 2px solid #f8f8f2 !important;
     border-right: none !important;
     width: 0 !important;
+    animation: blink 1.06s infinite;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
 }
 
 /* Estilo para os números de linha */
@@ -505,93 +584,6 @@ body .CodeMirror, .CodeMirror, #sidebar-left .CodeMirror, .script-editor-contain
 #game-canvas {
     width: 100%;
     height: 100%;
-}
-
-/* Garantir que o CodeMirror seja exibido corretamente */
-.CodeMirror {
-    height: 100% !important;
-    min-height: 400px;
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    font-size: 14px;
-    line-height: 1.5;
-    flex: 1;
-    width: 100%;
-    z-index: 1;
-    position: relative;
-    display: block !important;
-    /* Garantir que o CodeMirror seja exibido corretamente */
-    visibility: visible !important;
-    opacity: 1 !important;
-}
-
-/* Garantir que o container do editor ocupe todo o espaço disponível */
-.script-editor-container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    flex: 1;
-    overflow: hidden;
-    position: relative;
-    width: 100%;
-}
-
-/* Garantir que o textarea seja exibido corretamente antes da inicialização do CodeMirror */
-.script-textarea {
-    display: block;
-    width: 100%;
-    height: 100%;
-    min-height: 400px;
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    font-size: 14px;
-    line-height: 1.5;
-    background-color: #282a36;
-    color: #f8f8f2;
-    border: 1px solid #44475a;
-    padding: 10px;
-    box-sizing: border-box;
-    flex: 1;
-}
-
-/* Ajustar o layout da sidebar-left */
-.sidebar-left {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    width: 50% !important;
-    flex: 1 !important;
-}
-
-.sidebar-left .panel-content {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    height: 100%;
-    padding: 0 !important;
-}
-
-/* Garantir que o CodeMirror ocupe todo o espaço disponível dentro da sidebar-left */
-.script-editor-page .script-editor-container .CodeMirror {
-    position: relative;
-    height: calc(100% - 40px) !important; /* Altura total menos a barra de ferramentas (40px) */
-    width: 100%;
-    flex: 1;
-    overflow: auto;
-    margin-top: 0;
-    margin-bottom: 0;
-    box-sizing: border-box;
-    display: block !important;
-    max-height: calc(100vh - 250px) !important; /* Limitar altura máxima para evitar overflow */
-}
-
-/* Evitar duplicação do CodeMirror */
-.script-editor-page .script-editor-container .CodeMirror + .CodeMirror,
-.script-editor-page .script-editor-container .CodeMirror:nth-child(n+3) {
-    display: none !important;
-    visibility: hidden !important;
-    position: absolute !important;
-    z-index: -1 !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
 }
 
 /* Ajustar a barra de ferramentas do editor */
