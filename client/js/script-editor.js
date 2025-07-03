@@ -113,9 +113,6 @@ class ScriptEditor {
             existingCodeMirrors.forEach(cm => cm.remove());
         }
         
-        // Inicializar o CodeMirror
-        this.initializeCodeMirror();
-        
         // Preencher o seletor de scripts
         this.updateScriptSelector();
         
@@ -644,127 +641,94 @@ class ScriptEditor {
     }
     
     initializeCodeMirror() {
-        console.log('Inicializando CodeMirror...');
-        
-        // Verificar se o textarea existe
         const textarea = document.getElementById('script-content');
         if (!textarea) {
             console.error('Textarea não encontrado! ID: script-content');
-            return false;
+            return;
         }
-        
-        // Garantir que o textarea ocupe todo o espaço disponível
+
+        // Garantir altura/estilo base do textarea
         textarea.style.height = 'calc(100% - 40px)';
-        textarea.style.minHeight = 'calc(100vh - 250px)';
-        textarea.style.display = 'block';
-        textarea.style.width = '100%';
-        textarea.style.flex = '1';
-        
-        // Verificar se o CodeMirror está disponível globalmente
+        textarea.style.minHeight = '300px';
+        textarea.style.visibility = 'hidden';  // oculta sem quebrar layout
+        textarea.style.position = 'absolute';  // fora do fluxo
+        textarea.style.left = '-9999px';       // invisível mas ainda funcional
+
+        // Verifica se CodeMirror está disponível
         if (typeof CodeMirror === 'undefined') {
-            console.error('CodeMirror não está disponível! Tentando carregar via CDN...');
-            
-            // Tentar carregar o CodeMirror via CDN
-            this.loadCodeMirrorFromCDN();
-            return false;
+            loadCodeMirrorFromCDN(() => this.initializeCodeMirror());
+            return;
         }
-        
-        
-        
-        // Limpar instâncias anteriores
-        this.cleanupCodeMirrorInstances();
-        
-        // Configurar o textarea para iniciar vazio
-        textarea.value = '';
-        this.currentScript = null;
-        this.scripts = {};
-        // Tentar recuperar scripts do localStorage (em caso de queda da página)
-        this.recoverScriptsFromLocalStorage();
-        // Instância do CodeMirror
-        this.codeMirror = null;
-        // Inicializar a interface do editor
-        this.initializeInterface();
-        // Não carregar nenhum script automaticamente
-        // Armazenar a instância para o padrão Singleton
-        window.scriptEditorInstance = this;
-        // Configurar salvamento automático periódico
-        this.setupAutoSave();
-        
-        // Adicionar método para carregar o CodeMirror via CDN
-        loadCodeMirrorFromCDN() {
-            console.log('Carregando CodeMirror via CDN...');
-            
-            // Carregar CSS
-            const cssLinks = [
-                'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css',
-                'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css'
-            ];
-            
-            cssLinks.forEach(link => {
-                if (!document.querySelector(`link[href="${link}"]`)) {
-                    const cssLink = document.createElement('link');
-                    cssLink.rel = 'stylesheet';
-                    cssLink.href = link;
-                    document.head.appendChild(cssLink);
-                }
-            });
-            
-            // Carregar JavaScript
-            const jsLinks = [
-                'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js',
-                'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js',
-                'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/closebrackets.min.js',
-                'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/matchbrackets.min.js',
-                'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/selection/active-line.min.js'
-            ];
-            
-            // Verificar quais scripts já estão carregados
-            const loadedScripts = Array.from(document.querySelectorAll('script')).map(s => s.src);
-            const scriptsToLoad = jsLinks.filter(link => !loadedScripts.some(loaded => loaded.includes(link)));
-            
-            if (scriptsToLoad.length === 0) {
-                // Todos os scripts já estão carregados, tentar inicializar imediatamente
-                console.log('Todos os scripts do CodeMirror já estão carregados');
-                setTimeout(() => this.initializeCodeMirror(), 100);
-                return;
-            }
-            
-            let loadedCount = 0;
-            scriptsToLoad.forEach(link => {
-                const script = document.createElement('script');
-                script.src = link;
-                script.onload = () => {
-                    loadedCount++;
-                    console.log(`Script carregado: ${link}`);
-                    if (loadedCount === scriptsToLoad.length) {
-                        // Todos os scripts foram carregados, tentar inicializar novamente
-                        console.log('Todos os scripts do CodeMirror foram carregados');
-                        setTimeout(() => this.initializeCodeMirror(), 500);
-                    }
-                };
-                script.onerror = (error) => {
-                    console.error(`Erro ao carregar script: ${link}`, error);
-                    // Tentar carregar novamente em caso de erro
-                    setTimeout(() => {
-                        console.log(`Tentando carregar novamente: ${link}`);
-                        const retryScript = document.createElement('script');
-                        retryScript.src = link;
-                        retryScript.onload = () => {
-                            loadedCount++;
-                            console.log(`Script carregado na segunda tentativa: ${link}`);
-                            if (loadedCount === scriptsToLoad.length) {
-                                console.log('Todos os scripts do CodeMirror foram carregados');
-                                setTimeout(() => this.initializeCodeMirror(), 500);
-                            }
-                        };
-                        document.head.appendChild(retryScript);
-                    }, 1000);
-                };
-                document.head.appendChild(script);
-            });
+
+        // Evita duplicação
+        if (this.codeMirror) {
+            this.codeMirror.toTextArea();
+            this.codeMirror = null;
         }
+
+        this.codeMirror = CodeMirror.fromTextArea(textarea, {
+            mode: 'javascript',
+            theme: 'dracula',
+            lineNumbers: true,
+            styleActiveLine: true,
+            matchBrackets: true,
+            autoCloseBrackets: true,
+            lineWrapping: true
+        });
+
+        // Ajustar altura e layout
+        this.codeMirror.setSize('100%', '100%');
+        
+        // Opcional: foco automático no editor
+        this.codeMirror.focus();
+
+        // Sincroniza com o textarea se necessário
+        this.codeMirror.on('change', () => {
+            textarea.value = this.codeMirror.getValue();
+        });
+
+        console.log('CodeMirror inicializado com sucesso');
     }
+
 }
+
+function loadCodeMirrorFromCDN(callback) {
+    console.log('Carregando CodeMirror via CDN...');
+    const cssLinks = [
+        'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css',
+        'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css'
+    ];
+    const jsLinks = [
+        'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/closebrackets.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/matchbrackets.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/selection/active-line.min.js'
+    ];
+
+    cssLinks.forEach(link => {
+        if (!document.querySelector(`link[href="${link}"]`)) {
+            const el = document.createElement('link');
+            el.rel = 'stylesheet';
+            el.href = link;
+            document.head.appendChild(el);
+        }
+    });
+
+    let loaded = 0;
+    jsLinks.forEach(link => {
+        const script = document.createElement('script');
+        script.src = link;
+        script.onload = () => {
+            loaded++;
+            if (loaded === jsLinks.length && callback) {
+                setTimeout(callback, 200); // callback para continuar após tudo carregado
+            }
+        };
+        document.head.appendChild(script);
+    });
+}
+
 
 // Função auxiliar para limpar instâncias do CodeMirror globalmente
 // (Mantida para compatibilidade com código existente)
@@ -850,13 +814,16 @@ document.addEventListener('DOMContentLoaded', function() {
         // Garantir que o textarea esteja visível antes da inicialização
         const textarea = document.getElementById('script-content');
         if (textarea) {
-            textarea.style.display = 'block';
-            textarea.style.visibility = 'visible';
-            textarea.style.height = 'calc(100% - 40px)';
-            textarea.style.minHeight = 'calc(100vh - 250px)';
-            textarea.style.width = '100%';
-            textarea.style.flex = '1';
+            textarea.style.position = 'absolute';
+            textarea.style.left = '-9999px';
+            textarea.style.top = '-9999px';
+            textarea.style.width = '0px';
+            textarea.style.height = '0px';
+            textarea.style.opacity = '0';
+            textarea.style.pointerEvents = 'none';
+            textarea.style.visibility = 'hidden';
         }
+
         
 
         
