@@ -27,40 +27,7 @@
     <!-- Phaser para o motor de jogos -->
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
     
-    <link rel="stylesheet" href="js/editor/styles.css">
-    <style>
-      /* Estilos para o console */
-      .console-line {
-        padding: 2px 8px;
-        border-bottom: 1px solid #333;
-        font-family: 'Courier New', monospace;
-        font-size: 12px;
-        line-height: 1.4;
-        color: #e5e7eb;
-      }
-      
-      .console-line.error {
-        color: #fca5a5;
-      }
-      
-      .console-line.warning {
-        color: #fbbf24;
-      }
-      
-      .console-line.info {
-        color: #60a5fa;
-      }
-      
-      .timestamp {
-        color: #9ca3af;
-        margin-right: 8px;
-        font-size: 11px;
-      }
-      
-      .message {
-        word-break: break-word;
-      }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <!-- Header -->
@@ -73,6 +40,9 @@
                 </h1>
                 <nav class="main-nav">
                     <button class="nav-btn" data-menu="file">File</button>
+                    <button class="nav-btn" data-menu="edit">Edit</button>
+                    <button class="nav-btn" data-menu="view">View</button>
+                    <button class="nav-btn" data-menu="build">Build</button>
                     <button class="nav-btn" data-menu="help">Help</button>
                 </nav>
             </div>
@@ -232,10 +202,7 @@
         </div>
     </div>
 
-    <!-- Scripts da Engine Isoria -->
-    <script src="js/isoria-engine.js"></script>
-    
-    <script src="js/editor/script-editor.js"></script>
-    <script src="js/editor/app.js"></script>
+    <script src="script-editor.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>

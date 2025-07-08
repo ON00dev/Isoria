@@ -375,7 +375,7 @@ class IsoriaEngine {
             scriptFunction();
             
             this.isRunning = true;
-            this.log('Script executado com sucesso', 'success');
+            // Script executado - log removido para evitar mensagens desnecessárias
             
         } catch (error) {
             this.log(`Erro na execução do script: ${error.message}`, 'error');
