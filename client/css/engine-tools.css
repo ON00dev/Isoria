@@ -1621,8 +1621,8 @@ body, p, div, span, textarea {
   }
   
   .asset-item.selected {
-    background: #0066cc;
-    border-color: #0088ff;
+    background: #21910b;
+    border-color: #089e4c;
   }
   
   .asset-thumbnail {
@@ -1639,7 +1639,7 @@ body, p, div, span, textarea {
   
   /* Botão de upload */
   #upload-asset {
-    background: #0066cc;
+    background: #21910b;
     color: white;
     border: none;
     padding: 6px 12px;
@@ -1649,7 +1649,7 @@ body, p, div, span, textarea {
   }
   
   #upload-asset:hover {
-    background: #0088ff;
+    background: #21910bf;
   }
   
   /* Utility Classes */
