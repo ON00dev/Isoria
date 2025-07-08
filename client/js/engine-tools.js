@@ -4327,7 +4327,7 @@ class EngineTools {
     showScriptEditorModal() {
         const modal = document.getElementById('scriptEditorModal');
         if (modal) {
-            modal.style.display = 'block';
+            modal.style.display = 'flex';
         }
     }
 
