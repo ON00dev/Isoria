@@ -39,7 +39,7 @@ class MainMenuScene extends Phaser.Scene {
             'Iniciar Jogo',
             {
                 font: '20px Arial',
-                fill: '#4cc9f0',
+                fill: '#26752d',
                 align: 'center'
             }
         );
@@ -49,11 +49,11 @@ class MainMenuScene extends Phaser.Scene {
 
         // Efeito de hover no botão
         startButton.on('pointerover', () => {
-            startButton.setStyle({ fill: '#3db8df' });
+            startButton.setStyle({ fill: '#26752d' });
         });
 
         startButton.on('pointerout', () => {
-            startButton.setStyle({ fill: '#4cc9f0' });
+            startButton.setStyle({ fill: '#26752d' });
         });
 
         // Inicia o jogo ao clicar no botão

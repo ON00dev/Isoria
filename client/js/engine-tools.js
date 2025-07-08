@@ -27,6 +27,13 @@ class EngineTools {
         this.assets = new Map();
         this.sceneData = null;
         this.hoverHighlight = null;
+        
+        // Variáveis para movimento animado
+        this.isDragging = false;
+        this.draggedObject = null;
+        this.ghostObject = null;
+        this.dragStartPos = null;
+        this.dragOffset = { x: 0, y: 0 };
         this.projectData = {
             name: 'Untitled Project',
             scenes: [],
@@ -1335,6 +1342,8 @@ class EngineTools {
                     this.redo();
                 } else if (btn.id === 'toggle-grid') {
                     this.toggleGridVisibility();
+                } else if (btn.id === 'add-test-object') {
+                    this.addTestObject();
                 } else {
                     this.selectPreviewTool(btn.id);
                 }
@@ -1578,23 +1587,36 @@ class EngineTools {
 
     // Configurar eventos do menu
     setupMenuEvents() {
+        console.log('Configurando eventos do menu...');
+        
         // Menu principal
         const menuItems = document.querySelectorAll('.menu-item[data-menu]');
-        if (menuItems.length === 0) return;
+        console.log('Itens de menu encontrados:', menuItems.length);
+        
+        if (menuItems.length === 0) {
+            console.warn('Nenhum item de menu encontrado');
+            return;
+        }
         
         menuItems.forEach(item => {
+            console.log('Configurando evento para:', item.dataset.menu);
             item.addEventListener('click', (e) => {
                 e.preventDefault();
+                console.log('Menu clicado:', item.dataset.menu);
                 this.handleMenuAction(item.dataset.menu);
             });
         });
         
         // Itens do dropdown de arquivo
         const dropdownItems = document.querySelectorAll('.dropdown-menu .menu-item[data-action]');
+        console.log('Itens do dropdown encontrados:', dropdownItems.length);
+        
         if (dropdownItems.length > 0) {
             dropdownItems.forEach(item => {
+                console.log('Configurando evento para ação:', item.dataset.action);
                 item.addEventListener('click', (e) => {
                     e.preventDefault();
+                    console.log('Ação do dropdown clicada:', item.dataset.action);
                     this.handleFileAction(item.dataset.action);
                     // Fechar o menu após a ação
                     const fileMenu = document.getElementById('file-menu');
@@ -1616,6 +1638,8 @@ class EngineTools {
                 }
             }
         });
+        
+        console.log('Eventos do menu configurados com sucesso');
     }
 
     // Configurar atalhos de teclado
@@ -1848,6 +1872,12 @@ class EngineTools {
 
     showFileMenu() {
         const fileMenu = document.getElementById('file-menu');
+        
+        if (!fileMenu) {
+            console.error('Elemento file-menu não encontrado');
+            return;
+        }
+        
         const isVisible = fileMenu.style.display === 'block';
         
         // Fechar todos os menus primeiro
@@ -1857,12 +1887,27 @@ class EngineTools {
         
         // Mostrar o menu se não estava visível
         if (!isVisible) {
-            fileMenu.style.display = 'block';
-            // Posicionar o menu abaixo do botão File
             const fileButton = document.querySelector('[data-menu="file"]');
+            
+            if (!fileButton) {
+                console.error('Botão File não encontrado');
+                return;
+            }
+            
             const rect = fileButton.getBoundingClientRect();
+            
+            // Configurar posicionamento e visibilidade
+            fileMenu.style.position = 'absolute';
             fileMenu.style.left = rect.left + 'px';
             fileMenu.style.top = (rect.bottom + 2) + 'px';
+            fileMenu.style.zIndex = '9999';
+            fileMenu.style.display = 'block';
+            
+            console.log('Menu File exibido em:', {
+                left: rect.left,
+                top: rect.bottom + 2,
+                display: fileMenu.style.display
+            });
         }
     }
     
@@ -2629,6 +2674,40 @@ class EngineTools {
         this.logMessage('Canvas preenchido com cor selecionada', 'info');
     }
 
+    // Converter coordenadas do mundo para coordenadas de tela
+    worldToScreenCoords(worldX, worldY) {
+        const viewport = document.getElementById('preview-viewport');
+        const rect = viewport.getBoundingClientRect();
+        
+        // Obter informações da câmera
+        const zoom = this.scene?.cameras?.main?.zoom || 1;
+        const scrollX = this.scene?.cameras?.main?.scrollX || 0;
+        const scrollY = this.scene?.cameras?.main?.scrollY || 0;
+        
+        // Usar as mesmas dimensões do grid armazenadas
+        let canvasWidth, canvasHeight;
+        
+        if (this.gridDimensions) {
+            canvasWidth = this.gridDimensions.width;
+            canvasHeight = this.gridDimensions.height;
+        } else {
+            canvasWidth = viewport.clientWidth || 800;
+            canvasHeight = viewport.clientHeight || 600;
+        }
+        
+        const centerX = canvasWidth / 2;
+        const centerY = canvasHeight / 2;
+        
+        // Converter coordenadas do mundo para coordenadas de tela
+        const deltaX = (worldX - scrollX) * zoom;
+        const deltaY = (worldY - scrollY) * zoom;
+        
+        const screenX = centerX + deltaX + rect.left;
+        const screenY = centerY + deltaY + rect.top;
+        
+        return { screenX, screenY };
+    }
+    
     // Converter coordenadas de tela para coordenadas de tile isométrico
     screenToTileCoords(screenX, screenY) { 
         const rect = document.getElementById('preview-viewport').getBoundingClientRect(); 
@@ -2756,6 +2835,12 @@ class EngineTools {
             return;
         }
         
+        // Lógica especial para ferramenta Move
+        if (this.currentTool === 'move') {
+            this.handleMoveMouseDown(e.clientX, e.clientY);
+            return;
+        }
+        
         switch (this.currentTool) {
             case 'brush':
             case 'paint':
@@ -2790,6 +2875,12 @@ class EngineTools {
                 // Atualizar informações da câmera na interface
                 this.updateCameraInfo();
             }
+            return;
+        }
+        
+        // Lógica especial para ferramenta Move
+        if (this.currentTool === 'move' && this.isDragging) {
+            this.handleMoveMouseMove(e.clientX, e.clientY);
             return;
         }
         
@@ -2828,6 +2919,12 @@ class EngineTools {
             return;
         }
         
+        // Lógica especial para ferramenta Move
+        if (this.currentTool === 'move' && this.isDragging) {
+            this.handleMoveMouseUp(e.clientX, e.clientY);
+            return;
+        }
+        
         if (!this.isDrawing) return;
         
         const coords = this.screenToTileCoords(e.clientX, e.clientY);
@@ -2847,13 +2944,12 @@ class EngineTools {
         if (this.currentTool === 'select') {
             // Lógica de seleção de objetos
             this.handleObjectSelect(e.clientX, e.clientY);
-        } else if (this.currentTool === 'move') {
-            // Lógica de movimentação de objetos
-            this.handleObjectMove(e.clientX, e.clientY);
         } else if (this.currentTool === 'scale') {
             // Lógica de redimensionamento de objetos
             this.handleObjectScale(e.clientX, e.clientY);
         }
+        // Nota: A ferramenta 'move' agora usa sistema de drag and drop
+        // e não precisa mais de lógica no handleCanvasClick
     }
     
     // Manipular seleção de objetos
@@ -2937,6 +3033,213 @@ class EngineTools {
         this.logMessage(`Objeto redimensionado para escala ${newScale}`, 'success');
     }
     
+    // Funções para movimento animado
+    handleMoveMouseDown(screenX, screenY) {
+        const coords = this.screenToTileCoords(screenX, screenY);
+        console.log('handleMoveMouseDown - coords:', coords);
+        
+        // Verificar se há um objeto na posição clicada
+        const objectAtPosition = this.getObjectAtTilePosition(coords.tileX, coords.tileY);
+        console.log('handleMoveMouseDown - objectAtPosition:', objectAtPosition);
+        
+        if (objectAtPosition) {
+            this.isDragging = true;
+            this.draggedObject = objectAtPosition;
+            this.dragStartPos = { x: screenX, y: screenY };
+            
+            // Simplificar o offset - usar zero para começar
+            this.dragOffset = { x: 0, y: 0 };
+            
+            // Criar objeto fantasma
+            this.createGhostObject(objectAtPosition);
+            
+            // Selecionar o objeto
+            this.selectedObject = objectAtPosition.id;
+            this.updateInspector(objectAtPosition);
+            
+            // Mudar cursor
+            document.getElementById('preview-viewport').style.cursor = 'grabbing';
+            
+            console.log('handleMoveMouseDown - isDragging:', this.isDragging);
+            this.logMessage('Objeto selecionado para movimento. Arraste para mover.', 'info');
+        } else {
+            console.log('handleMoveMouseDown - Nenhum objeto encontrado na posição');
+        }
+    }
+    
+    handleMoveMouseMove(screenX, screenY) {
+        console.log('handleMoveMouseMove chamada - isDragging:', this.isDragging, 'draggedObject:', !!this.draggedObject, 'ghostObject:', !!this.ghostObject);
+        
+        if (!this.isDragging || !this.draggedObject || !this.ghostObject) {
+            console.log('handleMoveMouseMove - Condições não atendidas, retornando');
+            return;
+        }
+        
+        // Atualizar posição do objeto fantasma
+        const coords = this.screenToTileCoords(screenX - this.dragOffset.x, screenY - this.dragOffset.y);
+        console.log('handleMoveMouseMove - coords:', coords);
+        
+        if (this.isValidTile(coords.tileX, coords.tileY)) {
+            const worldCoords = this.tileToWorldCoords(coords.tileX, coords.tileY);
+            console.log('handleMoveMouseMove - worldCoords:', worldCoords);
+            
+            // Atualizar posição do objeto fantasma no Phaser
+            if (this.ghostObject.phaserObject) {
+                console.log('handleMoveMouseMove - Atualizando posição do objeto fantasma');
+                this.ghostObject.phaserObject.x = worldCoords.worldX;
+                this.ghostObject.phaserObject.y = worldCoords.worldY;
+            } else {
+                console.log('handleMoveMouseMove - ghostObject.phaserObject não existe');
+            }
+            
+            // Atualizar dados temporários
+            this.ghostObject.tilePosition = [coords.tileX, coords.tileY];
+            this.ghostObject.position = [worldCoords.worldX, worldCoords.worldY];
+        } else {
+            console.log('handleMoveMouseMove - Posição inválida:', coords.tileX, coords.tileY);
+        }
+    }
+    
+    handleMoveMouseUp(screenX, screenY) {
+        if (!this.isDragging || !this.draggedObject || !this.ghostObject) return;
+        
+        const coords = this.screenToTileCoords(screenX - this.dragOffset.x, screenY - this.dragOffset.y);
+        
+        // Verificar se a posição final é válida
+        if (this.isValidTile(coords.tileX, coords.tileY)) {
+            // Verificar se não há outro objeto na posição de destino
+            // Apenas sprites e assets bloqueiam movimento, tiles pintados não
+            const existingObject = this.sceneData.objects.find(obj => 
+                obj.id !== this.draggedObject.id && 
+                obj.tilePosition && 
+                obj.tilePosition[0] === coords.tileX && 
+                obj.tilePosition[1] === coords.tileY &&
+                obj.layer === this.draggedObject.layer &&
+                (obj.type === 'sprite' || obj.type === 'asset') // Apenas sprites/assets bloqueiam
+            );
+            
+            if (!existingObject) {
+                // Mover o objeto real para a nova posição
+                this.moveObjectToPosition(this.draggedObject.id, coords.tileX, coords.tileY);
+                this.logMessage('Objeto movido com sucesso!', 'success');
+            } else {
+                this.logMessage('Já existe um objeto nesta posição', 'warning');
+            }
+        } else {
+            this.logMessage('Posição inválida para movimentação', 'warning');
+        }
+        
+        // Limpar estado de arrasto
+        this.removeGhostObject();
+        this.isDragging = false;
+        this.draggedObject = null;
+        this.dragStartPos = null;
+        this.dragOffset = { x: 0, y: 0 };
+        
+        // Restaurar cursor
+        document.getElementById('preview-viewport').style.cursor = this.getToolCursor('move');
+    }
+    
+    // Criar objeto fantasma para visualização durante o arrasto
+    createGhostObject(originalObject) {
+        console.log('createGhostObject - originalObject:', originalObject);
+        console.log('createGhostObject - this.scene:', !!this.scene);
+        
+        this.ghostObject = {
+            id: originalObject.id + '_ghost',
+            position: [...originalObject.position],
+            tilePosition: [...originalObject.tilePosition],
+            scale: originalObject.scale ? [...originalObject.scale] : [1, 1, 1],
+            layer: originalObject.layer,
+            type: originalObject.type,
+            key: originalObject.key
+        };
+        
+        console.log('createGhostObject - ghostObject criado:', this.ghostObject);
+        
+        // Criar objeto visual no Phaser com transparência
+        if (this.scene) {
+            // Para objetos de teste ou sem SVG, criar um placeholder fantasma
+            const baseSize = 32;
+            const objectScale = this.ghostObject.scale ? this.ghostObject.scale[0] : 1;
+            const scaledSize = baseSize * objectScale;
+            
+            const graphics = this.scene.add.graphics();
+            graphics.fillStyle(0x00ff00, 0.4); // Verde semi-transparente
+            graphics.lineStyle(2, 0x000000, 0.8); // Borda preta semi-transparente
+            
+            // Desenhar retângulo com ancoragem na base (similar aos sprites)
+            // Em vez de centralizar, posicionar para que a base fique no ponto de referência
+            graphics.fillRect(-scaledSize/2, -scaledSize, scaledSize, scaledSize);
+            graphics.strokeRect(-scaledSize/2, -scaledSize, scaledSize, scaledSize);
+            
+            // Posicionar o objeto fantasma
+            graphics.setPosition(this.ghostObject.position[0], this.ghostObject.position[1]);
+            graphics.setDepth(2500); // Acima de tudo para ser visível durante o arrasto
+            
+            this.ghostObject.phaserObject = graphics;
+            console.log('createGhostObject - phaserObject criado:', !!this.ghostObject.phaserObject);
+        } else {
+            console.log('createGhostObject - Scene não existe');
+        }
+    }
+    
+    // Remover objeto fantasma
+    removeGhostObject() {
+        if (this.ghostObject) {
+            if (this.ghostObject.phaserObject) {
+                this.ghostObject.phaserObject.destroy();
+            }
+            this.ghostObject = null;
+        }
+    }
+    
+    // Obter objeto na posição do tile
+    getObjectAtTilePosition(tileX, tileY) {
+        console.log('getObjectAtTilePosition - procurando em:', tileX, tileY);
+        console.log('getObjectAtTilePosition - objetos disponíveis:', this.sceneData.objects.length);
+        
+        const foundObject = this.sceneData.objects.find(obj => {
+            console.log('getObjectAtTilePosition - verificando objeto:', obj.id, obj.tilePosition);
+            return obj.tilePosition && 
+                   obj.tilePosition[0] === tileX && 
+                   obj.tilePosition[1] === tileY;
+        });
+        
+        console.log('getObjectAtTilePosition - objeto encontrado:', foundObject);
+        return foundObject;
+    }
+    
+    // Função para adicionar um objeto de teste para testar o movimento
+    addTestObject() {
+        // Calcular posição mundial correta para o tile (0, 0)
+        const worldCoords = this.tileToWorldCoords(0, 0);
+        
+        const testObject = {
+            id: 'test_object_' + Date.now(),
+            name: 'Objeto de Teste',
+            type: 'sprite',
+            key: 'test',
+            position: [worldCoords.worldX, worldCoords.worldY], // Usar posição calculada
+            tilePosition: [0, 0], // Centro do grid
+            visible: true,
+            layer: 'ground',
+            scale: [1, 1, 1],
+            properties: {}
+        };
+        
+        // Adicionar à lista de objetos
+        this.sceneData.objects.push(testObject);
+        
+        // Atualizar interface
+        this.buildSceneHierarchy();
+        this.updateSceneRender();
+        
+        this.logMessage('Objeto de teste adicionado na posição (0, 0)', 'info');
+        console.log('addTestObject - objeto adicionado:', testObject);
+        console.log('addTestObject - posição mundial calculada:', worldCoords);
+    }
+    
     // Mover objeto para nova posição
     moveObjectToPosition(objectId, newTileX, newTileY) {
         const objectIndex = this.sceneData.objects.findIndex(obj => obj.id === objectId);
@@ -2950,12 +3253,14 @@ class EngineTools {
         const oldPosition = object.tilePosition ? [...object.tilePosition] : [0, 0];
         
         // Verificar se já existe um objeto na posição de destino
+        // Apenas sprites e assets bloqueiam movimento, tiles pintados não
         const existingObject = this.sceneData.objects.find(obj => 
             obj.id !== objectId && 
             obj.tilePosition && 
             obj.tilePosition[0] === newTileX && 
             obj.tilePosition[1] === newTileY &&
-            obj.layer === object.layer
+            obj.layer === object.layer &&
+            (obj.type === 'sprite' || obj.type === 'asset') // Apenas sprites/assets bloqueiam
         );
         
         if (existingObject) {
@@ -3567,25 +3872,45 @@ class EngineTools {
                         const objectScale = obj.scale ? obj.scale[0] : 1;
                         sprite.setScale(objectScale);
                         
+                        // Ajustar ancoragem para que a base do sprite fique no tile
+                        // Em vez do centro (0.5, 0.5), usar (0.5, 1.0) para ancorar na base
+                        sprite.setOrigin(0.5, 1.0);
+                        
+                        // Ajustar posição Y para compensar a nova ancoragem
+                        // Como a ancoragem agora é na base, precisamos mover o sprite para cima
+                        // para que a base fique exatamente no centro do tile
+                        const spriteHeight = sprite.height * objectScale;
+                        sprite.setY(-spriteHeight / 2);
+                        
                         container.add(sprite);
                     });
                 } else {
-                    // Armazenar informações do placeholder para criar depois
-                    // Não criar o placeholder aqui, pois será criado por último na função updateSceneRender
-                    // para garantir que fique por cima de todos os outros objetos
+                    // Criar placeholder visual para objetos sem SVG (como objetos de teste)
                     const baseSize = 32;
                     const objectScale = obj.scale ? obj.scale[0] : 1;
                     const scaledSize = baseSize * objectScale;
                     
-                    // Adicionar à lista de placeholders para criar por último
-                    if (!this.placeholders) this.placeholders = [];
-                    this.placeholders.push({
-                        x: obj.position[0],
-                        y: obj.position[1],
-                        width: scaledSize,
-                        height: scaledSize,
-                        scale: objectScale
-                    });
+                    // Criar um retângulo colorido como placeholder
+                    const graphics = scene.add.graphics();
+                    graphics.fillStyle(0x00ff00, 0.8); // Verde semi-transparente
+                    graphics.lineStyle(2, 0x000000, 1); // Borda preta
+                    
+                    // Desenhar retângulo com ancoragem na base (consistente com sprites)
+                    graphics.fillRect(-scaledSize/2, -scaledSize, scaledSize, scaledSize);
+                    graphics.strokeRect(-scaledSize/2, -scaledSize, scaledSize, scaledSize);
+                    
+                    // Posicionar o placeholder
+                    graphics.setPosition(obj.position[0], obj.position[1]);
+                    
+                    // Definir profundidade
+                    const isometricDepth = obj.tilePosition ? obj.tilePosition[1] * 10 + 100 : 100;
+                    graphics.setDepth(Math.min(isometricDepth, 1500));
+                    
+                    // Armazenar referência para poder selecionar o objeto
+                    graphics.setData('objectId', obj.id);
+                    graphics.setData('objectData', obj);
+                    
+                    console.log('Placeholder criado para objeto:', obj.id, 'na posição:', obj.position);
                 }
             }
         });

@@ -158,7 +158,7 @@ body, p, div, span, textarea {
   .logo h1 {
     font-size: 18px;
     font-weight: 600;
-    color: #4a9eff;
+    color: #26752d;
     margin-right: 24px;
   }
   
@@ -190,7 +190,7 @@ body, p, div, span, textarea {
   .btn-play,
   .btn-pause,
   .btn-stop {
-    background: #4a9eff;
+    background: #26752d;
     border: none;
     color: white;
     padding: 6px 12px;
@@ -440,7 +440,7 @@ body, p, div, span, textarea {
   }
   
   .tab.active {
-    background-color: #4a9eff;
+    background-color: #26752d;
     color: #ffffff;
   }
   
@@ -506,13 +506,13 @@ body, p, div, span, textarea {
     background-color: rgba(0, 0, 0, 0.7);
     padding: 40px;
     border-radius: 8px;
-    border: 2px dashed #4a9eff;
+    border: 2px dashed #26752d;
   }
   
   .preview-placeholder h2 {
     font-size: 24px;
     margin-bottom: 8px;
-    color: #4a9eff;
+    color: #26752d;
   }
   
   .preview-placeholder p {
@@ -642,12 +642,12 @@ body, p, div, span, textarea {
   
   .tool-btn:hover {
     background-color: #404040;
-    border-color: #4a9eff;
+    border-color: #26752d;
   }
   
   .tool-btn.active {
-    background-color: #4a9eff;
-    border-color: #4a9eff;
+    background-color: #26752d;
+    border-color: #26752d;
     color: #ffffff;
   }
   
@@ -680,7 +680,7 @@ body, p, div, span, textarea {
   
   .layer-item:hover {
     background-color: #2a2a2a;
-    border-color: #4a9eff;
+    border-color: #26752d;
   }
   
   .layer-visibility {
@@ -720,7 +720,7 @@ body, p, div, span, textarea {
   }
   
   .layer-btn.active {
-    background-color: #4a9eff;
+    background-color: #26752d;
     color: #ffffff;
   }
   
@@ -780,7 +780,7 @@ body, p, div, span, textarea {
   }
   
   .color-swatch:hover {
-    border-color: #4a9eff;
+    border-color: #26752d;
     transform: scale(1.1);
   }
   
@@ -821,7 +821,7 @@ body, p, div, span, textarea {
     -webkit-appearance: none;
     width: 16px;
     height: 16px;
-    background: #4a9eff;
+    background: #26752d;
     border-radius: 50%;
     cursor: pointer;
   }
@@ -829,7 +829,7 @@ body, p, div, span, textarea {
   .rgba-input input[type="range"]::-moz-range-thumb {
     width: 16px;
     height: 16px;
-    background: #4a9eff;
+    background: #26752d;
     border-radius: 50%;
     cursor: pointer;
     border: none;
@@ -932,19 +932,19 @@ body, p, div, span, textarea {
   }
   
   .console-line.warning .message {
-    color: #ffd000;
+    color: #ffaa00;
   }
   
   .console-line.error .message {
-    color: #ff6944;
+    color: #ff4444;
   }
   
   .console-line.log .message {
-    color: #88b1cc;
+    color: #88cc88;
   }
   
   .console-line.success .message {
-    color: #44b4ff;
+    color: #44ff44;
   }
   
   /* Script Editor */
@@ -1066,13 +1066,21 @@ body, p, div, span, textarea {
 
 /* Dropdown Menus */
   .dropdown-menu {
-    position: absolute;
+    position: absolute !important;
     background-color: #1e1e1e;
     border: 1px solid #404040;
     border-radius: 4px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    z-index: 1000;
+    z-index: 9999 !important;
     min-width: 150px;
+    display: none;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+  
+  .dropdown-menu[style*="block"] {
+    display: block !important;
   }
   
   .dropdown-menu .menu-item {
@@ -1134,39 +1142,39 @@ body, p, div, span, textarea {
   }
   
   .resizer-left:hover {
-    border-right-color: #4a9eff;
+    border-right-color: #26752d;
   }
   
   .resizer-right:hover {
-    border-left-color: #4a9eff;
+    border-left-color: #26752d;
   }
   
   .resizer-bottom:hover {
-    border-top-color: #4a9eff;
+    border-top-color: #26752d;
   }
   
   /* Drag and Drop Effects */
   .drag-over {
     background: rgba(74, 158, 255, 0.1) !important;
-    border: 2px dashed #4a9eff !important;
+    border: 2px dashed #26752d !important;
   }
   
   .tree-item.selected,
   .asset-item.selected {
     background: rgba(74, 158, 255, 0.2);
-    border-color: #4a9eff;
+    border-color: #26752d;
   }
   
   .tool-btn.active,
   .btn-icon.active {
-    background: #4a9eff;
+    background: #26752d;
     color: white;
   }
   
   .tab.active {
-    background: #4a9eff;
+    background: #26752d;
     color: white;
-    border-bottom-color: #4a9eff;
+    border-bottom-color: #26752d;
   }
   
   /* Responsive Design */
@@ -3505,146 +3513,6 @@ body, p, div, span, textarea {
     margin-bottom: 8px;
   }
 
-  /* Script Editor Modal Styles */
-  .script-editor-modal {
-    display: none;
-    position: fixed;
-    z-index: 10000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(3px);
-  }
-
-  .script-editor-modal-content {
-    background-color: #2b2b2b;
-    margin: 10% auto;
-    padding: 0;
-    border: 1px solid #404040;
-    border-radius: 8px;
-    width: 500px;
-    max-width: 90%;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    animation: scriptEditorModalFadeIn 0.3s ease-out;
-  }
-
-  @keyframes scriptEditorModalFadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(-50px) scale(0.9);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-  }
-
-  .script-editor-modal-header {
-    background-color: #1e1e1e;
-    padding: 16px 20px;
-    border-bottom: 1px solid #404040;
-    border-radius: 8px 8px 0 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .script-editor-modal-header h3 {
-    margin: 0;
-    color: #4a9eff;
-    font-size: 16px;
-    font-weight: 600;
-  }
-
-  .script-editor-modal-close {
-    background: none;
-    border: none;
-    color: #888;
-    font-size: 24px;
-    cursor: pointer;
-    padding: 0;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    transition: all 0.2s ease;
-  }
-
-  .script-editor-modal-close:hover {
-    background-color: #404040;
-    color: #fff;
-  }
-
-  .script-editor-modal-body {
-    padding: 20px;
-  }
-
-  .script-editor-warning {
-    text-align: center;
-    padding: 20px;
-  }
-
-  .script-editor-warning p {
-    margin: 10px 0;
-    font-size: 14px;
-    color: #ccc;
-    line-height: 1.5;
-  }
-
-  .script-editor-modal-footer {
-    padding: 16px 20px;
-    border-top: 1px solid #404040;
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    background-color: #1e1e1e;
-    border-radius: 0 0 8px 8px;
-  }
-
-  .script-editor-btn-cancel,
-  .script-editor-btn-save,
-  .script-editor-btn-continue {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-  }
-
-  .script-editor-btn-cancel {
-    background-color: #404040;
-    color: #ccc;
-  }
-
-  .script-editor-btn-cancel:hover {
-    background-color: #555;
-    color: #fff;
-  }
-
-  .script-editor-btn-save {
-    background-color: #4CAF50;
-    color: #fff;
-  }
-
-  .script-editor-btn-save:hover {
-    background-color: #45a049;
-  }
-
-  .script-editor-btn-continue {
-    background-color: #ff9800;
-    color: #fff;
-  }
-
-  .script-editor-btn-continue:hover {
-    background-color: #e68900;
-  }
-
   /* Scale Modal Styles */
   .scale-modal {
     display: none;
@@ -3693,7 +3561,7 @@ body, p, div, span, textarea {
 
   .scale-modal-header h3 {
     margin: 0;
-    color: #4a9eff;
+    color: #26752d;
     font-size: 16px;
     font-weight: 600;
   }
@@ -3728,7 +3596,7 @@ body, p, div, span, textarea {
     padding: 12px;
     background-color: #1e1e1e;
     border-radius: 6px;
-    border-left: 3px solid #4a9eff;
+    border-left: 3px solid #26752d;
   }
 
   .scale-info p {
@@ -3738,7 +3606,7 @@ body, p, div, span, textarea {
   }
 
   .scale-info span {
-    color: #4a9eff;
+    color: #26752d;
     font-weight: 600;
   }
 
@@ -3777,7 +3645,7 @@ body, p, div, span, textarea {
     appearance: none;
     width: 18px;
     height: 18px;
-    background: #4a9eff;
+    background: #26752d;
     border-radius: 50%;
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
@@ -3786,7 +3654,7 @@ body, p, div, span, textarea {
   #scaleSlider::-moz-range-thumb {
     width: 18px;
     height: 18px;
-    background: #4a9eff;
+    background: #26752d;
     border-radius: 50%;
     cursor: pointer;
     border: none;
@@ -3806,13 +3674,13 @@ body, p, div, span, textarea {
 
   #scaleInput:focus {
     outline: none;
-    border-color: #4a9eff;
+    border-color: #26752d;
     box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.2);
   }
 
   .scale-percentage {
     min-width: 50px;
-    color: #4a9eff;
+    color: #26752d;
     font-weight: 600;
     font-size: 14px;
   }
@@ -3836,14 +3704,14 @@ body, p, div, span, textarea {
   }
 
   .scale-preset-btn:hover {
-    background-color: #4a9eff;
-    border-color: #4a9eff;
+    background-color: #26752d;
+    border-color: #26752d;
     color: #fff;
   }
 
   .scale-preset-btn.active {
-    background-color: #4a9eff;
-    border-color: #4a9eff;
+    background-color: #26752d;
+    border-color: #26752d;
     color: #fff;
   }
 
@@ -3879,7 +3747,7 @@ body, p, div, span, textarea {
   }
 
   .scale-btn-apply {
-    background-color: #4a9eff;
+    background-color: #26752d;
     color: #fff;
   }
 

@@ -184,7 +184,7 @@ class UIScene extends Phaser.Scene {
 
             // Muda a cor da barra de vida com base na porcentagem
             if (percentage > 60) {
-                healthBarFill.style.backgroundColor = '#4cc9f0'; // Azul
+                healthBarFill.style.backgroundColor = '#26752d'; // Azul
             } else if (percentage > 30) {
                 healthBarFill.style.backgroundColor = '#f77f00'; // Laranja
             } else {

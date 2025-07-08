@@ -119,13 +119,13 @@ body {
     padding: 8px 15px;
     border: none;
     border-radius: 3px;
-    background-color: #4361ee;
+    background-color: #196b20;
     color: #fff;
     cursor: pointer;
 }
 
 #chat-send:hover {
-    background-color: #3a56d4;
+    background-color: #26752d;
 }
 
 /* Botões de Ação */
@@ -143,7 +143,7 @@ body {
     padding: 12px 20px;
     border: none;
     border-radius: 5px;
-    background-color: #4361ee;
+    background-color: #196b20;
     color: #fff;
     font-size: 16px;
     cursor: pointer;
@@ -151,7 +151,7 @@ body {
 }
 
 #action-buttons button:hover {
-    background-color: #3a56d4;
+    background-color: #26752d;
 }
 
 #attack-btn {
@@ -227,7 +227,7 @@ body {
 }
 
 .character-option.selected {
-    background-color: #4361ee;
+    background-color: #196b20;
 }
 
 #start-game-btn {
@@ -235,7 +235,7 @@ body {
     padding: 12px;
     border: none;
     border-radius: 5px;
-    background-color: #4cc9f0;
+    background-color: #26752d;
     color: #fff;
     font-size: 18px;
     cursor: pointer;
@@ -243,7 +243,7 @@ body {
 }
 
 #start-game-btn:hover {
-    background-color: #3db8df;
+    background-color: #26752d;
 }
 
 /* Responsividade */

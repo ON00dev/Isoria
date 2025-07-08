@@ -25,7 +25,7 @@ class Player extends Phaser.GameObjects.Container {
         // Cria o texto com o nome do jogador
         this.nameText = config.scene.add.text(0, -40, this.name, {
             font: '14px Arial',
-            fill: this.isLocal ? '#4cc9f0' : '#ffffff',
+            fill: this.isLocal ? '#26752d' : '#ffffff',
             stroke: '#000000',
             strokeThickness: 3,
             align: 'center'
@@ -367,7 +367,7 @@ class Player extends Phaser.GameObjects.Container {
         // Escolhe a cor com base na porcentagem de HP
         let color;
         if (hpPercentage > 0.6) {
-            color = 0x4cc9f0; // Azul
+            color = 0x26752d; // Azul
         } else if (hpPercentage > 0.3) {
             color = 0xf77f00; // Laranja
         } else {
